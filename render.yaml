@@ -1,0 +1,89 @@
+services:
+  - type: web
+    name: marketlens-api
+    runtime: python
+    region: singapore
+    plan: free
+    autoDeployTrigger: commit
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: python -m backend.start
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.14.0
+      - key: APP_ENV
+        value: production
+      - key: FRONTEND_ORIGINS
+        fromService:
+          type: web
+          name: marketlens-web
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_PUBLISHABLE_KEY
+        sync: false
+      - key: SUPABASE_SECRET_KEY
+        sync: false
+      - key: MAX_UPLOAD_MB
+        value: 10
+      - key: MAX_UPLOAD_ROWS
+        value: 50000
+      - key: AI_REPORT_ENABLED
+        value: true
+      - key: AI_PROVIDER
+        value: gemini
+      - key: AI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: AI_API_BASE_URL
+        value: https://generativelanguage.googleapis.com/v1beta
+      - key: AI_API_KEY
+        sync: false
+      - key: AI_TIMEOUT_SECONDS
+        value: 20
+      - key: AI_MAX_OUTPUT_TOKENS
+        value: 1200
+
+  - type: web
+    name: marketlens-web
+    runtime: static
+    plan: free
+    autoDeployTrigger: commit
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./dist
+    envVars:
+      - key: VITE_API_ORIGIN
+        fromService:
+          type: web
+          name: marketlens-api
+          envVarKey: RENDER_EXTERNAL_URL
+      - key: VITE_SUPABASE_URL
+        sync: false
+      - key: VITE_SUPABASE_PUBLISHABLE_KEY
+        sync: false
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    headers:
+      - path: /*
+        name: X-Content-Type-Options
+        value: nosniff
+      - path: /*
+        name: X-Frame-Options
+        value: DENY
+      - path: /*
+        name: Referrer-Policy
+        value: strict-origin-when-cross-origin
+      - path: /*
+        name: Permissions-Policy
+        value: camera=(), geolocation=(), microphone=()
+      - path: /*
+        name: Content-Security-Policy
+        value: "default-src 'self'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data:; connect-src 'self' https://*.supabase.co https://*.onrender.com"
+      - path: /assets/*
+        name: Cache-Control
+        value: public, max-age=31536000, immutable
+      - path: /index.html
+        name: Cache-Control
+        value: no-cache

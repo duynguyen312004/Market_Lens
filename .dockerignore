@@ -1,0 +1,14 @@
+.git
+.gitignore
+.venv
+.pytest_cache
+**/__pycache__
+**/*.pyc
+**/.env
+**/.env.*
+!**/.env.example
+frontend
+Market_lens_plan
+docs
+sample_data
+supabase
