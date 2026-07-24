@@ -18,7 +18,7 @@ Tài liệu này ghi trạng thái triển khai thực tế. Phạm vi và contr
 | Phase 2 - File pipeline và analytics | LOCKED | CSV/XLSX validation, analytics, persistence, ownership và upload UI; backend test suite pass |
 | Phase 3 - Dashboard và analytics pages | LOCKED | Dashboard, Sales Analytics, Customer Analytics dùng API thật; latest analysis restore; loading/error/empty/success; frontend test/lint/build pass |
 | Phase 4 - Forecast và report fallback | LOCKED | Forecast đủ/thiếu lịch sử, actual/forecast chart, 7 điểm dự báo và report rule-based có source trung thực; backend/frontend gates pass |
-| Phase 5 - AI Report và PDF | ACTIVE | Gemini/OpenAI adapters, mock-provider tests, fallback persistence và print/PDF đã xong; còn cấu hình Gemini Free Tier key và smoke-test thật trước khi lock |
+| Phase 5 - AI Report và PDF | LOCKED | Gemini thật trả `source=ai`; protected endpoint, Supabase persistence, fallback, privacy contract và print/PDF đều đạt gate |
 | Phase 6 - Full account và history | LOCKED | Forgot/reset recovery, Profile và History dùng Supabase/API thật; frontend/backend gates và smoke test Supabase thật đạt |
 | Phase 7 - Security, polish và deploy | ACTIVE | Security hardening, production fail-fast, Render/Docker và smoke script đã xong; còn deploy/smoke trên URL thật |
 
@@ -58,7 +58,7 @@ Tài liệu này ghi trạng thái triển khai thực tế. Phạm vi và contr
 - Test report kiểm tra KPI mẫu và không chứa các kết luận về quảng cáo, đối thủ,
   tồn kho hoặc lợi nhuận khi dữ liệu không cung cấp các trường đó.
 
-## Tiến độ Phase 5, chưa khóa
+## Gate Phase 5 đã khóa
 
 - Có Gemini Interactions API adapter và OpenAI Responses API adapter với
   Structured Outputs.
@@ -79,8 +79,13 @@ Tài liệu này ghi trạng thái triển khai thực tế. Phạm vi và contr
   JSON, incomplete response, rate limit, timeout và fallback.
 - Supabase thật đã smoke-test upload, AI-disabled fallback, persistence và
   cleanup.
-- Còn thiếu duy nhất gate bắt buộc: cấu hình Gemini Free Tier key thật và xác
-  nhận response `source = "ai"`.
+- Gemini Free Tier thật đã smoke-test trực tiếp thành công với
+  `gemini-3.5-flash-lite`.
+- Luồng end-to-end bằng tài khoản Supabase tạm đã đạt: auth → upload demo →
+  protected AI endpoint → `source = "ai"` → đọc lại report đã persist →
+  cleanup analysis và user.
+- Sau smoke thật, toàn bộ backend/frontend test, lint, build, audit và secret
+  scan vẫn pass.
 
 ## Gate Phase 6 đã khóa
 
@@ -129,6 +134,8 @@ Tài liệu này ghi trạng thái triển khai thực tế. Phạm vi và contr
 - `httpx2` không sử dụng đã được bỏ khỏi requirements.
 - Có `render.yaml` cho frontend static + backend FastAPI, SPA rewrite, static
   headers/CSP, cache assets, dynamic service URL và env secret không commit.
+- Git repository đã có branch `main`, remote GitHub và đã được liên kết vào
+  Render; chưa kích hoạt deploy.
 - Production boot với cấu hình Gemini đã được smoke-test trên dynamic `PORT`;
   health trả 200 cùng CSP, HSTS và các security header dự kiến.
 - Có Docker backend non-root, dynamic `PORT`, proxy headers và health check.
@@ -141,9 +148,9 @@ Tài liệu này ghi trạng thái triển khai thực tế. Phạm vi và contr
 - Tài liệu triển khai và rollback nằm trong `docs/DEPLOYMENT.md`.
 - Gate local gần nhất: `87` backend tests, `39` frontend tests, lint, production
   build, `pip check`, secret scan và `npm audit --audit-level=high` đều pass.
-- Gate còn thiếu: build Docker trong môi trường đã bật Docker engine, deploy
-  hai service lên URL thật, cấu hình SMTP/inbox, chạy automated + manual
-  production smoke. Docker Desktop hiện chưa bật WSL integration.
+- Gate còn thiếu: deploy hai service lên URL thật, cấu hình SMTP/inbox, chạy
+  automated + manual production smoke. Dockerfile là phương án deploy tùy
+  chọn; Render Python runtime không phụ thuộc Docker Desktop.
 
 ## Lệnh gate
 

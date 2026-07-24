@@ -10,16 +10,14 @@ nhận sau khi cung cấp credential hoặc URL production.
 ## Kết luận
 
 Toàn bộ chức năng V1 đã có implementation. Không có chức năng nghiệp vụ nào bị
-cắt. Các gate còn mở không phải phần code còn thiếu:
+cắt. Phase 5 đã được khóa bằng Gemini API và Supabase thật. Các gate còn mở
+không phải phần code còn thiếu:
 
-1. Gemini API key thật để xác nhận AI report trả `source = "ai"`.
-2. Git remote và tài khoản hosting để deploy lên URL production.
-3. SMTP/inbox production để kiểm tra email thật.
-4. Docker engine để chạy lại image build trên máy hiện tại.
+1. Kích hoạt Render deploy để có frontend/backend URL production.
+2. SMTP/inbox production để kiểm tra email thật.
 
 Ứng dụng vẫn dùng được khi Gemini hết quota hoặc tạm lỗi: backend trả report
-rule-based và UI ghi đúng nguồn. Điều này không thay thế gate AI thật bắt buộc
-trước khi khóa Phase 5.
+rule-based và UI ghi đúng nguồn.
 
 ## Ma trận chức năng
 
@@ -35,14 +33,14 @@ trước khi khóa Phase 5.
 | Customers | New/returning/VIP/potential/top customers | VERIFIED | Segment disjoint, potential loại VIP và sort theo rule |
 | Forecast | 7 ngày, MA7/linear trend, insufficient warning, non-negative | VERIFIED | Unit tests cho cả ba nhánh và sample oracle 60 ngày |
 | Report fallback | Summary, highlights, trend, tối đa 3 recommendations, disclaimer | VERIFIED | Rule-based report test kiểm tra grounding |
-| External AI | Aggregate-only, structured output, validate, persist, fallback | IMPLEMENTED; EXTERNAL GATE | Gemini/OpenAI adapter và mock-provider tests; thiếu Gemini key thật |
+| External AI | Aggregate-only, structured output, validate, persist, fallback | VERIFIED REAL GEMINI + SUPABASE | Gemini thật trả `source=ai`; protected endpoint persist report và cleanup đạt |
 | PDF | Xuất báo cáo | VERIFIED MANUAL FLOW | Print stylesheet và browser Save as PDF |
 | Persistence | Create/list/get/delete và restore latest analysis | VERIFIED REAL SUPABASE | CRUD, refresh restore, ownership và cleanup đã smoke-test |
 | History | List, pagination, open, confirm delete, responsive states | VERIFIED | `/history`, API/repository ownership tests |
 | Responsive/UX | Desktop/tablet/mobile, loading/error/empty/success | VERIFIED LOCAL | Data pages có state riêng; frontend test/lint/build pass |
 | Security | Secret isolation, CORS, validation, headers, ownership | VERIFIED LOCAL | Production fail-fast, tested XLSX guards, reproducible secret scan, repository filters |
 | Error handling | Stable contract, no stack trace/PII, internal request ID | VERIFIED | Mọi response có `X-Request-ID`; server errors log request ID; UI hiển thị mã để đối chiếu |
-| Deployment | Render/Docker config, env wiring, smoke/rollback docs | READY; EXTERNAL GATE | `render.yaml`, `Dockerfile`, production start và smoke script |
+| Deployment | Render/Docker config, env wiring, smoke/rollback docs | READY; EXTERNAL GATE | GitHub/Render đã liên kết; `render.yaml`, `Dockerfile`, production start và smoke script sẵn sàng |
 
 ## Những mục có điều kiện hoặc ngoài phạm vi
 
@@ -78,20 +76,16 @@ history và ownership. Production boot giả lập đã trả health 200 cùng C
 no-store, frame/content/referrer/permissions headers, CORS expose request ID;
 Swagger/OpenAPI đều tắt.
 
-## Điều kiện để khóa hai phase còn lại
+Gemini Free Tier thật đã trả `source = "ai"`. Luồng end-to-end với Supabase
+thật đã xác nhận auth, upload, AI generation, persistence và cleanup.
 
-### Phase 5
+## Điều kiện để khóa Phase 7
 
-1. Điền Gemini Free Tier key vào `backend/.env`.
-2. Bật `AI_REPORT_ENABLED=true`.
-3. Restart backend.
-4. Chạy `.venv/bin/python -m scripts.smoke_ai_provider`.
-5. Xác nhận app trả `source = "ai"` và refresh vẫn giữ report.
-
-### Phase 7
-
-1. Đưa source lên Git remote và tạo Render Blueprint.
-2. Điền secret env đúng service.
+1. Commit/push trạng thái đã khóa Phase 5 lên branch `main`.
+2. Điền secret env đúng service và kích hoạt Render deploy.
 3. Cập nhật Supabase Site URL/Redirect URLs và SMTP.
 4. Chạy `scripts/smoke_production.py`.
 5. Chạy checklist browser/inbox trong `docs/DEPLOYMENT.md`.
+
+Dockerfile là phương án deploy backend tùy chọn. MarketLens đang dùng Render
+Python runtime nên việc Docker Desktop chưa bật không chặn gate production.
