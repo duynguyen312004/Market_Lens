@@ -7,6 +7,8 @@ import {
 } from '@phosphor-icons/react'
 
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
+import { CustomerCohortSection } from '../components/analytics/CustomerCohortSection'
+import { CustomerRfmSection } from '../components/analytics/CustomerRfmSection'
 import {
   AnalysisEmptyState,
   AnalysisErrorState,
@@ -16,129 +18,189 @@ import { CustomerSegmentChart } from '../components/analytics/Charts'
 import { MetricCard } from '../components/analytics/MetricCard'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
 import { getSegmentLabel } from '../features/analysis/presentation'
+import { useLanguage } from '../i18n/LanguageContext'
 import {
   formatDate,
   formatInteger,
+  formatPercent,
   formatVnd,
 } from '../utils/formatters'
 
 export function CustomerAnalyticsPage() {
+  const { language, t } = useLanguage()
   const { analysis, error, isEmpty, isLoading, retry } = useCurrentAnalysis()
 
   if (isLoading) return <AnalysisLoadingState />
   if (error) return <AnalysisErrorState error={error} onRetry={retry} />
   if (isEmpty || !analysis) {
-    return <AnalysisEmptyState title="Chưa có dữ liệu khách hàng" />
+    return <AnalysisEmptyState title={t('analysis.noDataTitle')} />
   }
 
   const { customers, summary } = analysis
+  const vipRevenue = customers.revenue_by_segment.find(
+    (item) => item.segment === 'vip',
+  )
 
   return (
     <main className="px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
         <AnalysisHeader
           analysis={analysis}
-          description="Nhận diện nhóm khách hàng theo doanh thu và tần suất mua trong kỳ dữ liệu."
-          title="Customer Analytics"
+          description={t('customers.desc')}
+          title={t('customers.title')}
         />
 
+        {/* Customer Metric Cards Grid */}
         <section
-          aria-label="Tóm tắt khách hàng"
+          aria-label={t('dashboard.customerSummaryAria')}
           className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         >
           <MetricCard
             icon={UsersThreeIcon}
-            label="Tổng khách hàng"
-            value={formatInteger(summary.total_customers)}
+            label={t('dashboard.totalCustomers')}
+            value={formatInteger(summary.total_customers, language)}
           />
           <MetricCard
-            helper="Có đúng một đơn completed trong kỳ."
+            helper={t('customers.exactlyOne')}
             icon={UserPlusIcon}
-            label="Khách một đơn trong kỳ"
-            value={formatInteger(customers.segments.new)}
+            label={t('customers.new')}
+            value={formatInteger(customers.segments.new, language)}
           />
           <MetricCard
-            helper="Không thuộc VIP và có từ hai đơn trở lên."
+            helper={t('customers.twoOrMore')}
             icon={UserSwitchIcon}
-            label="Khách quay lại"
-            value={formatInteger(customers.segments.returning)}
+            label={t('customers.returning')}
+            value={formatInteger(customers.segments.returning, language)}
           />
           <MetricCard
-            helper="Top 10% khách hàng theo doanh thu trong kỳ."
+            helper={t('customers.topTen')}
             icon={CrownIcon}
-            label="Khách VIP"
-            value={formatInteger(customers.segments.vip)}
+            label={t('customers.vip')}
+            value={formatInteger(customers.segments.vip, language)}
           />
         </section>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(22rem,0.85fr)_minmax(0,1.15fr)]">
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-              Cơ cấu khách hàng
+        <section className="mt-6">
+          <div>
+            <h2 className="text-lg font-black tracking-tight text-slate-900">
+              {t('customers.health')}
             </h2>
-            <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-              VIP được gán trước, sau đó mới phân loại quay lại và một đơn.
+            <p className="mt-1 text-xs text-slate-500">
+              {t('customers.healthDesc')}
             </p>
-            <div className="mt-3">
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              icon={UserSwitchIcon}
+              label={t('dashboard.repeatRate')}
+              value={`${formatPercent(
+                customers.repeat_customer_rate_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <MetricCard
+              icon={UsersThreeIcon}
+              label={t('customers.repeatCount')}
+              value={formatInteger(
+                customers.repeat_customer_count,
+                language,
+              )}
+            />
+            <MetricCard
+              icon={SparkleIcon}
+              label={t('customers.revenuePerCustomer')}
+              value={formatVnd(
+                summary.average_revenue_per_customer,
+                language,
+              )}
+            />
+            <MetricCard
+              icon={CrownIcon}
+              label={t('customers.vipRevenueShare')}
+              value={`${formatPercent(
+                vipRevenue?.revenue_share_percent ?? 0,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+          </div>
+        </section>
+
+        <CustomerRfmSection rfm={customers.rfm} />
+        <CustomerCohortSection cohort={customers.cohort_analysis} />
+
+        {/* Customer Composition & Potential Customers */}
+        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(22rem,0.85fr)_minmax(0,1.15fr)]">
+          <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+            <h2 className="text-lg font-black tracking-tight text-slate-900">
+              {t('customers.composition')}
+            </h2>
+            <p className="mt-0.5 text-xs text-slate-500">
+              {t('customers.compositionDesc')}
+            </p>
+            <div className="mt-4">
               <CustomerSegmentChart segments={customers.segments} />
             </div>
           </section>
 
-          <section className="min-w-0 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-            <div className="flex items-start gap-3 bg-[var(--primary-soft)] p-5 sm:p-6">
-              <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--surface)] text-[var(--primary)]">
-                <SparkleIcon aria-hidden="true" size={23} weight="duotone" />
+          <section className="data-panel min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+            <div className="flex items-start gap-3.5 border-b border-[var(--border)] bg-[var(--primary-soft)] p-5 sm:p-6">
+              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-indigo-600 shadow-xs">
+                <SparkleIcon aria-hidden="true" size={22} weight="duotone" />
               </span>
               <div>
-                <div className="flex flex-wrap items-center gap-3">
-                  <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                    Khách hàng tiềm năng
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <h2 className="text-lg font-black tracking-tight text-slate-900">
+                    {t('customers.potential')}
                   </h2>
-                  <span className="rounded-lg bg-[var(--surface)] px-2.5 py-1 text-xs font-extrabold text-[var(--primary)]">
-                    {formatInteger(customers.potential_count)} khách
+                  <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-black text-indigo-700">
+                    {t('customers.count', {
+                      count: formatInteger(
+                        customers.potential_count,
+                        language,
+                      ),
+                    })}
                   </span>
                 </div>
-                <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-                  Tiềm năng theo doanh thu và tần suất trong kỳ. Danh sách không
-                  phải dự báo hành vi mua tương lai.
+                <p className="mt-0.5 text-xs text-slate-500">
+                  {t('customers.potentialDesc')}
                 </p>
               </div>
             </div>
+
             {customers.potential_customers.length > 0 ? (
               <div className="overflow-x-auto p-5 sm:p-6">
-                <table className="w-full min-w-[42rem] text-left text-sm">
-                  <thead className="text-[var(--text-muted)]">
+                <table className="w-full min-w-[36rem] text-left text-xs">
+                  <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
                     <tr>
-                      <th className="pb-3 pr-4 font-bold">Khách hàng</th>
-                      <th className="pb-3 pr-4 text-right font-bold">Số đơn</th>
-                      <th className="pb-3 pr-4 text-right font-bold">
-                        Mua gần nhất
-                      </th>
-                      <th className="pb-3 text-right font-bold">Doanh thu</th>
+                      <th className="pb-3 pr-4">{t('common.customer')}</th>
+                      <th className="pb-3 pr-4 text-right">{t('common.orders')}</th>
+                      <th className="pb-3 pr-4 text-right">{t('common.lastPurchase')}</th>
+                      <th className="pb-3 text-right">{t('common.revenue')}</th>
                     </tr>
                   </thead>
-                  <tbody>
+                  <tbody className="divide-y divide-slate-100">
                     {customers.potential_customers.map((customer) => (
-                      <tr
-                        className="border-t border-[var(--border)]"
-                        key={customer.customer_id}
-                      >
+                      <tr className="hover:bg-slate-50/70 transition" key={customer.customer_id}>
                         <td className="py-3.5 pr-4">
-                          <p className="font-extrabold text-[var(--text-primary)]">
+                          <p className="font-extrabold text-slate-900">
                             {customer.customer_name}
                           </p>
-                          <p className="mt-0.5 text-xs text-[var(--text-muted)]">
-                            {formatInteger(customer.quantity)} sản phẩm
+                          <p className="mt-0.5 text-[11px] text-slate-500">
+                            {formatInteger(customer.quantity, language)} {t('common.units').toLocaleLowerCase(language === 'vi' ? 'vi-VN' : 'en-US')}
                           </p>
                         </td>
-                        <td className="py-3.5 pr-4 text-right font-bold text-[var(--text-muted)]">
-                          {formatInteger(customer.order_count)}
+                        <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
+                          {formatInteger(customer.order_count, language)}
                         </td>
-                        <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                          {formatDate(customer.last_order_date)}
+                        <td className="py-3.5 pr-4 text-right text-slate-500 font-medium">
+                          {formatDate(customer.last_order_date, language)}
                         </td>
-                        <td className="py-3.5 text-right font-extrabold text-[var(--text-primary)]">
-                          {formatVnd(customer.revenue)}
+                        <td className="py-3.5 text-right font-black text-slate-900">
+                          {formatVnd(customer.revenue, language)}
                         </td>
                       </tr>
                     ))}
@@ -146,66 +208,109 @@ export function CustomerAnalyticsPage() {
                 </table>
               </div>
             ) : (
-              <div className="px-5 py-10 text-center sm:px-6">
-                <p className="font-extrabold text-[var(--text-primary)]">
-                  Chưa có khách hàng phù hợp rule tiềm năng
-                </p>
-                <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-                  Cần khách không thuộc VIP và có ít nhất hai đơn completed.
-                </p>
-              </div>
+              <p className="p-6 text-center text-xs font-semibold text-slate-500">
+                {t('customers.noPotential')}
+              </p>
             )}
           </section>
         </div>
 
-        <section className="mt-6 min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-          <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-            Top khách hàng theo doanh thu
+        <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <h2 className="text-lg font-black tracking-tight text-slate-900">
+            {t('customers.segmentRevenue')}
           </h2>
-          <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-            Số đơn, số lượng đã mua và tổng chi tiêu từ completed orders.
-          </p>
-          <div className="mt-5 overflow-x-auto">
-            <table className="w-full min-w-[50rem] text-left text-sm">
-              <thead className="text-[var(--text-muted)]">
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[34rem] text-left text-xs">
+              <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="pb-3 pr-4 font-bold">Khách hàng</th>
-                  <th className="pb-3 pr-4 font-bold">Phân loại</th>
-                  <th className="pb-3 pr-4 text-right font-bold">Số đơn</th>
-                  <th className="pb-3 pr-4 text-right font-bold">Số lượng</th>
-                  <th className="pb-3 pr-4 text-right font-bold">
-                    Đơn gần nhất
+                  <th className="pb-3 pr-4">{t('common.segment')}</th>
+                  <th className="pb-3 pr-4 text-right">
+                    {t('customers.customerCount')}
                   </th>
-                  <th className="pb-3 text-right font-bold">Doanh thu</th>
+                  <th className="pb-3 pr-4 text-right">
+                    {t('common.revenue')}
+                  </th>
+                  <th className="pb-3 text-right">
+                    {t('common.revenueShare')}
+                  </th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100">
+                {customers.revenue_by_segment.map((item) => (
+                  <tr key={item.segment}>
+                    <td className="py-3.5 pr-4 font-extrabold text-slate-900">
+                      {getSegmentLabel(item.segment, language)}
+                    </td>
+                    <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
+                      {formatInteger(item.customer_count, language)}
+                    </td>
+                    <td className="py-3.5 pr-4 text-right font-black text-slate-900">
+                      {formatVnd(item.revenue, language)}
+                    </td>
+                    <td className="py-3.5 text-right font-bold text-indigo-700">
+                      {formatPercent(
+                        item.revenue_share_percent,
+                        1,
+                        false,
+                        language,
+                      )}
+                      %
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        {/* Top Spending Customers Full Table */}
+        <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+          <h2 className="text-lg font-black tracking-tight text-slate-900">
+            {t('customers.ranking')}
+          </h2>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[42rem] text-left text-xs">
+              <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
+                <tr>
+                  <th className="pb-3 pr-4">{t('common.customer')}</th>
+                  <th className="pb-3 pr-4">{t('common.segment')}</th>
+                  <th className="pb-3 pr-4 text-right">{t('common.orders')}</th>
+                  <th className="pb-3 pr-4 text-right">{t('common.firstOrder')}</th>
+                  <th className="pb-3 pr-4 text-right">{t('common.lastOrder')}</th>
+                  <th className="pb-3 text-right">{t('common.revenue')}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
                 {customers.top_customers.map((customer) => (
-                  <tr
-                    className="border-t border-[var(--border)]"
-                    key={customer.customer_id}
-                  >
-                    <td className="py-3.5 pr-4 font-extrabold text-[var(--text-primary)]">
+                  <tr className="hover:bg-slate-50/70 transition" key={customer.customer_id}>
+                    <td className="py-3.5 pr-4 font-extrabold text-slate-900">
                       {customer.customer_name}
                     </td>
                     <td className="py-3.5 pr-4">
                       <span
-                        className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-extrabold ${getSegmentClass(customer.segment)}`}
+                        className={[
+                          'inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-bold',
+                          customer.segment === 'vip' && 'bg-indigo-50 text-indigo-700 border border-indigo-200/60',
+                          customer.segment === 'returning' && 'bg-cyan-50 text-cyan-700 border border-cyan-200/60',
+                          customer.segment === 'new' && 'bg-emerald-50 text-emerald-700 border border-emerald-200/60',
+                        ]
+                          .filter(Boolean)
+                          .join(' ')}
                       >
-                        {getSegmentLabel(customer.segment)}
+                        {getSegmentLabel(customer.segment, language)}
                       </span>
                     </td>
-                    <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                      {formatInteger(customer.order_count)}
+                    <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
+                      {formatInteger(customer.order_count, language)}
                     </td>
-                    <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                      {formatInteger(customer.quantity)}
+                    <td className="py-3.5 pr-4 text-right text-slate-500 font-medium">
+                      {formatDate(customer.first_order_date, language)}
                     </td>
-                    <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                      {formatDate(customer.last_order_date)}
+                    <td className="py-3.5 pr-4 text-right text-slate-500 font-medium">
+                      {formatDate(customer.last_order_date, language)}
                     </td>
-                    <td className="py-3.5 text-right font-extrabold text-[var(--text-primary)]">
-                      {formatVnd(customer.revenue)}
+                    <td className="py-3.5 text-right font-black text-slate-900">
+                      {formatVnd(customer.revenue, language)}
                     </td>
                   </tr>
                 ))}
@@ -216,14 +321,4 @@ export function CustomerAnalyticsPage() {
       </div>
     </main>
   )
-}
-
-function getSegmentClass(segment: 'new' | 'returning' | 'vip') {
-  if (segment === 'vip') {
-    return 'bg-[var(--primary)] text-[var(--primary-contrast)]'
-  }
-  if (segment === 'returning') {
-    return 'bg-[var(--primary-soft)] text-[var(--primary)]'
-  }
-  return 'bg-[var(--surface-subtle)] text-[var(--text-muted)]'
 }

@@ -25,7 +25,7 @@ def read_sales_file(*, file_name: str, content: bytes) -> pd.DataFrame:
     if extension not in ALLOWED_EXTENSIONS:
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="Chỉ hỗ trợ file CSV hoặc XLSX.",
+            message="Only CSV and XLSX files are supported.",
             status_code=400,
             details={"allowed_extensions": sorted(ALLOWED_EXTENSIONS)},
         )
@@ -33,7 +33,7 @@ def read_sales_file(*, file_name: str, content: bytes) -> pd.DataFrame:
     if not content:
         raise AppError(
             code="EMPTY_FILE",
-            message="File không có dữ liệu.",
+            message="The file does not contain data.",
             status_code=400,
         )
 
@@ -52,20 +52,20 @@ def read_sales_file(*, file_name: str, content: bytes) -> pd.DataFrame:
     except (UnicodeDecodeError, EmptyDataError):
         raise AppError(
             code="EMPTY_FILE",
-            message="File rỗng hoặc không dùng encoding UTF-8.",
+            message="The file is empty or does not use UTF-8 encoding.",
             status_code=400,
         ) from None
     except (ParserError, ValueError, OSError, KeyError):
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="Không thể đọc file. Hãy kiểm tra lại định dạng CSV/XLSX.",
+            message="The file cannot be read. Check the CSV or XLSX format.",
             status_code=400,
         ) from None
 
     if frame.empty and len(frame.columns) == 0:
         raise AppError(
             code="EMPTY_FILE",
-            message="File không có dữ liệu.",
+            message="The file does not contain data.",
             status_code=400,
         )
 
@@ -85,7 +85,7 @@ def _validate_workbook_structure(content: bytes) -> None:
     except Exception as error:
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="File XLSX bị lỗi hoặc không đọc được.",
+            message="The XLSX file is damaged or unreadable.",
             status_code=400,
         ) from error
 
@@ -94,7 +94,7 @@ def _validate_workbook_structure(content: bytes) -> None:
         if worksheet.merged_cells.ranges:
             raise AppError(
                 code="INVALID_FILE_TYPE",
-                message="File XLSX không được chứa ô gộp.",
+                message="XLSX files cannot contain merged cells.",
                 status_code=400,
                 details={"reason": "merged_cells_not_supported"},
             )
@@ -111,7 +111,7 @@ def _validate_xlsx_archive(content: bytes) -> None:
     except (BadZipFile, LargeZipFile, OSError) as error:
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="File XLSX bị lỗi hoặc không đọc được.",
+            message="The XLSX file is damaged or unreadable.",
             status_code=400,
             details={"reason": "invalid_xlsx_archive"},
         ) from error
@@ -119,7 +119,7 @@ def _validate_xlsx_archive(content: bytes) -> None:
     if len(files) > MAX_XLSX_ARCHIVE_FILES:
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="File XLSX có cấu trúc quá phức tạp.",
+            message="The XLSX structure is too complex.",
             status_code=400,
             details={"reason": "xlsx_archive_too_many_files"},
         )
@@ -132,7 +132,7 @@ def _validate_xlsx_archive(content: bytes) -> None:
     if unsafe_path or any(item.flag_bits & 0x1 for item in files):
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="File XLSX có cấu trúc không an toàn.",
+            message="The XLSX file has an unsafe structure.",
             status_code=400,
             details={"reason": "unsafe_xlsx_archive"},
         )
@@ -141,7 +141,7 @@ def _validate_xlsx_archive(content: bytes) -> None:
     if uncompressed_bytes > MAX_XLSX_UNCOMPRESSED_BYTES:
         raise AppError(
             code="INVALID_FILE_TYPE",
-            message="File XLSX giải nén vượt quá giới hạn an toàn.",
+            message="The extracted XLSX content exceeds the safety limit.",
             status_code=400,
             details={"reason": "xlsx_archive_too_large"},
         )

@@ -1,11 +1,8 @@
 import {
-  ArrowRightIcon,
   ChartLineUpIcon,
   CheckCircleIcon,
   FilePdfIcon,
-  GearSixIcon,
   InfoIcon,
-  LightbulbIcon,
   SparkleIcon,
   SpinnerGapIcon,
   TargetIcon,
@@ -13,11 +10,12 @@ import {
 } from '@phosphor-icons/react'
 import { useMutation } from '@tanstack/react-query'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
 
 import {
   generateAiReport,
   type AnalysisDetail,
+  type ReportContent,
+  type ReportEvidence,
 } from '../api/analysesApi'
 import { parseApiError } from '../api/apiErrors'
 import { queryClient } from '../app/queryClient'
@@ -27,43 +25,82 @@ import {
   AnalysisErrorState,
   AnalysisLoadingState,
 } from '../components/analytics/AnalysisStates'
+import { ReportCharts } from '../components/report/ReportCharts'
 import {
   analysisKeys,
   useCurrentAnalysis,
 } from '../features/analysis/analysisQueries'
 import {
+  getAnalysisFileLabel,
+  getAnalysisSourceNames,
+} from '../features/analysis/presentation'
+import {
+  formatReportEvidence,
   getReportPageTitle,
-  getReportSourceLabel,
 } from '../features/report/reportPresentation'
-import { formatInteger, formatVnd } from '../utils/formatters'
+import {
+  useLanguage,
+  type Language,
+} from '../i18n/LanguageContext'
+import {
+  formatDate,
+  formatDateTime,
+  formatInteger,
+} from '../utils/formatters'
 
 export function ReportPage() {
-  const { analysis, error, isEmpty, isLoading, retry } = useCurrentAnalysis()
+  const { language, t } = useLanguage()
+  const { analysis, error, isEmpty, isLoading, retry } =
+    useCurrentAnalysis()
   const [generationNotice, setGenerationNotice] = useState<{
     message: string
     tone: 'success' | 'warning' | 'danger'
   } | null>(null)
+
   const reportMutation = useMutation({
-    mutationFn: (analysisId: string) => generateAiReport(analysisId),
+    mutationFn: (analysisId: string) =>
+      generateAiReport(analysisId, language),
     onMutate: () => setGenerationNotice(null),
     onSuccess: (result) => {
       queryClient.setQueryData<AnalysisDetail>(
         analysisKeys.detail(result.analysis_id),
         (current) =>
-          current ? { ...current, report: result.report } : current,
+          current
+            ? {
+                ...current,
+                report: result.report,
+                reports: {
+                  ...current.reports,
+                  [result.language]: result.report,
+                },
+              }
+            : current,
       )
       setGenerationNotice(
         result.warning
-          ? { message: result.warning.message, tone: 'warning' }
+          ? {
+              message: t(
+                {
+                  AI_DISABLED: 'report.aiDisabled',
+                  AI_NOT_CONFIGURED: 'report.aiNotConfigured',
+                  AI_PROVIDER_UNSUPPORTED: 'report.aiUnsupported',
+                  AI_TIMEOUT: 'report.aiTimeout',
+                  AI_INVALID_RESPONSE: 'report.aiInvalid',
+                  AI_PROVIDER_ERROR: 'report.aiProviderError',
+                  AI_RATE_LIMITED: 'report.aiRateLimited',
+                }[result.warning.code] ?? 'api.UNKNOWN_ERROR',
+              ),
+              tone: 'warning',
+            }
           : {
-              message: 'Báo cáo AI đã được tạo và lưu vào analysis này.',
+              message: t('report.generatedSaved'),
               tone: 'success',
             },
       )
     },
     onError: (mutationError) => {
       setGenerationNotice({
-        message: parseApiError(mutationError).message,
+        message: parseApiError(mutationError, language).message,
         tone: 'danger',
       })
     },
@@ -72,10 +109,10 @@ export function ReportPage() {
   if (isLoading) return <AnalysisLoadingState />
   if (error) return <AnalysisErrorState error={error} onRetry={retry} />
   if (isEmpty || !analysis) {
-    return <AnalysisEmptyState title="Chưa có dữ liệu để tạo báo cáo" />
+    return <AnalysisEmptyState title={t('report.noData')} />
   }
 
-  const { report } = analysis
+  const report = analysis.reports[language] ?? analysis.report
 
   return (
     <main className="report-page px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
@@ -83,50 +120,48 @@ export function ReportPage() {
         <div className="report-screen-only">
           <AnalysisHeader
             analysis={analysis}
-            description="Tổng hợp tình hình, xu hướng và khuyến nghị từ các chỉ số đã được backend tính."
-            title={getReportPageTitle(report.source)}
+            description={t('report.desc')}
+            title={getReportPageTitle(report.source, language)}
           />
 
-          <section className="mt-6 flex flex-col gap-5 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
+          <section className="mt-6 flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:flex-row sm:items-center sm:justify-between sm:p-6">
             <div className="max-w-2xl">
-              <h2 className="font-extrabold text-[var(--text-primary)]">
-                Tạo và xuất báo cáo
+              <h2 className="font-black text-slate-900">
+                {t('report.actionTitle')}
               </h2>
-              <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-                AI chỉ nhận aggregate đã loại thông tin khách hàng. Nút PDF mở
-                hộp thoại in để chọn “Save as PDF”.
+              <p className="mt-0.5 text-xs text-slate-500">
+                {t('report.actionDesc')}
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-3">
               <button
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-4 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
+                className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black text-white shadow-md shadow-indigo-500/20 transition hover:bg-indigo-700 active:scale-[0.98] disabled:opacity-55"
                 disabled={reportMutation.isPending}
                 onClick={() => reportMutation.mutate(analysis.id)}
                 type="button"
               >
                 {reportMutation.isPending ? (
                   <SpinnerGapIcon
-                    aria-hidden="true"
-                    className="animate-spin motion-reduce:animate-none"
+                    className="animate-spin"
                     size={18}
                     weight="bold"
                   />
                 ) : (
-                  <SparkleIcon aria-hidden="true" size={18} weight="fill" />
+                  <SparkleIcon size={18} weight="fill" />
                 )}
                 {reportMutation.isPending
-                  ? 'Đang tạo báo cáo...'
+                  ? t('report.generating')
                   : report.source === 'ai'
-                    ? 'Tạo lại bằng AI'
-                    : 'Tạo báo cáo AI'}
+                    ? t('report.regenerateAi')
+                    : t('report.regenerate')}
               </button>
               <button
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--border-strong)] px-4 py-3 text-sm font-extrabold text-[var(--text-primary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)] active:scale-[0.98]"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs font-black text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-indigo-600"
                 onClick={() => window.print()}
                 type="button"
               >
-                <FilePdfIcon aria-hidden="true" size={19} weight="duotone" />
-                Xuất PDF
+                <FilePdfIcon size={19} weight="duotone" />
+                {t('report.exportPdf')}
               </button>
             </div>
           </section>
@@ -140,140 +175,437 @@ export function ReportPage() {
         </div>
 
         <article
-          className="mt-7 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
+          className="mt-7 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md"
           id="business-report"
         >
-          <header className="border-b border-[var(--border)] bg-[var(--primary-soft)] p-6 sm:p-8">
-            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-              <div className="max-w-3xl">
-                <ReportSource source={report.source} />
-                <h2 className="mt-4 text-2xl font-extrabold tracking-[-0.035em] text-[var(--text-primary)] sm:text-3xl">
-                  {report.title}
-                </h2>
-                <p className="mt-4 text-base leading-8 text-[var(--text-muted)]">
-                  {report.summary}
+          <header className="border-b border-[var(--border)] bg-[var(--primary-soft)] p-6 sm:p-9">
+            <div className="mb-7 flex items-center justify-between border-b border-indigo-200/70 pb-4">
+              <div>
+                <p className="text-lg font-black tracking-tight text-indigo-700">
+                  MarketLens
+                </p>
+                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                  {t('report.documentSubtitle')}
                 </p>
               </div>
-              <span className="grid size-14 shrink-0 place-items-center rounded-2xl bg-[var(--surface)] text-[var(--primary)]">
-                {report.source === 'ai' ? (
-                  <SparkleIcon aria-hidden="true" size={29} weight="duotone" />
-                ) : (
-                  <GearSixIcon aria-hidden="true" size={29} weight="duotone" />
-                )}
-              </span>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                {t('report.confidential')}
+              </p>
+            </div>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
+              <div className="max-w-3xl">
+                <div className="flex flex-wrap items-center gap-2">
+                  <ReportSource source={report.source} />
+                  <span className="rounded-full border border-indigo-200 bg-white/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-700">
+                    Report {report.report_version}
+                  </span>
+                </div>
+                <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
+                  {report.title}
+                </h2>
+                <p className="mt-3 text-sm font-medium leading-relaxed text-slate-700 sm:text-base">
+                  {report.executive_summary}
+                </p>
+              </div>
+              <dl className="grid shrink-0 gap-3 text-xs sm:min-w-56">
+                <div>
+                  <dt className="font-semibold text-slate-400">
+                    {t('report.generatedFor')}
+                  </dt>
+                  <dd
+                    className="mt-0.5 max-w-72 break-words font-bold text-slate-900"
+                    title={getAnalysisSourceNames(analysis)}
+                  >
+                    {analysis.upload.source_files
+                      .map((source) => source.file_name)
+                      .join(', ') ||
+                      getAnalysisFileLabel(analysis, language)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-slate-400">
+                    {t('report.period')}
+                  </dt>
+                  <dd className="mt-0.5 font-bold text-slate-900">
+                    {formatDate(analysis.period.from, language)} –{' '}
+                    {formatDate(analysis.period.to, language)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-slate-400">
+                    {t('report.datasetSize')}
+                  </dt>
+                  <dd className="mt-0.5 font-bold text-slate-900">
+                    {t('report.datasetSizeValue', {
+                      rows: formatInteger(analysis.row_count, language),
+                      files: formatInteger(
+                        analysis.source_file_count,
+                        language,
+                      ),
+                    })}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-slate-400">
+                    {t('report.generatedAt')}
+                  </dt>
+                  <dd className="mt-0.5 font-bold text-slate-900">
+                    {formatDateTime(report.generated_at, language)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-semibold text-slate-400">
+                    {t('report.generator')}
+                  </dt>
+                  <dd className="mt-0.5 font-bold text-slate-900">
+                    {report.generator.model ??
+                      t('report.generatorRules')}
+                  </dd>
+                </div>
+              </dl>
             </div>
 
-            <dl className="mt-7 grid gap-4 border-t border-[color-mix(in_srgb,var(--primary)_18%,transparent)] pt-6 sm:grid-cols-3">
-              <ReportFact
-                label="Doanh thu thực tế"
-                value={formatVnd(analysis.summary.total_revenue)}
-              />
-              <ReportFact
-                label="Đơn completed"
-                value={formatInteger(analysis.summary.total_orders)}
-              />
-              <ReportFact
-                label="Khách hàng trong kỳ"
-                value={formatInteger(analysis.summary.total_customers)}
-              />
-            </dl>
+            <div className="report-kpi-grid mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+              {report.kpi_snapshot.map((evidence) => (
+                <div
+                  className="report-print-break-avoid rounded-xl border border-[var(--border)] bg-white p-4"
+                  key={evidence.metric_key}
+                >
+                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                    {evidence.label}
+                  </p>
+                  <p className="mt-1 text-lg font-black text-slate-900">
+                    {formatReportEvidence(evidence, language)}
+                  </p>
+                  {evidence.context && (
+                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-500">
+                      {evidence.context}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
           </header>
 
-          <div className="grid gap-8 p-6 sm:p-8 xl:grid-cols-[minmax(0,1.05fr)_minmax(20rem,0.95fr)]">
-            <div>
-              <section>
-                <SectionTitle icon={CheckCircleIcon} title="Điểm nổi bật" />
-                <ul className="mt-5 space-y-3">
-                  {report.highlights.map((highlight, index) => (
-                    <li
-                      className="flex gap-3 rounded-xl bg-[var(--surface-subtle)] p-4 text-sm leading-6 text-[var(--text-primary)]"
-                      key={`${index}-${highlight}`}
-                    >
-                      <span className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-lg bg-[var(--primary)] text-xs font-extrabold text-[var(--primary-contrast)]">
-                        {index + 1}
-                      </span>
-                      {highlight}
-                    </li>
-                  ))}
-                </ul>
-              </section>
+          <DataQualitySection
+            dataQuality={report.data_quality}
+            language={language}
+          />
 
-              <section className="mt-8 border-t border-[var(--border)] pt-8">
-                <SectionTitle icon={ChartLineUpIcon} title="Phân tích xu hướng" />
-                <p className="mt-4 rounded-xl border-l-4 border-[var(--primary)] bg-[var(--primary-soft)] p-5 leading-7 text-[var(--text-primary)]">
-                  {report.trend_analysis}
+          <ReportCharts analysis={analysis} />
+
+          <section className="border-b border-slate-100 p-6 sm:p-9">
+            <div className="mb-6 flex items-center gap-2.5">
+              <span className="grid size-9 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+                <ChartLineUpIcon size={21} weight="duotone" />
+              </span>
+              <div>
+                <h3 className="text-lg font-black tracking-tight text-slate-900">
+                  {t('report.analysisSections')}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {t('report.analysisSectionsDesc')}
                 </p>
-              </section>
+              </div>
             </div>
+            <div className="report-print-two-column grid gap-5 xl:grid-cols-2">
+              {report.sections.map((section) => (
+                <section
+                  className="report-print-break-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs"
+                  key={section.key}
+                >
+                  <h4 className="font-black text-slate-900">
+                    {section.title}
+                  </h4>
+                  <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600">
+                    {section.narrative}
+                  </p>
+                  <EvidenceList
+                    evidence={section.evidence}
+                    language={language}
+                  />
+                </section>
+              ))}
+            </div>
+          </section>
 
-            <section>
-              <SectionTitle icon={LightbulbIcon} title="Khuyến nghị cải thiện" />
-              <ol className="mt-5 space-y-4">
-                {report.recommendations.map((recommendation, index) => (
-                  <li
-                    className="report-print-break-avoid rounded-xl border border-[var(--border)] p-5"
-                    key={`${index}-${recommendation.title}`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <TargetIcon
-                        aria-hidden="true"
-                        className="mt-0.5 shrink-0 text-[var(--primary)]"
-                        size={21}
-                        weight="duotone"
-                      />
-                      <div>
-                        <h3 className="font-extrabold text-[var(--text-primary)]">
-                          {recommendation.title}
-                        </h3>
-                        <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-                          {recommendation.description}
-                        </p>
-                      </div>
+          <RiskSection
+            language={language}
+            risks={report.risk_signals}
+          />
+
+          <section className="report-recommendations-section border-b border-slate-100 p-6 sm:p-9">
+            <div className="mb-6 flex items-center gap-2.5">
+              <span className="grid size-9 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
+                <TargetIcon size={21} weight="duotone" />
+              </span>
+              <div>
+                <h3 className="text-lg font-black tracking-tight text-slate-900">
+                  {t('report.recommendations')}
+                </h3>
+                <p className="text-xs text-slate-500">
+                  {t('report.recommendationsDesc')}
+                </p>
+              </div>
+            </div>
+            <div
+              className="report-print-two-column report-recommendations-grid grid gap-5 xl:grid-cols-2"
+              data-count={report.recommendations.length}
+            >
+              {report.recommendations.map((recommendation, index) => (
+                <article
+                  className="report-print-break-avoid rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs"
+                  key={`${recommendation.title}-${index}`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span
+                      className={[
+                        'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider',
+                        priorityClassName(recommendation.priority),
+                      ].join(' ')}
+                    >
+                      {t(`report.priority.${recommendation.priority}`)}
+                    </span>
+                    <span className="text-[10px] font-bold text-slate-400">
+                      #{index + 1}
+                    </span>
+                  </div>
+                  <h4 className="mt-3 text-sm font-black text-slate-900">
+                    {recommendation.title}
+                  </h4>
+                  <div className="mt-3 space-y-3 text-xs leading-relaxed">
+                    <div>
+                      <p className="font-black uppercase tracking-wider text-slate-400">
+                        {t('report.action')}
+                      </p>
+                      <p className="mt-1 text-slate-700">
+                        {recommendation.action}
+                      </p>
                     </div>
-                  </li>
-                ))}
-              </ol>
-            </section>
-          </div>
+                    <div>
+                      <p className="font-black uppercase tracking-wider text-slate-400">
+                        {t('report.successMetric')}
+                      </p>
+                      <p className="mt-1 text-slate-700">
+                        {recommendation.success_metric}
+                      </p>
+                    </div>
+                  </div>
+                  <EvidenceList
+                    evidence={recommendation.evidence}
+                    language={language}
+                  />
+                </article>
+              ))}
+            </div>
+          </section>
 
-          <footer className="flex flex-col gap-4 border-t border-[var(--border)] bg-[var(--surface-subtle)] px-6 py-5 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-            <p className="flex max-w-3xl gap-2 text-xs leading-5 text-[var(--text-muted)]">
+          <footer className="bg-slate-50 p-6 text-xs text-slate-500">
+            <div className="flex items-start gap-3">
               <InfoIcon
-                aria-hidden="true"
-                className="mt-0.5 shrink-0 text-[var(--primary)]"
+                className="mt-0.5 shrink-0 text-slate-400"
                 size={17}
                 weight="fill"
               />
-              {report.disclaimer}
-            </p>
-            <div className="report-screen-only flex shrink-0 flex-wrap gap-4 text-sm font-extrabold">
-              <Link
-                className="inline-flex items-center gap-2 whitespace-nowrap text-[var(--primary)] hover:underline"
-                to="/sales"
-              >
-                Kiểm tra số liệu
-                <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
-              </Link>
-              <Link
-                className="inline-flex items-center gap-2 whitespace-nowrap text-[var(--primary)] hover:underline"
-                to="/forecast"
-              >
-                Xem dự báo
-                <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
-              </Link>
+              <p className="leading-relaxed">{report.disclaimer}</p>
             </div>
           </footer>
         </article>
-
-        {report.source === 'rule_based' && (
-          <p className="report-screen-only mt-4 text-center text-xs leading-5 text-[var(--text-muted)]">
-            Đây là báo cáo dự phòng theo quy tắc. MarketLens không gắn nhãn AI
-            cho nội dung này.
-          </p>
-        )}
       </div>
     </main>
   )
+}
+
+function DataQualitySection({
+  dataQuality,
+  language,
+}: {
+  dataQuality: ReportContent['data_quality']
+  language: Language
+}) {
+  const { t } = useLanguage()
+  const needsAttention = dataQuality.status === 'attention'
+  return (
+    <section className="border-b border-slate-100 p-6 sm:p-9">
+      <div className="report-print-break-avoid rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            {needsAttention ? (
+              <WarningCircleIcon
+                className="text-amber-600"
+                size={22}
+                weight="fill"
+              />
+            ) : (
+              <CheckCircleIcon
+                className="text-emerald-600"
+                size={22}
+                weight="fill"
+              />
+            )}
+            <h3 className="font-black text-slate-900">
+              {t('report.dataQuality')}
+            </h3>
+          </div>
+          <span
+            className={[
+              'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider',
+              needsAttention
+                ? 'bg-amber-100 text-amber-800'
+                : 'bg-emerald-100 text-emerald-800',
+            ].join(' ')}
+          >
+            {t(
+              needsAttention
+                ? 'report.dataQualityAttention'
+                : 'report.dataQualityGood',
+            )}
+          </span>
+        </div>
+        <p className="mt-2 text-xs leading-relaxed text-slate-600">
+          {dataQuality.summary}
+        </p>
+        {dataQuality.signals.length > 0 && (
+          <div className="report-print-two-column mt-4 grid gap-3 lg:grid-cols-2">
+            {dataQuality.signals.map((signal) => (
+              <div
+                className="rounded-xl border border-slate-200 bg-white p-4"
+                key={signal.code}
+              >
+                <p className="text-xs font-semibold leading-relaxed text-slate-700">
+                  {signal.message}
+                </p>
+                <EvidenceList
+                  evidence={signal.evidence}
+                  language={language}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function RiskSection({
+  language,
+  risks,
+}: {
+  language: Language
+  risks: ReportContent['risk_signals']
+}) {
+  const { t } = useLanguage()
+  return (
+    <section className="report-risk-section border-b border-slate-100 p-6 sm:p-9">
+      <div className="mb-5 flex items-center gap-2.5">
+        <span className="grid size-9 place-items-center rounded-xl bg-amber-50 text-amber-600">
+          <WarningCircleIcon size={21} weight="duotone" />
+        </span>
+        <div>
+          <h3 className="text-lg font-black tracking-tight text-slate-900">
+            {t('report.riskSignals')}
+          </h3>
+          <p className="text-xs text-slate-500">
+            {t('report.riskSignalsDesc')}
+          </p>
+        </div>
+      </div>
+      {risks.length === 0 ? (
+        <div className="report-print-break-avoid rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-900">
+          {t('report.noRiskSignals')}
+        </div>
+      ) : (
+        <div className="report-print-two-column grid gap-4 xl:grid-cols-2">
+          {risks.map((risk) => (
+            <article
+              className="report-print-break-avoid rounded-xl border border-amber-200 bg-amber-50/60 p-4"
+              key={risk.code}
+            >
+              <div className="flex items-center justify-between gap-3">
+                <h4 className="text-sm font-black text-slate-900">
+                  {risk.title}
+                </h4>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-black uppercase text-amber-700">
+                  {t(`report.severity.${risk.severity}`)}
+                </span>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-slate-700">
+                {risk.description}
+              </p>
+              <EvidenceList
+                evidence={risk.evidence}
+                language={language}
+              />
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  )
+}
+
+function EvidenceList({
+  evidence,
+  language,
+}: {
+  evidence: ReportEvidence[]
+  language: Language
+}) {
+  const { t } = useLanguage()
+  return (
+    <div className="mt-4">
+      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+        {t('report.evidence')}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        {evidence.map((item) => (
+          <span
+            className="report-evidence-chip inline-flex max-w-full items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-[10px] font-bold text-indigo-900"
+            key={item.metric_key}
+            title={item.metric_key}
+          >
+            <span className="report-evidence-label truncate">
+              {item.context ? `${item.context} · ` : ''}
+              {item.label}
+            </span>
+            <span className="shrink-0 text-indigo-600">
+              {formatReportEvidence(item, language)}
+            </span>
+          </span>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function ReportSource({
+  source,
+}: {
+  source: ReportContent['source']
+}) {
+  const { t } = useLanguage()
+  if (source === 'ai') {
+    return (
+      <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--primary)] px-3.5 py-1 text-xs font-extrabold text-white">
+        <SparkleIcon size={14} weight="fill" />
+        {t('report.badgeAi')}
+      </span>
+    )
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-200 px-3 py-1 text-xs font-extrabold text-slate-700">
+      {t('report.badgeRules')}
+    </span>
+  )
+}
+
+function priorityClassName(
+  priority: ReportContent['recommendations'][number]['priority'],
+) {
+  if (priority === 'high') return 'bg-rose-100 text-rose-800'
+  if (priority === 'medium') return 'bg-amber-100 text-amber-800'
+  return 'bg-slate-100 text-slate-700'
 }
 
 function GenerationNotice({
@@ -283,83 +615,36 @@ function GenerationNotice({
   message: string
   tone: 'success' | 'warning' | 'danger'
 }) {
-  const toneClass = {
-    success:
-      'border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[var(--success-soft)] text-[var(--success)]',
-    warning:
-      'border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_10%,var(--surface))] text-[var(--warning)]',
-    danger:
-      'border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[var(--danger-soft)] text-[var(--danger)]',
-  }
-
   return (
     <div
-      className={`mt-4 flex gap-3 rounded-xl border px-4 py-3 text-sm font-bold leading-6 ${toneClass[tone]}`}
-      role={tone === 'danger' ? 'alert' : 'status'}
+      className={[
+        'mt-4 flex items-center gap-3 rounded-xl border p-4 text-xs font-bold shadow-2xs',
+        tone === 'success' &&
+          'border-emerald-200 bg-emerald-50 text-emerald-900',
+        tone === 'warning' &&
+          'border-amber-200 bg-amber-50 text-amber-900',
+        tone === 'danger' &&
+          'border-rose-200 bg-rose-50 text-rose-900',
+      ]
+        .filter(Boolean)
+        .join(' ')}
     >
       {tone === 'success' ? (
         <CheckCircleIcon
-          aria-hidden="true"
-          className="mt-0.5 shrink-0"
-          size={19}
+          className="text-emerald-600"
+          size={20}
           weight="fill"
         />
       ) : (
         <WarningCircleIcon
-          aria-hidden="true"
-          className="mt-0.5 shrink-0"
-          size={19}
+          className={
+            tone === 'warning' ? 'text-amber-600' : 'text-rose-600'
+          }
+          size={20}
           weight="fill"
         />
       )}
-      {message}
-    </div>
-  )
-}
-
-function ReportSource({
-  source,
-}: {
-  source: 'rule_based' | 'ai'
-}) {
-  return (
-    <span className="inline-flex items-center gap-2 rounded-lg bg-[var(--surface)] px-3 py-1.5 text-xs font-extrabold text-[var(--primary)]">
-      {source === 'ai' ? (
-        <SparkleIcon aria-hidden="true" size={15} weight="fill" />
-      ) : (
-        <GearSixIcon aria-hidden="true" size={15} weight="fill" />
-      )}
-      {getReportSourceLabel(source)}
-    </span>
-  )
-}
-
-function ReportFact({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-bold text-[var(--text-muted)]">{label}</dt>
-      <dd className="mt-1 font-extrabold text-[var(--text-primary)]">
-        {value}
-      </dd>
-    </div>
-  )
-}
-
-function SectionTitle({
-  icon: Icon,
-  title,
-}: {
-  icon: typeof CheckCircleIcon
-  title: string
-}) {
-  return (
-    <div className="flex items-center gap-3">
-      <span className="grid size-10 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-        <Icon aria-hidden="true" size={21} weight="duotone" />
-      </span>
-      <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-        {title}
-      </h2>
+      <p>{message}</p>
     </div>
   )
 }

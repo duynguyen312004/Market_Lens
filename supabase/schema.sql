@@ -7,6 +7,10 @@ create table if not exists public.analyses (
     id uuid primary key default gen_random_uuid(),
     user_id uuid not null references auth.users(id) on delete cascade,
     file_name text not null,
+    upload_mode text not null default 'single'
+        check (upload_mode in ('single', 'combined')),
+    source_file_count integer not null default 1
+        check (source_file_count between 1 and 10),
     status text not null default 'completed'
         check (status in ('processing', 'completed', 'failed')),
     row_count integer not null default 0 check (row_count >= 0),
@@ -19,6 +23,23 @@ create table if not exists public.analyses (
     constraint analyses_date_range_check
         check (date_from is null or date_to is null or date_from <= date_to)
 );
+
+alter table public.analyses
+    add column if not exists upload_mode text not null default 'single';
+alter table public.analyses
+    add column if not exists source_file_count integer not null default 1;
+
+alter table public.analyses
+    drop constraint if exists analyses_upload_mode_check;
+alter table public.analyses
+    add constraint analyses_upload_mode_check
+        check (upload_mode in ('single', 'combined'));
+
+alter table public.analyses
+    drop constraint if exists analyses_source_file_count_check;
+alter table public.analyses
+    add constraint analyses_source_file_count_check
+        check (source_file_count between 1 and 10);
 
 create index if not exists analyses_user_created_idx
     on public.analyses (user_id, created_at desc);

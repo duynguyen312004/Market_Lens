@@ -1,6 +1,6 @@
 from copy import deepcopy
 from datetime import date
-from typing import Annotated, Any
+from typing import Annotated, Any, Literal
 
 from fastapi import Depends
 from supabase import Client
@@ -18,6 +18,8 @@ class AnalysesRepository:
         *,
         user_id: str,
         file_name: str,
+        upload_mode: Literal["single", "combined"],
+        source_file_count: int,
         row_count: int,
         date_from: date,
         date_to: date,
@@ -26,6 +28,8 @@ class AnalysesRepository:
         payload = {
             "user_id": user_id,
             "file_name": file_name,
+            "upload_mode": upload_mode,
+            "source_file_count": source_file_count,
             "status": "completed",
             "row_count": row_count,
             "date_from": date_from.isoformat(),
@@ -54,7 +58,8 @@ class AnalysesRepository:
             response = (
                 self.client.table("analyses")
                 .select(
-                    "id,file_name,status,row_count,date_from,date_to,created_at"
+                    "id,file_name,upload_mode,source_file_count,status,"
+                    "row_count,date_from,date_to,created_at"
                 )
                 .eq("user_id", user_id)
                 .order("created_at", desc=True)
@@ -120,6 +125,7 @@ class AnalysesRepository:
         analysis_id: str,
         user_id: str,
         report: dict[str, Any],
+        language: Literal["en", "vi"] = "en",
     ) -> dict[str, Any] | None:
         existing = self.get_analysis_for_user(
             analysis_id=analysis_id,
@@ -130,6 +136,9 @@ class AnalysesRepository:
 
         result_json = deepcopy(existing.get("result_json") or {})
         result_json["report"] = report
+        reports = deepcopy(result_json.get("reports") or {})
+        reports[language] = report
+        result_json["reports"] = reports
 
         try:
             response = (
@@ -156,6 +165,6 @@ def get_analyses_repository(
 def _database_error() -> AppError:
     return AppError(
         code="DATABASE_UNAVAILABLE",
-        message="Không thể truy cập dữ liệu phân tích lúc này.",
+        message="Analysis data cannot be accessed right now.",
         status_code=503,
     )

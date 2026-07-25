@@ -80,6 +80,8 @@ def test_create_assigns_verified_user_id() -> None:
     repository.create_analysis(
         user_id="verified-user",
         file_name="sales.csv",
+        upload_mode="single",
+        source_file_count=1,
         row_count=10,
         date_from=date(2026, 1, 1),
         date_to=date(2026, 1, 2),
@@ -92,6 +94,8 @@ def test_create_assigns_verified_user_id() -> None:
         if operation[0] == "insert"
     )
     assert insert_operation[1]["user_id"] == "verified-user"
+    assert insert_operation[1]["upload_mode"] == "single"
+    assert insert_operation[1]["source_file_count"] == 1
 
 
 def test_get_filters_by_analysis_and_verified_user() -> None:
@@ -122,6 +126,11 @@ def test_list_filters_by_verified_user_before_pagination() -> None:
     assert ("eq", "user_id", "owner") in operations
     assert ("order", "created_at", True) in operations
     assert ("range", 40, 59) in operations
+    assert (
+        "select",
+        "id,file_name,upload_mode,source_file_count,status,"
+        "row_count,date_from,date_to,created_at",
+    ) in operations
 
 
 def test_delete_filters_by_analysis_and_verified_user() -> None:
@@ -166,7 +175,16 @@ def test_update_report_filters_by_analysis_and_verified_user() -> None:
 
     assert result == updated
     operations = client.queries[1].operations
-    assert ("update", {"result_json": updated["result_json"]}) in operations
+    assert (
+        "update",
+        {
+            "result_json": {
+                "summary": {},
+                "report": {"source": "ai"},
+                "reports": {"en": {"source": "ai"}},
+            }
+        },
+    ) in operations
     assert ("eq", "id", "analysis-id") in operations
     assert ("eq", "user_id", "owner") in operations
 

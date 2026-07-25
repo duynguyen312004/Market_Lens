@@ -1,97 +1,124 @@
 import { z } from 'zod'
 
-export const emailSchema = z
-  .string()
-  .trim()
-  .min(1, 'Nhập email của bạn.')
-  .email('Email chưa đúng định dạng.')
-  .max(254, 'Email quá dài.')
+import {
+  translate,
+  type Language,
+} from '../i18n/LanguageContext'
 
-export const strongPasswordSchema = z
-  .string()
-  .min(8, 'Mật khẩu cần ít nhất 8 ký tự.')
-  .max(72, 'Mật khẩu không được quá 72 ký tự.')
-  .regex(/[a-z]/, 'Mật khẩu cần ít nhất một chữ thường.')
-  .regex(/[A-Z]/, 'Mật khẩu cần ít nhất một chữ hoa.')
-  .regex(/[0-9]/, 'Mật khẩu cần ít nhất một chữ số.')
-  .regex(/^\S+$/, 'Mật khẩu không được chứa khoảng trắng.')
-
-export const loginSchema = z.object({
-  email: emailSchema,
-  password: z
+export function createEmailSchema(language: Language) {
+  return z
     .string()
-    .min(1, 'Nhập mật khẩu.')
-    .max(72, 'Mật khẩu không được quá 72 ký tự.'),
-})
+    .trim()
+    .min(1, translate(language, 'validation.emailRequired'))
+    .email(translate(language, 'validation.emailInvalid'))
+    .max(254, translate(language, 'validation.emailTooLong'))
+}
 
-export const registerSchema = z
-  .object({
-    displayName: z
+export function createStrongPasswordSchema(language: Language) {
+  return z
+    .string()
+    .min(8, translate(language, 'validation.passwordMin'))
+    .max(72, translate(language, 'validation.passwordMax'))
+    .regex(/[a-z]/, translate(language, 'validation.passwordLowercase'))
+    .regex(/[A-Z]/, translate(language, 'validation.passwordUppercase'))
+    .regex(/[0-9]/, translate(language, 'validation.passwordNumber'))
+    .regex(/^\S+$/, translate(language, 'validation.passwordNoSpaces'))
+}
+
+export function createDisplayNameSchema(language: Language) {
+  return z
+    .string()
+    .trim()
+    .min(2, translate(language, 'validation.displayNameMin'))
+    .max(50, translate(language, 'validation.displayNameMax'))
+    .regex(
+      /^[\p{L}\p{M}\s.'-]+$/u,
+      translate(language, 'validation.displayNameCharacters'),
+    )
+}
+
+export function createLoginSchema(language: Language) {
+  return z.object({
+    email: createEmailSchema(language),
+    password: z
       .string()
-      .trim()
-      .min(2, 'Tên hiển thị cần ít nhất 2 ký tự.')
-      .max(50, 'Tên hiển thị không được quá 50 ký tự.')
-      .regex(
-        /^[\p{L}\p{M}\s.'-]+$/u,
-        'Tên hiển thị chỉ nên chứa chữ cái và dấu câu cơ bản.',
-      ),
-    email: emailSchema,
-    password: strongPasswordSchema,
-    passwordConfirmation: z.string().min(1, 'Nhập lại mật khẩu.'),
-    acceptTerms: z.boolean().refine((accepted) => accepted, {
-      message: 'Bạn cần xác nhận quyền sử dụng dữ liệu.',
-    }),
+      .min(1, translate(language, 'validation.passwordRequired'))
+      .max(72, translate(language, 'validation.passwordMax')),
   })
-  .refine((values) => values.password === values.passwordConfirmation, {
-    message: 'Mật khẩu nhập lại chưa khớp.',
-    path: ['passwordConfirmation'],
-  })
+}
 
-export const forgotPasswordSchema = z.object({
-  email: emailSchema,
-})
+export function createRegisterSchema(language: Language) {
+  return z
+    .object({
+      displayName: createDisplayNameSchema(language),
+      email: createEmailSchema(language),
+      password: createStrongPasswordSchema(language),
+      passwordConfirmation: z
+        .string()
+        .min(1, translate(language, 'validation.confirmPassword')),
+      acceptTerms: z.boolean().refine((accepted) => accepted, {
+        message: translate(language, 'validation.authorizedData'),
+      }),
+    })
+    .refine((values) => values.password === values.passwordConfirmation, {
+      message: translate(language, 'validation.passwordMismatch'),
+      path: ['passwordConfirmation'],
+    })
+}
 
-export const resetPasswordSchema = z
-  .object({
-    password: strongPasswordSchema,
-    passwordConfirmation: z.string().min(1, 'Nhập lại mật khẩu.'),
-  })
-  .refine((values) => values.password === values.passwordConfirmation, {
-    message: 'Mật khẩu nhập lại chưa khớp.',
-    path: ['passwordConfirmation'],
-  })
+export function createForgotPasswordSchema(language: Language) {
+  return z.object({ email: createEmailSchema(language) })
+}
 
-export const displayNameSchema = z
-  .string()
-  .trim()
-  .min(2, 'Tên hiển thị cần ít nhất 2 ký tự.')
-  .max(50, 'Tên hiển thị không được quá 50 ký tự.')
-  .regex(
-    /^[\p{L}\p{M}\s.'-]+$/u,
-    'Tên hiển thị chỉ nên chứa chữ cái và dấu câu cơ bản.',
-  )
+export function createResetPasswordSchema(language: Language) {
+  return z
+    .object({
+      password: createStrongPasswordSchema(language),
+      passwordConfirmation: z
+        .string()
+        .min(1, translate(language, 'validation.confirmPassword')),
+    })
+    .refine((values) => values.password === values.passwordConfirmation, {
+      message: translate(language, 'validation.passwordMismatch'),
+      path: ['passwordConfirmation'],
+    })
+}
 
-export const profileSchema = z.object({
-  displayName: displayNameSchema,
-})
+export function createProfileSchema(language: Language) {
+  return z.object({ displayName: createDisplayNameSchema(language) })
+}
 
-export const changePasswordSchema = z
-  .object({
-    currentPassword: z
-      .string()
-      .min(1, 'Nhập mật khẩu hiện tại.')
-      .max(72, 'Mật khẩu không được quá 72 ký tự.'),
-    password: strongPasswordSchema,
-    passwordConfirmation: z.string().min(1, 'Nhập lại mật khẩu mới.'),
-  })
-  .refine((values) => values.password !== values.currentPassword, {
-    message: 'Mật khẩu mới cần khác mật khẩu hiện tại.',
-    path: ['password'],
-  })
-  .refine((values) => values.password === values.passwordConfirmation, {
-    message: 'Mật khẩu nhập lại chưa khớp.',
-    path: ['passwordConfirmation'],
-  })
+export function createChangePasswordSchema(language: Language) {
+  return z
+    .object({
+      currentPassword: z
+        .string()
+        .min(1, translate(language, 'validation.currentPassword'))
+        .max(72, translate(language, 'validation.passwordMax')),
+      password: createStrongPasswordSchema(language),
+      passwordConfirmation: z
+        .string()
+        .min(1, translate(language, 'validation.confirmNewPassword')),
+    })
+    .refine((values) => values.password !== values.currentPassword, {
+      message: translate(language, 'auth.errorSamePassword'),
+      path: ['password'],
+    })
+    .refine((values) => values.password === values.passwordConfirmation, {
+      message: translate(language, 'validation.passwordMismatch'),
+      path: ['passwordConfirmation'],
+    })
+}
+
+// English defaults keep the public module contract stable for existing callers.
+export const emailSchema = createEmailSchema('en')
+export const strongPasswordSchema = createStrongPasswordSchema('en')
+export const loginSchema = createLoginSchema('en')
+export const registerSchema = createRegisterSchema('en')
+export const forgotPasswordSchema = createForgotPasswordSchema('en')
+export const resetPasswordSchema = createResetPasswordSchema('en')
+export const profileSchema = createProfileSchema('en')
+export const changePasswordSchema = createChangePasswordSchema('en')
 
 export type LoginValues = z.infer<typeof loginSchema>
 export type RegisterValues = z.infer<typeof registerSchema>

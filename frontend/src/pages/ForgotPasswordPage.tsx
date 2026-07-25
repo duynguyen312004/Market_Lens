@@ -4,23 +4,29 @@ import {
   ArrowRightIcon,
   CircleNotchIcon,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 import { getAuthErrorMessage } from '../auth/authErrors'
 import {
-  forgotPasswordSchema,
+  createForgotPasswordSchema,
   type ForgotPasswordValues,
 } from '../auth/authSchemas'
 import { useAuth } from '../auth/useAuth'
 import { AuthLayout } from '../components/AuthLayout'
 import { AuthNotice } from '../components/AuthNotice'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const inputClassName =
   'mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)]/70 focus:border-[var(--primary)] focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_16%,transparent)] disabled:cursor-not-allowed disabled:opacity-60'
 
 export function ForgotPasswordPage() {
+  const { language, t } = useLanguage()
+  const forgotPasswordSchema = useMemo(
+    () => createForgotPasswordSchema(language),
+    [language],
+  )
   const { configurationError, requestPasswordReset } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null)
@@ -45,23 +51,23 @@ export function ForgotPasswordPage() {
       await requestPasswordReset(normalizedEmail)
       setSubmittedEmail(normalizedEmail)
     } catch (error) {
-      setSubmitError(getAuthErrorMessage(error))
+      setSubmitError(getAuthErrorMessage(error, language))
     }
   })
 
   return (
     <AuthLayout
-      description="Nhập email đăng ký. Chúng tôi sẽ gửi liên kết để bạn tạo mật khẩu mới."
+      description={t('auth.forgotDesc')}
       footer={
         <Link
           className="inline-flex items-center gap-2 font-extrabold text-[var(--primary)] hover:underline"
           to="/login"
         >
           <ArrowLeftIcon aria-hidden="true" size={16} weight="bold" />
-          Quay lại đăng nhập
+          {t('auth.backToSignIn')}
         </Link>
       }
-      title="Khôi phục mật khẩu"
+      title={t('auth.forgotTitle')}
     >
       <div className="space-y-4">
         {configurationError && (
@@ -70,8 +76,7 @@ export function ForgotPasswordPage() {
         {submitError && <AuthNotice tone="error">{submitError}</AuthNotice>}
         {submittedEmail && (
           <AuthNotice tone="success">
-            Nếu tài khoản <strong>{submittedEmail}</strong> tồn tại, email khôi
-            phục đã được gửi. Hãy kiểm tra cả thư mục spam.
+            {t('auth.resetEmailSent', { email: submittedEmail })}
           </AuthNotice>
         )}
       </div>
@@ -83,7 +88,7 @@ export function ForgotPasswordPage() {
               className="text-sm font-extrabold text-[var(--text-primary)]"
               htmlFor="forgot-email"
             >
-              Email
+              {t('auth.emailLabel')}
             </label>
             <input
               aria-describedby={
@@ -96,7 +101,7 @@ export function ForgotPasswordPage() {
               id="forgot-email"
               inputMode="email"
               maxLength={254}
-              placeholder="ban@cuahang.vn"
+              placeholder={t('auth.emailPlaceholder')}
               type="email"
               {...register('email')}
             />
@@ -112,7 +117,7 @@ export function ForgotPasswordPage() {
                 className="mt-2 text-sm leading-6 text-[var(--text-muted)]"
                 id="forgot-email-helper"
               >
-                Liên kết chỉ có hiệu lực trong thời gian giới hạn.
+                {t('auth.resetLinkLifetime')}
               </p>
             )}
           </div>
@@ -130,11 +135,11 @@ export function ForgotPasswordPage() {
                   size={18}
                   weight="bold"
                 />
-                Đang gửi email
+                {t('auth.sendingResetLink')}
               </>
             ) : (
               <>
-                Gửi liên kết
+                {t('auth.sendResetLink')}
                 <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
               </>
             )}

@@ -1,7 +1,8 @@
 import { lazy, Suspense } from 'react'
-import { Navigate, Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router'
 
 import { ProtectedRoute, PublicOnlyRoute } from './auth/routeGuards'
+import { useLanguage } from './i18n/LanguageContext'
 
 const AppShell = lazy(() =>
   import('./components/AppShell').then((module) => ({
@@ -75,13 +76,14 @@ const ProfilePage = lazy(() =>
 )
 
 function RouteLoadingScreen() {
+  const { t } = useLanguage()
   return (
     <main
       className="grid min-h-[100dvh] place-items-center px-5"
       role="status"
     >
       <div className="size-9 animate-spin rounded-full border-2 border-[var(--border-strong)] border-t-[var(--primary)] motion-reduce:animate-none" />
-      <span className="sr-only">Đang tải trang...</span>
+      <span className="sr-only">{t('common.loadingPage')}</span>
     </main>
   )
 }

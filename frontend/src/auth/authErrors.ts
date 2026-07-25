@@ -1,48 +1,60 @@
-export function getAuthErrorMessage(error: unknown) {
+import {
+  translate,
+  type Language,
+} from '../i18n/LanguageContext'
+
+export function getAuthErrorMessage(
+  error: unknown,
+  language: Language = 'en',
+) {
   if (!(error instanceof Error)) {
-    return 'Đã có lỗi xảy ra. Vui lòng thử lại.'
+    return translate(language, 'auth.errorGeneric')
   }
 
   const message = error.message.toLowerCase()
 
+  if (message.includes('supabase is not configured')) {
+    return translate(language, 'auth.configMissing')
+  }
+
   if (message.includes('invalid login credentials')) {
-    return 'Email hoặc mật khẩu chưa đúng.'
+    return translate(language, 'auth.errorInvalidCredentials')
   }
 
   if (message.includes('email not confirmed')) {
-    return 'Email chưa được xác nhận. Hãy kiểm tra hộp thư của bạn.'
+    return translate(language, 'auth.errorEmailUnconfirmed')
   }
 
   if (message.includes('user already registered')) {
-    return 'Email này đã được đăng ký.'
+    return translate(language, 'auth.errorAlreadyRegistered')
   }
 
   if (message.includes('password should be')) {
-    return 'Mật khẩu chưa đáp ứng yêu cầu bảo mật.'
+    return translate(language, 'auth.errorWeakPassword')
   }
 
   if (message.includes('rate limit')) {
-    return 'Bạn thao tác quá nhanh. Vui lòng chờ một chút rồi thử lại.'
+    return translate(language, 'auth.errorRateLimit')
   }
 
   if (message.includes('network') || message.includes('fetch')) {
-    return 'Không thể kết nối tới dịch vụ đăng nhập. Kiểm tra mạng rồi thử lại.'
+    return translate(language, 'auth.errorNetwork')
   }
 
   if (message.includes('same password')) {
-    return 'Mật khẩu mới cần khác mật khẩu hiện tại.'
+    return translate(language, 'auth.errorSamePassword')
   }
 
   if (
     message.includes('current password') ||
     message.includes('reauthentication')
   ) {
-    return 'Mật khẩu hiện tại chưa đúng. Vui lòng kiểm tra lại.'
+    return translate(language, 'auth.errorCurrentPassword')
   }
 
   if (message.includes('session') || message.includes('expired')) {
-    return 'Liên kết đã hết hạn hoặc phiên không còn hợp lệ.'
+    return translate(language, 'auth.errorExpired')
   }
 
-  return error.message
+  return language === 'en' ? error.message : translate(language, 'auth.errorGeneric')
 }

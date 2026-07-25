@@ -1,12 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRightIcon, CircleNotchIcon } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 import { getAuthErrorMessage } from '../auth/authErrors'
 import {
-  registerSchema,
+  createRegisterSchema,
   type RegisterValues,
 } from '../auth/authSchemas'
 import { useAuth } from '../auth/useAuth'
@@ -14,11 +14,17 @@ import { AuthLayout } from '../components/AuthLayout'
 import { AuthNotice } from '../components/AuthNotice'
 import { PasswordInput } from '../components/PasswordInput'
 import { PasswordRequirements } from '../components/PasswordRequirements'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const inputClassName =
-  'w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)]/70 focus:border-[var(--primary)] focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_16%,transparent)] disabled:cursor-not-allowed disabled:opacity-60'
+  'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-600 focus:ring-3 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-60'
 
 export function RegisterPage() {
+  const { language, t } = useLanguage()
+  const registerSchema = useMemo(
+    () => createRegisterSchema(language),
+    [language],
+  )
   const { configurationError, signUp } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
@@ -54,30 +60,30 @@ export function RegisterPage() {
         )
         setSuccessMessage(
           result.requiresEmailConfirmation
-            ? 'Tài khoản đã được tạo. Hãy mở email xác nhận rồi quay lại đăng nhập.'
-            : 'Tài khoản đã được tạo. MarketLens đang mở dashboard cho bạn.',
+            ? t('auth.accountConfirmEmail')
+            : t('auth.accountReady'),
         )
       } catch (error) {
-        setSubmitError(getAuthErrorMessage(error))
+        setSubmitError(getAuthErrorMessage(error, language))
       }
     },
   )
 
   return (
     <AuthLayout
-      description="Bắt đầu với một tài khoản riêng cho dữ liệu và lịch sử phân tích của bạn."
+      description={t('auth.registerDesc')}
       footer={
         <>
-          Đã có tài khoản?{' '}
+          {t('auth.alreadyHaveAccount')}{' '}
           <Link
-            className="font-extrabold text-[var(--primary)] hover:underline"
+            className="font-black text-indigo-600 hover:underline"
             to="/login"
           >
-            Đăng nhập
+            {t('auth.signInLink')}
           </Link>
         </>
       }
-      title="Tạo tài khoản MarketLens"
+      title={t('auth.registerTitle')}
     >
       <div className="space-y-4">
         {configurationError && (
@@ -88,10 +94,10 @@ export function RegisterPage() {
           <AuthNotice tone="success">
             <p>{successMessage}</p>
             <Link
-              className="mt-2 inline-block font-extrabold underline underline-offset-4"
+              className="mt-2 inline-block font-bold underline underline-offset-4"
               to="/login"
             >
-              Đi tới đăng nhập
+              {t('auth.goToSignIn')}
             </Link>
           </AuthNotice>
         )}
@@ -100,10 +106,10 @@ export function RegisterPage() {
       <form className="mt-5 space-y-5" noValidate onSubmit={onSubmit}>
         <div>
           <label
-            className="text-sm font-extrabold text-[var(--text-primary)]"
+            className="text-xs font-black text-slate-800"
             htmlFor="register-name"
           >
-            Tên hiển thị
+            {t('auth.displayNameLabel')}
           </label>
           <input
             aria-describedby={
@@ -114,13 +120,13 @@ export function RegisterPage() {
             className={`${inputClassName} mt-2`}
             id="register-name"
             maxLength={50}
-            placeholder="Nguyễn Minh Anh"
+            placeholder={t('auth.displayNamePlaceholder')}
             type="text"
             {...register('displayName')}
           />
           {errors.displayName && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="register-name-error"
             >
               {errors.displayName.message}
@@ -130,10 +136,10 @@ export function RegisterPage() {
 
         <div>
           <label
-            className="text-sm font-extrabold text-[var(--text-primary)]"
+            className="text-xs font-black text-slate-800"
             htmlFor="register-email"
           >
-            Email
+            {t('auth.emailLabel')}
           </label>
           <input
             aria-describedby={
@@ -146,13 +152,13 @@ export function RegisterPage() {
             id="register-email"
             inputMode="email"
             maxLength={254}
-            placeholder="ban@cuahang.vn"
+            placeholder={t('auth.emailPlaceholder')}
             type="email"
             {...register('email')}
           />
           {errors.email && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="register-email-error"
             >
               {errors.email.message}
@@ -162,10 +168,10 @@ export function RegisterPage() {
 
         <div>
           <label
-            className="text-sm font-extrabold text-[var(--text-primary)]"
+            className="text-xs font-black text-slate-800"
             htmlFor="register-password"
           >
-            Mật khẩu
+            {t('auth.passwordLabel')}
           </label>
           <PasswordInput
             aria-describedby={
@@ -176,13 +182,13 @@ export function RegisterPage() {
             className={inputClassName}
             id="register-password"
             maxLength={72}
-            placeholder="Tạo mật khẩu mạnh"
+            placeholder={t('auth.passwordPlaceholder')}
             {...register('password')}
           />
           <PasswordRequirements password={password} />
           {errors.password && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="register-password-error"
             >
               {errors.password.message}
@@ -192,10 +198,10 @@ export function RegisterPage() {
 
         <div>
           <label
-            className="text-sm font-extrabold text-[var(--text-primary)]"
+            className="text-xs font-black text-slate-800"
             htmlFor="register-password-confirmation"
           >
-            Nhập lại mật khẩu
+            {t('auth.confirmPasswordLabel')}
           </label>
           <PasswordInput
             aria-describedby={
@@ -208,12 +214,12 @@ export function RegisterPage() {
             className={inputClassName}
             id="register-password-confirmation"
             maxLength={72}
-            placeholder="Nhập lại mật khẩu"
+            placeholder={t('auth.passwordPlaceholder')}
             {...register('passwordConfirmation')}
           />
           {errors.passwordConfirmation && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="register-password-confirmation-error"
             >
               {errors.passwordConfirmation.message}
@@ -222,24 +228,23 @@ export function RegisterPage() {
         </div>
 
         <div>
-          <label className="flex cursor-pointer items-start gap-3 text-sm leading-6 text-[var(--text-muted)]">
+          <label className="flex cursor-pointer items-start gap-3 text-xs leading-5 text-slate-600 font-medium">
             <input
               aria-describedby={
                 errors.acceptTerms ? 'register-terms-error' : undefined
               }
               aria-invalid={Boolean(errors.acceptTerms)}
-              className="mt-1 size-4 shrink-0 accent-[var(--primary)]"
+              className="mt-0.5 size-4 shrink-0 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
               type="checkbox"
               {...register('acceptTerms')}
             />
             <span>
-              Tôi xác nhận thông tin đăng ký là chính xác và chỉ tải lên dữ liệu
-              mình có quyền sử dụng.
+              {t('auth.dataAuthorization')}
             </span>
           </label>
           {errors.acceptTerms && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="register-terms-error"
             >
               {errors.acceptTerms.message}
@@ -248,7 +253,7 @@ export function RegisterPage() {
         </div>
 
         <button
-          className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3.5 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-black text-white shadow-md shadow-indigo-600/30 transition hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
           disabled={Boolean(configurationError) || isSubmitting}
           type="submit"
         >
@@ -256,15 +261,15 @@ export function RegisterPage() {
             <>
               <CircleNotchIcon
                 aria-hidden="true"
-                className="animate-spin motion-reduce:animate-none"
+                className="animate-spin"
                 size={18}
                 weight="bold"
               />
-              Đang tạo tài khoản
+              <span>{t('auth.creatingAccount')}</span>
             </>
           ) : (
             <>
-              Tạo tài khoản
+              <span>{t('auth.createAccountButton')}</span>
               <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
             </>
           )}

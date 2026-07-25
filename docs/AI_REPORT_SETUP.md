@@ -27,7 +27,7 @@ AI_MODEL=gemini-3.5-flash-lite
 AI_API_BASE_URL=https://generativelanguage.googleapis.com/v1beta
 AI_API_KEY=YOUR_GEMINI_API_KEY
 AI_TIMEOUT_SECONDS=20
-AI_MAX_OUTPUT_TOKENS=1200
+AI_MAX_OUTPUT_TOKENS=2400
 ```
 
 `gemini-3.5-flash-lite` là model GA ưu tiên chi phí và throughput, hỗ trợ
@@ -77,18 +77,22 @@ warning tương ứng.
 
 ## 5. Dữ liệu gửi tới provider
 
-Chỉ gửi aggregate:
+Chỉ gửi một evidence catalog tổng hợp:
 
-- Period và summary KPI.
-- 14 điểm doanh thu ngày gần nhất.
-- Tổng hợp sản phẩm và danh mục.
-- Số lượng segment khách hàng.
-- Forecast aggregate.
+- Period.
+- Các metric có `metric_key`, label, value, unit và context không chứa PII.
+- Trạng thái available/unavailable của RFM, cohort, association, forecast,
+  evaluation và uncertainty.
 - Warning codes.
 
 Không gửi file, raw rows, email, filename, order ID, customer ID hoặc customer
 name. Gemini không nhận user ID hoặc hash user ID. Adapter OpenAI tùy chọn chỉ
 gửi `safety_identifier` là hash một chiều, không gửi UUID gốc.
+
+AI chỉ trả narrative và các `evidence_keys`. Backend kiểm tra key tồn tại,
+kiểm tra evidence đúng domain của từng section rồi hydrate value/unit từ
+catalog. Reference sai hoặc response không đúng schema sẽ fallback toàn bộ;
+AI không có đường để tự ghi một KPI vào report cuối.
 
 ## 6. OpenAI tùy chọn
 

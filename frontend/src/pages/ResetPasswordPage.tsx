@@ -4,13 +4,13 @@ import {
   CheckCircleIcon,
   CircleNotchIcon,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 
 import { getAuthErrorMessage } from '../auth/authErrors'
 import {
-  resetPasswordSchema,
+  createResetPasswordSchema,
   type ResetPasswordValues,
 } from '../auth/authSchemas'
 import { useAuth } from '../auth/useAuth'
@@ -18,11 +18,17 @@ import { AuthLayout } from '../components/AuthLayout'
 import { AuthNotice } from '../components/AuthNotice'
 import { PasswordInput } from '../components/PasswordInput'
 import { PasswordRequirements } from '../components/PasswordRequirements'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const inputClassName =
   'w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)]/70 focus:border-[var(--primary)] focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_16%,transparent)] disabled:cursor-not-allowed disabled:opacity-60'
 
 export function ResetPasswordPage() {
+  const { language, t } = useLanguage()
+  const resetPasswordSchema = useMemo(
+    () => createResetPasswordSchema(language),
+    [language],
+  )
   const {
     configurationError,
     isPasswordRecovery,
@@ -60,30 +66,30 @@ export function ResetPasswordPage() {
         state: { passwordReset: true },
       })
     } catch (error) {
-      setSubmitError(getAuthErrorMessage(error))
+      setSubmitError(getAuthErrorMessage(error, language))
     }
   })
 
   return (
     <AuthLayout
-      description="Tạo mật khẩu mới đủ mạnh cho tài khoản MarketLens của bạn."
+      description={t('auth.resetDesc')}
       footer={
         <Link
           className="inline-flex items-center gap-2 font-extrabold text-[var(--primary)] hover:underline"
           to="/login"
         >
           <ArrowLeftIcon aria-hidden="true" size={16} weight="bold" />
-          Quay lại đăng nhập
+          {t('auth.backToSignIn')}
         </Link>
       }
-      title="Đặt lại mật khẩu"
+      title={t('auth.resetTitle')}
     >
       {loading && (
         <div
           className="h-32 animate-pulse rounded-2xl bg-[var(--surface-subtle)] motion-reduce:animate-none"
           role="status"
         >
-          <span className="sr-only">Đang kiểm tra liên kết khôi phục...</span>
+          <span className="sr-only">{t('auth.checkingReset')}</span>
         </div>
       )}
 
@@ -95,12 +101,12 @@ export function ResetPasswordPage() {
         !configurationError &&
         (!session || !isPasswordRecovery) && (
         <AuthNotice tone="info">
-          <p>Liên kết đặt lại mật khẩu không hợp lệ hoặc đã hết hạn.</p>
+          <p>{t('auth.invalidReset')}</p>
           <Link
             className="mt-2 inline-block font-extrabold text-[var(--primary)] underline underline-offset-4"
             to="/forgot-password"
           >
-            Yêu cầu liên kết mới
+            {t('auth.requestNewReset')}
           </Link>
         </AuthNotice>
       )}
@@ -119,7 +125,7 @@ export function ResetPasswordPage() {
                 className="text-sm font-extrabold text-[var(--text-primary)]"
                 htmlFor="reset-password"
               >
-                Mật khẩu mới
+                {t('auth.newPassword')}
               </label>
               <PasswordInput
                 aria-describedby={
@@ -130,7 +136,7 @@ export function ResetPasswordPage() {
                 className={inputClassName}
                 id="reset-password"
                 maxLength={72}
-                placeholder="Tạo mật khẩu mới"
+                placeholder={t('auth.newPassword')}
                 {...register('password')}
               />
               <PasswordRequirements password={password} />
@@ -149,7 +155,7 @@ export function ResetPasswordPage() {
                 className="text-sm font-extrabold text-[var(--text-primary)]"
                 htmlFor="reset-password-confirmation"
               >
-                Nhập lại mật khẩu
+                {t('auth.confirmNewPassword')}
               </label>
               <PasswordInput
                 aria-describedby={
@@ -162,7 +168,7 @@ export function ResetPasswordPage() {
                 className={inputClassName}
                 id="reset-password-confirmation"
                 maxLength={72}
-                placeholder="Nhập lại mật khẩu"
+                placeholder={t('auth.confirmNewPassword')}
                 {...register('passwordConfirmation')}
               />
               {errors.passwordConfirmation && (
@@ -188,12 +194,12 @@ export function ResetPasswordPage() {
                     size={18}
                     weight="bold"
                   />
-                  Đang cập nhật
+                  {t('auth.updatingPassword')}
                 </>
               ) : (
                 <>
                   <CheckCircleIcon aria-hidden="true" size={18} weight="bold" />
-                  Cập nhật mật khẩu
+                  {t('auth.updatePassword')}
                 </>
               )}
             </button>

@@ -1,69 +1,258 @@
+from __future__ import annotations
+
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Any
+from datetime import UTC, datetime
+from typing import Any, Literal
 
 import httpx
-from pydantic import ValidationError
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    ValidationError,
+    model_validator,
+)
 
 from backend.app.schemas.analysis import ReportContent
-from backend.app.services.report import REPORT_DISCLAIMER
+from backend.app.services.report import (
+    REPORT_DISCLAIMERS,
+    SECTION_TITLES,
+    hydrate_evidence,
+)
+from backend.app.services.report_evidence import (
+    build_report_evidence_catalog,
+)
+from backend.app.services.report_types import ReportLanguage
 
 
-SYSTEM_PROMPT = """
-Bạn là chuyên viên viết báo cáo bán hàng tiếng Việt cho chủ shop.
+SECTION_KEYS = ("revenue", "products", "customers", "forecast")
+SECTION_EVIDENCE_PREFIXES = {
+    "revenue": (
+        "summary.",
+        "orders.",
+        "sales.gross_revenue",
+        "sales.discount_rate_percent",
+    ),
+    "products": (
+        "sales.top_product.",
+        "sales.lowest_quantity_product.",
+        "sales.top_category.",
+        "sales.concentration.",
+        "sales.association.",
+    ),
+    "customers": ("customers.",),
+    "forecast": ("forecast.",),
+}
 
-Quy tắc bắt buộc:
-- Chỉ sử dụng dữ liệu aggregate trong JSON người dùng cung cấp.
-- Không tự tính lại, sửa hoặc thêm KPI.
-- Không nêu nguyên nhân như một sự thật khi dữ liệu không chứng minh.
-- Không suy đoán về lợi nhuận, tồn kho, quảng cáo, đối thủ hoặc giá thị trường.
-- Phân biệt rõ số liệu thực tế và forecast.
-- Viết ngắn gọn, cụ thể, dễ hành động.
-- Tối đa 3 điểm nổi bật và 3 khuyến nghị.
-- Không nhắc đến customer cụ thể.
-- Trả đúng JSON schema, không thêm nội dung ngoài schema.
+
+class StrictDraftModel(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+
+class AIReportSectionDraft(StrictDraftModel):
+    key: Literal["revenue", "products", "customers", "forecast"]
+    narrative: str = Field(min_length=10, max_length=1_500)
+    evidence_keys: list[str] = Field(min_length=1, max_length=5)
+
+
+class AIReportRiskDraft(StrictDraftModel):
+    code: str = Field(min_length=1, max_length=96)
+    severity: Literal["info", "warning", "critical"]
+    title: str = Field(min_length=3, max_length=120)
+    description: str = Field(min_length=10, max_length=800)
+    evidence_keys: list[str] = Field(min_length=1, max_length=3)
+
+
+class AIReportRecommendationDraft(StrictDraftModel):
+    priority: Literal["high", "medium", "low"]
+    title: str = Field(min_length=3, max_length=160)
+    evidence_keys: list[str] = Field(min_length=1, max_length=3)
+    action: str = Field(min_length=10, max_length=1_000)
+    success_metric: str = Field(min_length=10, max_length=600)
+
+
+class AIReportDraft(StrictDraftModel):
+    title: str = Field(min_length=3, max_length=160)
+    executive_summary: str = Field(min_length=20, max_length=1_500)
+    sections: list[AIReportSectionDraft] = Field(
+        min_length=4,
+        max_length=4,
+    )
+    risk_signals: list[AIReportRiskDraft] = Field(max_length=5)
+    recommendations: list[AIReportRecommendationDraft] = Field(
+        min_length=1,
+        max_length=5,
+    )
+
+    @model_validator(mode="after")
+    def validate_section_order(self) -> "AIReportDraft":
+        if [section.key for section in self.sections] != list(SECTION_KEYS):
+            raise ValueError(
+                "AI report sections must use the required order."
+            )
+        return self
+
+
+def build_system_prompt(language: ReportLanguage) -> str:
+    output_language = (
+        "Write every user-facing field in natural Vietnamese."
+        if language == "vi"
+        else "Write every user-facing field in clear English."
+    )
+    return f"""
+You are a sales reporting specialist writing for shop owners.
+
+Mandatory rules:
+- {output_language}
+- Use only the aggregate evidence_catalog in the supplied JSON.
+- Never recalculate, modify, copy with a changed value, or invent a KPI.
+- Cite evidence only by exact metric_key strings present in evidence_catalog.
+- Use the four section keys exactly once and in this order: revenue, products, customers, forecast.
+- Keep each section grounded in evidence relevant to that section.
+- Do not state a cause as fact when the data does not prove it.
+- Product association lift is not causality.
+- Forecast reliability is backtest evidence, not a probability or guarantee.
+- Do not speculate about profit, inventory, advertising, competitors, or market prices.
+- Never mention or infer a specific customer.
+- Return at most 5 risk signals and 5 recommendations.
+- Every risk and recommendation must cite 1-3 exact evidence keys.
+- Every recommendation must include a concrete action and a measurable success metric.
+- Return exactly the requested JSON schema with no additional content.
 """.strip()
 
 
-REPORT_JSON_SCHEMA: dict[str, Any] = {
-    "type": "object",
-    "properties": {
-        "title": {"type": "string"},
-        "summary": {"type": "string"},
-        "highlights": {
+SYSTEM_PROMPT = build_system_prompt("en")
+
+
+def build_report_json_schema(
+    safe_payload: dict[str, Any],
+    *,
+    restrict_metric_keys: bool = True,
+) -> dict[str, Any]:
+    metric_keys = [
+        str(item["metric_key"])
+        for item in safe_payload["evidence_catalog"]
+    ]
+
+    def evidence_keys_schema(maximum: int) -> dict[str, Any]:
+        item_schema: dict[str, Any] = {"type": "string"}
+        if restrict_metric_keys:
+            item_schema["enum"] = metric_keys
+        return {
             "type": "array",
-            "items": {"type": "string"},
+            "items": item_schema,
             "minItems": 1,
-            "maxItems": 3,
-        },
-        "trend_analysis": {"type": "string"},
-        "recommendations": {
-            "type": "array",
-            "minItems": 1,
-            "maxItems": 3,
-            "items": {
-                "type": "object",
-                "properties": {
-                    "title": {"type": "string"},
-                    "description": {"type": "string"},
+            "maxItems": maximum,
+        }
+
+    return {
+        "type": "object",
+        "properties": {
+            "title": {
+                "type": "string",
+            },
+            "executive_summary": {
+                "type": "string",
+            },
+            "sections": {
+                "type": "array",
+                "minItems": 4,
+                "maxItems": 4,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "key": {
+                            "type": "string",
+                            "enum": list(SECTION_KEYS),
+                        },
+                        "narrative": {
+                            "type": "string",
+                        },
+                        "evidence_keys": evidence_keys_schema(5),
+                    },
+                    "required": [
+                        "key",
+                        "narrative",
+                        "evidence_keys",
+                    ],
+                    "additionalProperties": False,
                 },
-                "required": ["title", "description"],
-                "additionalProperties": False,
+            },
+            "risk_signals": {
+                "type": "array",
+                "maxItems": 5,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "code": {
+                            "type": "string",
+                        },
+                        "severity": {
+                            "type": "string",
+                            "enum": ["info", "warning", "critical"],
+                        },
+                        "title": {
+                            "type": "string",
+                        },
+                        "description": {
+                            "type": "string",
+                        },
+                        "evidence_keys": evidence_keys_schema(3),
+                    },
+                    "required": [
+                        "code",
+                        "severity",
+                        "title",
+                        "description",
+                        "evidence_keys",
+                    ],
+                    "additionalProperties": False,
+                },
+            },
+            "recommendations": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 5,
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "priority": {
+                            "type": "string",
+                            "enum": ["high", "medium", "low"],
+                        },
+                        "title": {
+                            "type": "string",
+                        },
+                        "evidence_keys": evidence_keys_schema(3),
+                        "action": {
+                            "type": "string",
+                        },
+                        "success_metric": {
+                            "type": "string",
+                        },
+                    },
+                    "required": [
+                        "priority",
+                        "title",
+                        "evidence_keys",
+                        "action",
+                        "success_metric",
+                    ],
+                    "additionalProperties": False,
+                },
             },
         },
-        "disclaimer": {"type": "string"},
-    },
-    "required": [
-        "title",
-        "summary",
-        "highlights",
-        "trend_analysis",
-        "recommendations",
-        "disclaimer",
-    ],
-    "additionalProperties": False,
-}
+        "required": [
+            "title",
+            "executive_summary",
+            "sections",
+            "risk_signals",
+            "recommendations",
+        ],
+        "additionalProperties": False,
+    }
 
 
 @dataclass(frozen=True)
@@ -94,52 +283,56 @@ SUPPORTED_AI_PROVIDERS = frozenset({"gemini", "openai"})
 
 def build_safe_aggregate_payload(
     analysis_result: dict[str, Any],
+    language: ReportLanguage = "en",
 ) -> dict[str, Any]:
     sales = analysis_result.get("sales") or {}
     customers = analysis_result.get("customers") or {}
     forecast = analysis_result.get("forecast") or {}
-
+    product_intelligence = sales.get("product_intelligence") or {}
+    catalog = build_report_evidence_catalog(
+        analysis_result,
+        language,
+    )
+    metric_keys = list(catalog)
     return {
+        "contract_version": analysis_result.get("contract_version"),
         "period": analysis_result.get("period") or {},
-        "actual_summary": analysis_result.get("summary") or {},
-        "recent_daily_revenue": [
-            {
-                "date": item.get("date"),
-                "revenue": item.get("revenue"),
-            }
-            for item in (analysis_result.get("revenue_by_date") or [])[-14:]
-        ],
-        "sales": {
-            "revenue_by_month": sales.get("revenue_by_month") or [],
-            "revenue_by_category": sales.get("revenue_by_category") or [],
-            "top_products_by_revenue": [
-                _safe_product(item)
-                for item in (sales.get("top_products_by_revenue") or [])
-            ],
-            "top_products_by_quantity": [
-                _safe_product(item)
-                for item in (sales.get("top_products_by_quantity") or [])
-            ],
-            "lowest_quantity_products": [
-                _safe_product(item)
-                for item in (sales.get("lowest_quantity_products") or [])
-            ],
+        "evidence_catalog": list(catalog.values()),
+        "allowed_evidence_keys_by_section": {
+            section_key: [
+                metric_key
+                for metric_key in metric_keys
+                if metric_key.startswith(
+                    SECTION_EVIDENCE_PREFIXES[section_key]
+                )
+            ]
+            for section_key in SECTION_KEYS
         },
-        "customer_aggregates": {
-            "segments": customers.get("segments") or {},
-            "potential_count": customers.get("potential_count") or 0,
-        },
-        "forecast": {
-            "available": forecast.get("available", False),
-            "method": forecast.get("method"),
-            "history_days": forecast.get("history_days", 0),
-            "forecast_days": forecast.get("forecast_days", 0),
-            "forecast_total": forecast.get("forecast_total"),
-            "change_vs_last_7_days_percent": forecast.get(
-                "change_vs_last_7_days_percent"
+        "allowed_evidence_keys_for_risks_and_recommendations": (
+            metric_keys
+        ),
+        "availability": {
+            "rfm": _availability(customers.get("rfm") or {}),
+            "cohort": _availability(
+                customers.get("cohort_analysis") or {}
             ),
-            "points": forecast.get("points") or [],
-            "disclaimer": forecast.get("disclaimer"),
+            "product_associations": _availability(
+                product_intelligence.get("associations") or {}
+            ),
+            "forecast": {
+                "available": bool(forecast.get("available")),
+                "reason": (
+                    None
+                    if forecast.get("available")
+                    else "INSUFFICIENT_HISTORY"
+                ),
+            },
+            "forecast_evaluation": _availability(
+                forecast.get("evaluation") or {}
+            ),
+            "forecast_uncertainty": _availability(
+                forecast.get("uncertainty") or {}
+            ),
         },
         "warning_codes": analysis_result.get("warnings") or [],
     }
@@ -151,6 +344,7 @@ def generate_ai_report(
     fallback_report: dict[str, Any],
     config: AIReportConfig,
     safety_subject: str,
+    language: ReportLanguage = "en",
     transport: httpx.BaseTransport | None = None,
 ) -> AIReportGeneration:
     if not config.enabled:
@@ -176,23 +370,34 @@ def generate_ai_report(
             warning_code="AI_NOT_CONFIGURED",
         )
 
-    safe_payload = build_safe_aggregate_payload(analysis_result)
-
+    safe_payload = build_safe_aggregate_payload(
+        analysis_result,
+        language,
+    )
     try:
         with httpx.Client(
             timeout=config.timeout_seconds,
             transport=transport,
         ) as client:
-            raw_report = json.loads(
+            raw_draft = json.loads(
                 _request_report(
                     client=client,
                     provider=provider,
                     config=config,
                     safe_payload=safe_payload,
                     safety_subject=safety_subject,
+                    language=language,
                 )
             )
-            validated = ReportContent.model_validate(raw_report)
+        draft = AIReportDraft.model_validate(raw_draft)
+        report = _hydrate_ai_report(
+            draft=draft,
+            analysis_result=analysis_result,
+            fallback_report=fallback_report,
+            provider=provider,
+            model=config.model,
+            language=language,
+        )
     except httpx.TimeoutException:
         return AIReportGeneration(
             report=fallback_report,
@@ -207,21 +412,111 @@ def generate_ai_report(
                 else "AI_PROVIDER_ERROR"
             ),
         )
-    except (AIReportProviderError, json.JSONDecodeError, ValidationError):
+    except (
+        AIReportProviderError,
+        json.JSONDecodeError,
+        ValidationError,
+        ValueError,
+    ):
         return AIReportGeneration(
             report=fallback_report,
             warning_code="AI_INVALID_RESPONSE",
         )
-    except (httpx.HTTPError, TypeError, ValueError):
+    except (httpx.HTTPError, TypeError):
         return AIReportGeneration(
             report=fallback_report,
             warning_code="AI_PROVIDER_ERROR",
         )
-
-    report = validated.model_dump()
-    report["source"] = "ai"
-    report["disclaimer"] = REPORT_DISCLAIMER
     return AIReportGeneration(report=report)
+
+
+def _hydrate_ai_report(
+    *,
+    draft: AIReportDraft,
+    analysis_result: dict[str, Any],
+    fallback_report: dict[str, Any],
+    provider: str,
+    model: str,
+    language: ReportLanguage,
+) -> dict[str, Any]:
+    catalog = build_report_evidence_catalog(
+        analysis_result,
+        language,
+    )
+    sections = []
+    for section in draft.sections:
+        allowed_prefixes = SECTION_EVIDENCE_PREFIXES[section.key]
+        if any(
+            not metric_key.startswith(allowed_prefixes)
+            for metric_key in section.evidence_keys
+        ):
+            raise ValueError(
+                "A report section references unrelated evidence."
+            )
+        sections.append(
+            {
+                "key": section.key,
+                "title": SECTION_TITLES[section.key][language],
+                "narrative": section.narrative,
+                "evidence": hydrate_evidence(
+                    catalog,
+                    section.evidence_keys,
+                ),
+            }
+        )
+
+    report = {
+        "report_version": "2.0",
+        "source": "ai",
+        "language": language,
+        "generated_at": datetime.now(UTC).isoformat(),
+        "generator": {
+            "provider": provider,
+            "model": model,
+        },
+        "title": draft.title,
+        "executive_summary": draft.executive_summary,
+        "kpi_snapshot": fallback_report["kpi_snapshot"],
+        "data_quality": fallback_report["data_quality"],
+        "sections": sections,
+        "risk_signals": [
+            {
+                "code": f"AI_{risk.code}",
+                "severity": risk.severity,
+                "title": risk.title,
+                "description": risk.description,
+                "evidence": hydrate_evidence(
+                    catalog,
+                    risk.evidence_keys,
+                    maximum=3,
+                ),
+            }
+            for risk in draft.risk_signals
+        ],
+        "recommendations": [
+            {
+                "priority": recommendation.priority,
+                "title": recommendation.title,
+                "evidence": hydrate_evidence(
+                    catalog,
+                    recommendation.evidence_keys,
+                    maximum=3,
+                ),
+                "action": recommendation.action,
+                "success_metric": recommendation.success_metric,
+            }
+            for recommendation in draft.recommendations
+        ],
+        "disclaimer": REPORT_DISCLAIMERS[language],
+    }
+    return ReportContent.model_validate(report).model_dump(mode="json")
+
+
+def _availability(value: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "available": bool(value.get("available")),
+        "reason": value.get("reason"),
+    }
 
 
 def _request_report(
@@ -231,18 +526,21 @@ def _request_report(
     config: AIReportConfig,
     safe_payload: dict[str, Any],
     safety_subject: str,
+    language: ReportLanguage,
 ) -> str:
     if provider == "gemini":
         return _request_gemini_report(
             client=client,
             config=config,
             safe_payload=safe_payload,
+            language=language,
         )
     return _request_openai_report(
         client=client,
         config=config,
         safe_payload=safe_payload,
         safety_subject=safety_subject,
+        language=language,
     )
 
 
@@ -251,6 +549,7 @@ def _request_gemini_report(
     client: httpx.Client,
     config: AIReportConfig,
     safe_payload: dict[str, Any],
+    language: ReportLanguage,
 ) -> str:
     response = client.post(
         f"{config.api_base_url.rstrip('/')}/interactions",
@@ -265,11 +564,14 @@ def _request_gemini_report(
                 ensure_ascii=False,
                 separators=(",", ":"),
             ),
-            "system_instruction": SYSTEM_PROMPT,
+            "system_instruction": build_system_prompt(language),
             "response_format": {
                 "type": "text",
                 "mime_type": "application/json",
-                "schema": REPORT_JSON_SCHEMA,
+                "schema": build_report_json_schema(
+                    safe_payload,
+                    restrict_metric_keys=False,
+                ),
             },
             "generation_config": {
                 "thinking_level": "minimal",
@@ -288,6 +590,7 @@ def _request_openai_report(
     config: AIReportConfig,
     safe_payload: dict[str, Any],
     safety_subject: str,
+    language: ReportLanguage,
 ) -> str:
     response = client.post(
         f"{config.api_base_url.rstrip('/')}/responses",
@@ -298,7 +601,10 @@ def _request_openai_report(
         json={
             "model": config.model,
             "input": [
-                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "system",
+                    "content": build_system_prompt(language),
+                },
                 {
                     "role": "user",
                     "content": json.dumps(
@@ -312,8 +618,8 @@ def _request_openai_report(
             "text": {
                 "format": {
                     "type": "json_schema",
-                    "name": "marketlens_business_report",
-                    "schema": REPORT_JSON_SCHEMA,
+                    "name": "marketlens_evidence_report_v2",
+                    "schema": build_report_json_schema(safe_payload),
                     "strict": True,
                 }
             },
@@ -324,16 +630,6 @@ def _request_openai_report(
     )
     response.raise_for_status()
     return _extract_openai_output_text(response.json())
-
-
-def _safe_product(item: dict[str, Any]) -> dict[str, Any]:
-    return {
-        "product_name": item.get("product_name"),
-        "category": item.get("category"),
-        "revenue": item.get("revenue"),
-        "quantity": item.get("quantity"),
-        "order_count": item.get("order_count"),
-    }
 
 
 def _extract_openai_output_text(response: dict[str, Any]) -> str:

@@ -1,11 +1,9 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import {
-  CheckCircleIcon,
   CircleNotchIcon,
   EnvelopeSimpleIcon,
   IdentificationCardIcon,
   LockKeyIcon,
-  ShieldCheckIcon,
   SignOutIcon,
 } from '@phosphor-icons/react'
 import { useEffect, useMemo, useState } from 'react'
@@ -13,24 +11,29 @@ import { useForm } from 'react-hook-form'
 
 import { getAuthErrorMessage } from '../auth/authErrors'
 import {
-  changePasswordSchema,
-  profileSchema,
+  createChangePasswordSchema,
+  createProfileSchema,
   type ChangePasswordValues,
   type ProfileValues,
 } from '../auth/authSchemas'
 import { useAuth } from '../auth/useAuth'
 import { AuthNotice } from '../components/AuthNotice'
+import { LogoutConfirmDialog } from '../components/LogoutConfirmDialog'
 import { PasswordInput } from '../components/PasswordInput'
 import { PasswordRequirements } from '../components/PasswordRequirements'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const inputClassName =
-  'mt-2 w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)]/75 focus:border-[var(--primary)] focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_16%,transparent)] disabled:cursor-not-allowed disabled:opacity-60'
+  'mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-600 focus:ring-3 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-60'
 
-function getDisplayName(metadata: Record<string, unknown> | undefined) {
+function getDisplayName(
+  metadata: Record<string, unknown> | undefined,
+  fallback: string,
+) {
   const value = metadata?.display_name
   return typeof value === 'string' && value.trim()
     ? value.trim()
-    : 'Chủ shop'
+    : fallback
 }
 
 function getInitials(displayName: string) {
@@ -38,11 +41,12 @@ function getInitials(displayName: string) {
     .split(/\s+/)
     .filter(Boolean)
     .slice(-2)
-    .map((part) => part[0]?.toLocaleUpperCase('vi-VN'))
+    .map((part) => part[0]?.toLocaleUpperCase('en-US'))
     .join('')
 }
 
 export function ProfilePage() {
+  const { language, t } = useLanguage()
   const {
     configurationError,
     signOut,
@@ -50,7 +54,19 @@ export function ProfilePage() {
     updatePassword,
     user,
   } = useAuth()
-  const currentDisplayName = getDisplayName(user?.user_metadata)
+
+  const currentDisplayName = getDisplayName(
+    user?.user_metadata,
+    t('profile.defaultOwner'),
+  )
+  const profileSchema = useMemo(
+    () => createProfileSchema(language),
+    [language],
+  )
+  const changePasswordSchema = useMemo(
+    () => createChangePasswordSchema(language),
+    [language],
+  )
   const [profileNotice, setProfileNotice] = useState<{
     tone: 'success' | 'error'
     message: string
@@ -61,6 +77,7 @@ export function ProfilePage() {
   } | null>(null)
   const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [isLogoutDialogOpen, setIsLogoutDialogOpen] = useState(false)
 
   const profileForm = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),
@@ -68,6 +85,7 @@ export function ProfilePage() {
     reValidateMode: 'onChange',
     defaultValues: { displayName: currentDisplayName },
   })
+
   const passwordForm = useForm<ChangePasswordValues>({
     resolver: zodResolver(changePasswordSchema),
     mode: 'onBlur',
@@ -98,12 +116,12 @@ export function ProfilePage() {
       profileForm.reset({ displayName })
       setProfileNotice({
         tone: 'success',
-        message: 'Tên hiển thị đã được cập nhật.',
+        message: t('profile.saved'),
       })
     } catch (error) {
       setProfileNotice({
         tone: 'error',
-        message: getAuthErrorMessage(error),
+        message: getAuthErrorMessage(error, language),
       })
     }
   })
@@ -116,12 +134,12 @@ export function ProfilePage() {
         passwordForm.reset()
         setPasswordNotice({
           tone: 'success',
-          message: 'Mật khẩu đã được đổi thành công.',
+          message: t('profile.passwordChanged'),
         })
       } catch (error) {
         setPasswordNotice({
           tone: 'error',
-          message: getAuthErrorMessage(error),
+          message: getAuthErrorMessage(error, language),
         })
       }
     },
@@ -133,395 +151,187 @@ export function ProfilePage() {
     try {
       await signOut()
     } catch (error) {
-      setLogoutError(getAuthErrorMessage(error))
+      setLogoutError(getAuthErrorMessage(error, language))
       setIsLoggingOut(false)
+      setIsLogoutDialogOpen(false)
     }
   }
 
   return (
     <main className="px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
-      <div className="mx-auto max-w-6xl">
-        <header className="max-w-3xl">
-          <p className="text-sm font-extrabold text-[var(--primary)]">
-            Tài khoản
+      <div className="mx-auto max-w-5xl space-y-8">
+        <header className="border-b border-slate-200/80 pb-6">
+          <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+            {t('nav.profile')}
           </p>
-          <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
-            Hồ sơ của bạn
+          <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+            {t('profile.title')}
           </h1>
-          <p className="mt-3 leading-7 text-[var(--text-muted)]">
-            Cập nhật tên hiển thị, bảo vệ mật khẩu và quản lý phiên đăng nhập.
+          <p className="mt-2 text-sm text-slate-500">
+            {t('profile.desc')}
           </p>
         </header>
 
         {configurationError && (
-          <div className="mt-6">
-            <AuthNotice tone="error">{configurationError}</AuthNotice>
-          </div>
+          <AuthNotice tone="error">{configurationError}</AuthNotice>
+        )}
+        {logoutError && (
+          <AuthNotice tone="error">{logoutError}</AuthNotice>
         )}
 
-        <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(18rem,0.72fr)_minmax(0,1.28fr)]">
-          <aside className="self-start overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-            <div className="bg-[#102b61] px-6 py-7 text-white">
-              <span
-                aria-hidden="true"
-                className="grid size-16 place-items-center rounded-2xl bg-white/12 text-xl font-extrabold"
-              >
-                {initials || 'ML'}
-              </span>
-              <h2 className="mt-5 text-xl font-extrabold">
-                {currentDisplayName}
-              </h2>
-              <p className="mt-1 break-all text-sm text-blue-100/75">
+        {/* Profile Card Summary */}
+        <section className="data-panel flex flex-col gap-6 rounded-2xl border border-slate-200/80 bg-white p-6 sm:flex-row sm:items-center sm:justify-between shadow-xs">
+          <div className="flex items-center gap-4">
+            <span className="grid size-16 place-items-center rounded-xl bg-[var(--primary)] text-xl font-extrabold text-white">
+              {initials || 'SO'}
+            </span>
+            <div>
+              <h2 className="text-xl font-black text-slate-900">{currentDisplayName}</h2>
+              <p className="mt-0.5 flex items-center gap-1.5 text-xs font-semibold text-slate-500">
+                <EnvelopeSimpleIcon size={16} />
                 {user?.email}
               </p>
             </div>
-
-            <div className="space-y-5 p-6">
-              <div className="flex gap-3">
-                <EnvelopeSimpleIcon
-                  aria-hidden="true"
-                  className="mt-0.5 shrink-0 text-[var(--primary)]"
-                  size={20}
-                  weight="duotone"
-                />
-                <div>
-                  <p className="text-xs font-bold text-[var(--text-muted)]">
-                    Email đăng nhập
-                  </p>
-                  <p className="mt-1 break-all text-sm font-extrabold text-[var(--text-primary)]">
-                    {user?.email ?? 'Chưa có email'}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex gap-3">
-                <ShieldCheckIcon
-                  aria-hidden="true"
-                  className="mt-0.5 shrink-0 text-[var(--success)]"
-                  size={20}
-                  weight="duotone"
-                />
-                <div>
-                  <p className="text-xs font-bold text-[var(--text-muted)]">
-                    Trạng thái
-                  </p>
-                  <p className="mt-1 text-sm font-extrabold text-[var(--text-primary)]">
-                    Phiên đăng nhập đang hoạt động
-                  </p>
-                </div>
-              </div>
-
-              {logoutError && (
-                <AuthNotice tone="error">{logoutError}</AuthNotice>
-              )}
-
-              <button
-                className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl border border-[var(--border-strong)] px-4 py-3 text-sm font-extrabold text-[var(--text-primary)] transition hover:border-[var(--danger)] hover:text-[var(--danger)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-                disabled={isLoggingOut}
-                onClick={handleSignOut}
-                type="button"
-              >
-                {isLoggingOut ? (
-                  <CircleNotchIcon
-                    aria-hidden="true"
-                    className="animate-spin motion-reduce:animate-none"
-                    size={18}
-                    weight="bold"
-                  />
-                ) : (
-                  <SignOutIcon aria-hidden="true" size={18} weight="bold" />
-                )}
-                {isLoggingOut ? 'Đang đăng xuất' : 'Đăng xuất'}
-              </button>
-            </div>
-          </aside>
-
-          <div className="space-y-6">
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-7">
-              <div className="flex items-start gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-                  <IdentificationCardIcon
-                    aria-hidden="true"
-                    size={24}
-                    weight="duotone"
-                  />
-                </span>
-                <div>
-                  <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                    Thông tin cá nhân
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-                    Tên này xuất hiện trong thanh điều hướng của MarketLens.
-                  </p>
-                </div>
-              </div>
-
-              {profileNotice && (
-                <div className="mt-5" aria-live="polite">
-                  <AuthNotice tone={profileNotice.tone}>
-                    {profileNotice.message}
-                  </AuthNotice>
-                </div>
-              )}
-
-              <form
-                className="mt-6"
-                noValidate
-                onSubmit={submitProfile}
-              >
-                <label
-                  className="text-sm font-extrabold text-[var(--text-primary)]"
-                  htmlFor="profile-display-name"
-                >
-                  Tên hiển thị
-                </label>
-                <input
-                  aria-describedby={
-                    profileForm.formState.errors.displayName
-                      ? 'profile-display-name-error'
-                      : 'profile-display-name-helper'
-                  }
-                  aria-invalid={Boolean(
-                    profileForm.formState.errors.displayName,
-                  )}
-                  autoComplete="name"
-                  className={inputClassName}
-                  disabled={
-                    Boolean(configurationError) ||
-                    profileForm.formState.isSubmitting
-                  }
-                  id="profile-display-name"
-                  maxLength={50}
-                  {...profileForm.register('displayName')}
-                />
-                {profileForm.formState.errors.displayName ? (
-                  <p
-                    className="mt-2 text-sm font-medium text-[var(--danger)]"
-                    id="profile-display-name-error"
-                  >
-                    {profileForm.formState.errors.displayName.message}
-                  </p>
-                ) : (
-                  <p
-                    className="mt-2 text-sm text-[var(--text-muted)]"
-                    id="profile-display-name-helper"
-                  >
-                    Từ 2 đến 50 ký tự.
-                  </p>
-                )}
-
-                <div className="mt-5 flex justify-end">
-                  <button
-                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-                    disabled={
-                      Boolean(configurationError) ||
-                      profileForm.formState.isSubmitting ||
-                      !profileForm.formState.isDirty
-                    }
-                    type="submit"
-                  >
-                    {profileForm.formState.isSubmitting ? (
-                      <CircleNotchIcon
-                        aria-hidden="true"
-                        className="animate-spin motion-reduce:animate-none"
-                        size={18}
-                        weight="bold"
-                      />
-                    ) : (
-                      <CheckCircleIcon
-                        aria-hidden="true"
-                        size={18}
-                        weight="bold"
-                      />
-                    )}
-                    {profileForm.formState.isSubmitting
-                      ? 'Đang lưu'
-                      : 'Lưu thay đổi'}
-                  </button>
-                </div>
-              </form>
-            </section>
-
-            <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-7">
-              <div className="flex items-start gap-4">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-                  <LockKeyIcon
-                    aria-hidden="true"
-                    size={24}
-                    weight="duotone"
-                  />
-                </span>
-                <div>
-                  <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                    Đổi mật khẩu
-                  </h2>
-                  <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-                    Xác nhận mật khẩu hiện tại trước khi tạo mật khẩu mới.
-                  </p>
-                </div>
-              </div>
-
-              {passwordNotice && (
-                <div className="mt-5" aria-live="polite">
-                  <AuthNotice tone={passwordNotice.tone}>
-                    {passwordNotice.message}
-                  </AuthNotice>
-                </div>
-              )}
-
-              <form
-                className="mt-6 space-y-5"
-                noValidate
-                onSubmit={submitPassword}
-              >
-                <div>
-                  <label
-                    className="text-sm font-extrabold text-[var(--text-primary)]"
-                    htmlFor="profile-current-password"
-                  >
-                    Mật khẩu hiện tại
-                  </label>
-                  <PasswordInput
-                    aria-describedby={
-                      passwordForm.formState.errors.currentPassword
-                        ? 'profile-current-password-error'
-                        : undefined
-                    }
-                    aria-invalid={Boolean(
-                      passwordForm.formState.errors.currentPassword,
-                    )}
-                    autoComplete="current-password"
-                    className={inputClassName}
-                    disabled={
-                      Boolean(configurationError) ||
-                      passwordForm.formState.isSubmitting
-                    }
-                    id="profile-current-password"
-                    maxLength={72}
-                    {...passwordForm.register('currentPassword')}
-                  />
-                  {passwordForm.formState.errors.currentPassword && (
-                    <p
-                      className="mt-2 text-sm font-medium text-[var(--danger)]"
-                      id="profile-current-password-error"
-                    >
-                      {
-                        passwordForm.formState.errors.currentPassword
-                          .message
-                      }
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    className="text-sm font-extrabold text-[var(--text-primary)]"
-                    htmlFor="profile-new-password"
-                  >
-                    Mật khẩu mới
-                  </label>
-                  <PasswordInput
-                    aria-describedby={
-                      passwordForm.formState.errors.password
-                        ? 'profile-new-password-error'
-                        : undefined
-                    }
-                    aria-invalid={Boolean(
-                      passwordForm.formState.errors.password,
-                    )}
-                    autoComplete="new-password"
-                    className={inputClassName}
-                    disabled={
-                      Boolean(configurationError) ||
-                      passwordForm.formState.isSubmitting
-                    }
-                    id="profile-new-password"
-                    maxLength={72}
-                    {...passwordForm.register('password')}
-                  />
-                  <PasswordRequirements password={newPassword} />
-                  {passwordForm.formState.errors.password && (
-                    <p
-                      className="mt-2 text-sm font-medium text-[var(--danger)]"
-                      id="profile-new-password-error"
-                    >
-                      {passwordForm.formState.errors.password.message}
-                    </p>
-                  )}
-                </div>
-
-                <div>
-                  <label
-                    className="text-sm font-extrabold text-[var(--text-primary)]"
-                    htmlFor="profile-password-confirmation"
-                  >
-                    Nhập lại mật khẩu mới
-                  </label>
-                  <PasswordInput
-                    aria-describedby={
-                      passwordForm.formState.errors.passwordConfirmation
-                        ? 'profile-password-confirmation-error'
-                        : undefined
-                    }
-                    aria-invalid={Boolean(
-                      passwordForm.formState.errors.passwordConfirmation,
-                    )}
-                    autoComplete="new-password"
-                    className={inputClassName}
-                    disabled={
-                      Boolean(configurationError) ||
-                      passwordForm.formState.isSubmitting
-                    }
-                    id="profile-password-confirmation"
-                    maxLength={72}
-                    {...passwordForm.register('passwordConfirmation')}
-                  />
-                  {passwordForm.formState.errors.passwordConfirmation && (
-                    <p
-                      className="mt-2 text-sm font-medium text-[var(--danger)]"
-                      id="profile-password-confirmation-error"
-                    >
-                      {
-                        passwordForm.formState.errors.passwordConfirmation
-                          .message
-                      }
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex justify-end">
-                  <button
-                    className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-                    disabled={
-                      Boolean(configurationError) ||
-                      passwordForm.formState.isSubmitting
-                    }
-                    type="submit"
-                  >
-                    {passwordForm.formState.isSubmitting ? (
-                      <CircleNotchIcon
-                        aria-hidden="true"
-                        className="animate-spin motion-reduce:animate-none"
-                        size={18}
-                        weight="bold"
-                      />
-                    ) : (
-                      <ShieldCheckIcon
-                        aria-hidden="true"
-                        size={18}
-                        weight="bold"
-                      />
-                    )}
-                    {passwordForm.formState.isSubmitting
-                      ? 'Đang cập nhật'
-                      : 'Đổi mật khẩu'}
-                  </button>
-                </div>
-              </form>
-            </section>
           </div>
-        </div>
+          <button
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-xs font-black text-slate-700 shadow-2xs hover:bg-rose-50 hover:text-rose-600 hover:border-rose-200 transition"
+            disabled={isLoggingOut}
+            onClick={() => setIsLogoutDialogOpen(true)}
+            type="button"
+          >
+            <SignOutIcon size={16} weight="bold" />
+            {t('nav.signOut')}
+          </button>
+        </section>
+
+        {/* Profile Details Form */}
+        <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4">
+            <IdentificationCardIcon className="text-indigo-600" size={22} weight="duotone" />
+            <h2 className="text-lg font-black text-slate-900">{t('profile.information')}</h2>
+          </div>
+
+          <form className="mt-6 space-y-5" onSubmit={(e) => void submitProfile(e)}>
+            <div>
+              <label className="text-xs font-extrabold text-slate-700" htmlFor="displayName">
+                {t('profile.displayName')}
+              </label>
+              <input
+                className={inputClassName}
+                id="displayName"
+                {...profileForm.register('displayName')}
+              />
+              {profileForm.formState.errors.displayName?.message && (
+                <p className="mt-1.5 text-xs font-bold text-rose-600">
+                  {profileForm.formState.errors.displayName.message}
+                </p>
+              )}
+            </div>
+
+            {profileNotice && (
+              <AuthNotice tone={profileNotice.tone === 'success' ? 'success' : 'error'}>
+                {profileNotice.message}
+              </AuthNotice>
+            )}
+
+            <button
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition disabled:opacity-55"
+              disabled={profileForm.formState.isSubmitting || !profileForm.formState.isDirty}
+              type="submit"
+            >
+              {profileForm.formState.isSubmitting && (
+                <CircleNotchIcon className="animate-spin" size={16} />
+              )}
+              {t('profile.saveChanges')}
+            </button>
+          </form>
+        </section>
+
+        {/* Change Password Form */}
+        <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+          <div className="flex items-center gap-2.5 border-b border-slate-100 pb-4">
+            <LockKeyIcon className="text-indigo-600" size={22} weight="duotone" />
+            <h2 className="text-lg font-black text-slate-900">{t('profile.changePassword')}</h2>
+          </div>
+
+          <form className="mt-6 space-y-5" onSubmit={(e) => void submitPassword(e)}>
+            <div>
+              <label className="text-xs font-extrabold text-slate-700" htmlFor="currentPassword">
+                {t('profile.currentPassword')}
+              </label>
+              <PasswordInput
+                className={inputClassName}
+                id="currentPassword"
+                {...passwordForm.register('currentPassword')}
+              />
+              {passwordForm.formState.errors.currentPassword?.message && (
+                <p className="mt-1.5 text-xs font-bold text-rose-600">
+                  {passwordForm.formState.errors.currentPassword.message}
+                </p>
+              )}
+            </div>
+
+            <div>
+              <label className="text-xs font-extrabold text-slate-700" htmlFor="password">
+                {t('auth.newPassword')}
+              </label>
+              <PasswordInput
+                className={inputClassName}
+                id="password"
+                {...passwordForm.register('password')}
+              />
+              {passwordForm.formState.errors.password?.message && (
+                <p className="mt-1.5 text-xs font-bold text-rose-600">
+                  {passwordForm.formState.errors.password.message}
+                </p>
+              )}
+            </div>
+
+            <PasswordRequirements password={newPassword} />
+
+            <div>
+              <label className="text-xs font-extrabold text-slate-700" htmlFor="passwordConfirmation">
+                {t('auth.confirmNewPassword')}
+              </label>
+              <PasswordInput
+                className={inputClassName}
+                id="passwordConfirmation"
+                {...passwordForm.register('passwordConfirmation')}
+              />
+              {passwordForm.formState.errors.passwordConfirmation?.message && (
+                <p className="mt-1.5 text-xs font-bold text-rose-600">
+                  {passwordForm.formState.errors.passwordConfirmation.message}
+                </p>
+              )}
+            </div>
+
+            {passwordNotice && (
+              <AuthNotice tone={passwordNotice.tone === 'success' ? 'success' : 'error'}>
+                {passwordNotice.message}
+              </AuthNotice>
+            )}
+
+            <button
+              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition disabled:opacity-55"
+              disabled={passwordForm.formState.isSubmitting}
+              type="submit"
+            >
+              {passwordForm.formState.isSubmitting && (
+                <CircleNotchIcon className="animate-spin" size={16} />
+              )}
+              {t('auth.updatePassword')}
+            </button>
+          </form>
+        </section>
       </div>
+
+      {isLogoutDialogOpen && (
+        <LogoutConfirmDialog
+          isLoggingOut={isLoggingOut}
+          onCancel={() => setIsLogoutDialogOpen(false)}
+          onConfirm={() => void handleSignOut()}
+        />
+      )}
     </main>
   )
 }

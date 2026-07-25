@@ -26,7 +26,7 @@ def get_access_token(
     if credentials is None or credentials.scheme.lower() != "bearer":
         raise AppError(
             code="UNAUTHORIZED",
-            message="Yêu cầu access token hợp lệ.",
+            message="A valid access token is required.",
             status_code=401,
         )
 
@@ -43,14 +43,14 @@ def get_current_user(
     except Exception as error:
         raise AppError(
             code="UNAUTHORIZED",
-            message="Access token không hợp lệ hoặc đã hết hạn.",
+            message="The access token is invalid or expired.",
             status_code=401,
         ) from error
 
     if user is None:
         raise AppError(
             code="UNAUTHORIZED",
-            message="Không tìm thấy người dùng cho access token này.",
+            message="No user was found for this access token.",
             status_code=401,
         )
 

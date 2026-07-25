@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   changePasswordSchema,
+  createRegisterSchema,
   emailSchema,
   loginSchema,
   profileSchema,
@@ -81,6 +82,20 @@ describe('registerSchema', () => {
         displayName: 'Shop 123',
       }).success,
     ).toBe(false)
+  })
+
+  it('returns Vietnamese validation messages for the Vietnamese schema', () => {
+    const result = createRegisterSchema('vi').safeParse({
+      ...validRegistration,
+      email: 'khong-hop-le',
+    })
+
+    expect(result.success).toBe(false)
+    if (!result.success) {
+      expect(result.error.issues[0]?.message).toBe(
+        'Vui lòng nhập địa chỉ email hợp lệ.',
+      )
+    }
   })
 })
 

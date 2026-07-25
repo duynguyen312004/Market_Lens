@@ -31,6 +31,7 @@ STRING_COLUMNS = [
 ]
 VALID_STATUSES = {"completed", "cancelled", "returned"}
 MAX_RETURNED_ERRORS = 20
+DEFAULT_MAX_ANALYSIS_PERIOD_DAYS = 1_826
 
 
 @dataclass(frozen=True)
@@ -56,11 +57,12 @@ def validate_sales_data(
     frame: pd.DataFrame,
     *,
     max_rows: int,
+    max_period_days: int = DEFAULT_MAX_ANALYSIS_PERIOD_DAYS,
 ) -> pd.DataFrame:
     if len(frame.index) > max_rows:
         raise AppError(
             code="TOO_MANY_ROWS",
-            message=f"File vượt quá giới hạn {max_rows:,} dòng.",
+            message=f"The file exceeds the {max_rows:,}-row limit.",
             status_code=400,
             details={"max_rows": max_rows, "actual_rows": len(frame.index)},
         )
@@ -80,7 +82,7 @@ def validate_sales_data(
         )
         raise AppError(
             code="INVALID_FILE_COLUMNS",
-            message="Cấu trúc cột không đúng file mẫu MarketLens.",
+            message="The columns do not match the MarketLens template.",
             status_code=400,
             details={
                 "required": REQUIRED_COLUMNS,
@@ -98,7 +100,7 @@ def validate_sales_data(
     if normalized.empty:
         raise AppError(
             code="EMPTY_FILE",
-            message="File không có dòng dữ liệu.",
+            message="The file does not contain any data rows.",
             status_code=400,
         )
 
@@ -206,9 +208,40 @@ def validate_sales_data(
     if errors:
         _raise_row_errors(errors)
 
+    validate_analysis_period(
+        normalized,
+        max_period_days=max_period_days,
+    )
     normalized["quantity"] = normalized["quantity"].astype("int64")
     normalized = normalized.reset_index(drop=True)
     return normalized
+
+
+def validate_analysis_period(
+    frame: pd.DataFrame,
+    *,
+    max_period_days: int,
+) -> None:
+    date_from = pd.Timestamp(frame["order_date"].min()).normalize()
+    date_to = pd.Timestamp(frame["order_date"].max()).normalize()
+    actual_period_days = int((date_to - date_from).days) + 1
+    if actual_period_days <= max_period_days:
+        return
+
+    raise AppError(
+        code="DATE_RANGE_TOO_LARGE",
+        message=(
+            "The analysis period exceeds the "
+            f"{max_period_days:,}-day limit."
+        ),
+        status_code=400,
+        details={
+            "max_period_days": max_period_days,
+            "actual_period_days": actual_period_days,
+            "date_from": date_from.date().isoformat(),
+            "date_to": date_to.date().isoformat(),
+        },
+    )
 
 
 def _add_mask_errors(
@@ -266,7 +299,7 @@ def _raise_row_errors(errors: list[RowValidationError]) -> None:
     )
     raise AppError(
         code="INVALID_ROW_DATA",
-        message="File có dữ liệu không hợp lệ.",
+        message="The file contains invalid data.",
         status_code=400,
         details={
             "errors": [

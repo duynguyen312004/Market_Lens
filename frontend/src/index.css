@@ -2,7 +2,7 @@
 @import "@fontsource-variable/manrope";
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
   font-family:
     "Manrope Variable", "Segoe UI Variable", ui-sans-serif, system-ui,
     sans-serif;
@@ -11,53 +11,23 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  --page: #f6f9ff;
+  --page: #f1f4f8;
   --surface: #ffffff;
-  --surface-subtle: #edf3fb;
-  --surface-elevated: #ffffff;
-  --text-primary: #10213f;
-  --text-muted: #52627c;
-  --border: #dce5f3;
-  --border-strong: #b8c7dc;
-  --primary: #2563eb;
-  --primary-hover: #1d4ed8;
-  --primary-contrast: #f8fbff;
-  --primary-soft: #e1ecff;
-  --success: #15803d;
-  --success-soft: #e9f8ee;
-  --danger: #b42318;
-  --danger-soft: #fff0ee;
-  --warning: #9a6700;
-  --chart-2: #3b82f6;
-  --chart-3: #93c5fd;
-  --chart-grid: #dce5f3;
-  --forecast: #b45309;
-}
+  --surface-subtle: #f5f7fa;
+  --text-primary: #152033;
+  --text-muted: #617087;
+  --border: #d9e0e9;
+  --border-strong: #bdc8d6;
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --page: #0d1422;
-    --surface: #141e30;
-    --surface-subtle: #111b2c;
-    --surface-elevated: #18243a;
-    --text-primary: #eaf1ff;
-    --text-muted: #a6b5ce;
-    --border: #273550;
-    --border-strong: #3e506e;
-    --primary: #6b9bff;
-    --primary-hover: #8bb0ff;
-    --primary-contrast: #0c1423;
-    --primary-soft: #1a3158;
-    --success: #6fd28c;
-    --success-soft: #153625;
-    --danger: #ff9186;
-    --danger-soft: #3b2023;
-    --warning: #ffd277;
-    --chart-2: #8bb0ff;
-    --chart-3: #bfd4ff;
-    --chart-grid: #273550;
-    --forecast: #f6be68;
-  }
+  --primary: #1f64d8;
+  --primary-hover: #1854ba;
+  --primary-contrast: #ffffff;
+  --primary-soft: #e9f1fd;
+
+  --success: #10b981;
+  --success-soft: #ecfdf5;
+  --danger: #f43f5e;
+  --danger-soft: #fff1f2;
 }
 
 * {
@@ -74,6 +44,24 @@ body {
   min-height: 100dvh;
   margin: 0;
   background: var(--page);
+  color: var(--text-primary);
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.app-sidebar-surface {
+  background: #101a2b;
+  border-right: 1px solid #1e2b40;
+}
+
+.data-panel {
+  box-shadow: 0 1px 2px rgba(19, 33, 54, 0.04);
+}
+
+.data-panel:hover {
+  border-color: var(--border-strong);
 }
 
 button,
@@ -91,6 +79,25 @@ input:focus-visible {
 ::selection {
   background: color-mix(in srgb, var(--primary) 24%, transparent);
   color: var(--text-primary);
+}
+
+/* Scrollbar polish */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -115,12 +122,12 @@ input:focus-visible {
     --page: #ffffff;
     --surface: #ffffff;
     --surface-subtle: #f1f5f9;
-    --text-primary: #10213f;
+    --text-primary: #0f172a;
     --text-muted: #475569;
-    --border: #dce5f3;
-    --primary: #1d4ed8;
+    --border: #e2e8f0;
+    --primary: #4f46e5;
     --primary-contrast: #ffffff;
-    --primary-soft: #e8f0ff;
+    --primary-soft: #eef2ff;
   }
 
   html,
@@ -129,18 +136,22 @@ input:focus-visible {
   }
 
   body {
+    margin: 0 !important;
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }
 
-  .app-sidebar,
-  .app-mobile-header,
-  .report-screen-only {
-    display: none !important;
+  body * {
+    visibility: hidden !important;
   }
 
-  .app-content {
-    display: block !important;
+  #business-report,
+  #business-report * {
+    visibility: visible !important;
+  }
+
+  .report-screen-only {
+    display: none !important;
   }
 
   .report-page {
@@ -148,15 +159,97 @@ input:focus-visible {
   }
 
   #business-report {
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
     margin: 0 !important;
     overflow: visible !important;
     border: 0 !important;
     border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 8.5pt;
   }
 
   #business-report header,
   #business-report footer,
   .report-print-break-avoid {
-    break-inside: avoid;
+    break-inside: avoid-page;
+    page-break-inside: avoid;
+  }
+
+  #business-report h2,
+  #business-report h3,
+  #business-report h4,
+  #business-report figcaption {
+    break-after: avoid-page;
+    page-break-after: avoid;
+  }
+
+  #business-report > section {
+    break-before: auto;
+    page-break-before: auto;
+  }
+
+  #business-report .report-print-section,
+  #business-report .report-risk-section {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  #business-report > header {
+    padding: 24px !important;
+  }
+
+  #business-report > section {
+    padding: 20px 24px !important;
+  }
+
+  #business-report > footer {
+    padding: 16px 24px !important;
+  }
+
+  #business-report .report-print-break-avoid {
+    padding: 12px !important;
+  }
+
+  #business-report .report-kpi-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+
+  #business-report .report-print-two-column,
+  #business-report .report-print-chart-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  #business-report
+    .report-recommendations-grid[data-count="3"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+
+  #business-report .report-evidence-chip {
+    align-items: flex-start;
+    padding: 4px 7px !important;
+  }
+
+  #business-report .report-evidence-label {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+  }
+
+  #business-report .report-chart-svg {
+    display: block;
+    overflow: visible;
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  #business-report a {
+    color: inherit !important;
+    text-decoration: none !important;
   }
 }

@@ -58,7 +58,7 @@ async def validation_error_handler(
                     if part not in {"body"}
                 ],
                 "reason": item.get("type", "validation_error"),
-                "message": item.get("msg", "Giá trị không hợp lệ."),
+                "message": item.get("msg", "Invalid value."),
             }
             for item in error.errors()
         ]
@@ -66,7 +66,7 @@ async def validation_error_handler(
     return error_response(
         status_code=422,
         code="REQUEST_VALIDATION_ERROR",
-        message="Yêu cầu có tham số không hợp lệ.",
+        message="The request contains invalid parameters.",
         details=details,
     )
 
@@ -78,7 +78,7 @@ async def http_error_handler(
     message = (
         error.detail
         if isinstance(error.detail, str)
-        else "Không thể xử lý yêu cầu."
+        else "The request cannot be processed."
     )
     return error_response(
         status_code=error.status_code,
@@ -100,7 +100,7 @@ async def unexpected_error_handler(
     return error_response(
         status_code=500,
         code="INTERNAL_SERVER_ERROR",
-        message="Hệ thống gặp lỗi không mong đợi. Vui lòng thử lại.",
+        message="The system encountered an unexpected error. Please try again.",
     )
 
 

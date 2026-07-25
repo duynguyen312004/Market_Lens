@@ -1,7 +1,7 @@
 # MARKETLENS — MASTER IMPLEMENTATION PLAN
 
 > **Trạng thái:** Kế hoạch kỹ thuật chính thức cho feature-complete MVP  
-> **Phiên bản tài liệu:** 1.3  
+> **Phiên bản tài liệu:** 1.9
 > **Ngôn ngữ sản phẩm:** Tiếng Việt  
 > **Múi giờ nghiệp vụ:** Asia/Ho_Chi_Minh  
 > **Repository dự kiến:** `Market_lens/`  
@@ -60,6 +60,7 @@ V1 bắt buộc có:
 - Landing page với hero, CTA và ba nhóm tính năng.
 - Đăng ký, đăng nhập, quên mật khẩu, đổi mật khẩu và đăng xuất.
 - Dashboard, upload CSV/XLSX, Sales Analytics và Customer Analytics.
+- Phân tích riêng một file hoặc gộp 2-10 file cùng template trong một lần.
 - Forecast 7 ngày bằng thuật toán thống kê deterministic.
 - AI Report gọi external API từ backend và có rule-based fallback.
 - Xuất/lưu báo cáo dạng PDF.
@@ -127,7 +128,7 @@ năng, nhất quán và có thể trình diễn hoặc cho nhóm người dùng 
 MVP được xem là thành công khi:
 
 1. Người dùng đăng ký hoặc đăng nhập bằng Supabase Auth.
-2. Người dùng upload một file CSV/XLSX hợp lệ.
+2. Người dùng upload một file hoặc một nhóm file CSV/XLSX hợp lệ.
 3. Backend trả kết quả trong thời gian chấp nhận được với file demo.
 4. Dashboard hiển thị đúng 4 KPI chính.
 5. Sales Analytics và Customer Analytics hiển thị dữ liệu thật.
@@ -176,6 +177,11 @@ Google OAuth, email template tùy biến và role admin không thuộc V1.
 - Có file mẫu tải xuống.
 - Có kéo-thả hoặc chọn file.
 - Có trạng thái loading và thông báo lỗi rõ ràng.
+- Có hai chế độ: phân tích một file và phân tích gộp 2-10 file.
+- Với chế độ gộp, giới hạn 10 MB và 50.000 dòng áp dụng cho tổng các file.
+- Toàn bộ nhóm file được xử lý atomically: chỉ lưu khi mọi file đều hợp lệ.
+- Đơn trùng hoàn toàn giữa các file chỉ tính một lần; cùng mã nhưng dữ liệu
+  khác nhau phải bị từ chối.
 
 ### A.3. Dashboard
 
@@ -233,7 +239,7 @@ Bản fallback dùng rule/template ở backend để luôn hoạt động:
 - 3 khuyến nghị dựa trên rule.
 - Ghi rõ dữ liệu nào là thực tế và dữ liệu nào là dự báo.
 
-Tên hiển thị fallback là **Báo cáo tự động** hoặc **Báo cáo thông minh**. Dùng
+Tên hiển thị fallback là **Smart Report**. Dùng
 nhãn **AI Report** khi `AI_REPORT_ENABLED=true` và request AI thành công; khi
 fallback phải cho người dùng biết báo cáo đang dùng rule/template.
 
@@ -258,6 +264,7 @@ Không lưu từng dòng order trong MVP.
 - Đổi mật khẩu và đăng xuất.
 - Lịch sử upload/analysis.
 - Chọn analysis cũ để xem lại.
+- Đổi analysis đang xem từ mọi trang mà không đổi route hiện tại.
 - Xóa analysis của chính user sau bước xác nhận.
 - So sánh 7 ngày gần nhất với 7 ngày trước khi đủ dữ liệu.
 - Bộ lọc thời gian cơ bản trên dữ liệu aggregate đã lưu nếu contract hỗ trợ.
@@ -265,7 +272,7 @@ Không lưu từng dòng order trong MVP.
 
 ## 2.3. Phase C — AI, PDF và hoàn thiện chức năng, bắt buộc cho V1
 
-- External AI API viết báo cáo tiếng Việt từ aggregate JSON.
+- External AI API viết báo cáo tiếng Anh từ aggregate JSON để đồng bộ UI.
 - Rule-based report luôn là fallback.
 - Nút tạo lại báo cáo khi AI request trước đó thất bại.
 - Xuất/lưu report dạng PDF; V1 có thể dùng print stylesheet/browser Save as PDF.
@@ -353,8 +360,13 @@ Không yêu cầu trong V1:
 - Không lưu model.
 - Chạy thuật toán thống kê ngay khi phân tích file.
 - Dưới 14 ngày dữ liệu: không forecast.
-- Từ 14 đến 29 ngày: Moving Average 7 ngày.
-- Từ 30 ngày trở lên: Linear Trend trên tối đa 30 ngày gần nhất.
+- Từ 14 đến 27 ngày: fallback Moving Average 7 ngày; chưa công bố model
+  selection/evaluation nếu không đủ hai fold.
+- Từ 28 ngày trở lên: so sánh các candidate đủ điều kiện trên cùng tối đa 8
+  rolling-origin fold và chọn theo MAE cùng simplicity tolerance 5%.
+- Candidate gồm Seasonal Naive 7 ngày, Moving Average 7 ngày, Weekday Average
+  4 tuần và Linear Trend 30 ngày.
+- Khi có ít nhất 28 residual backtest, trả empirical interval mục tiêu 80%.
 - Forecast 7 ngày.
 
 ## 3.6. Lưu trữ dữ liệu
@@ -668,6 +680,8 @@ SUPABASE_SECRET_KEY=sb_secret_xxx
 
 MAX_UPLOAD_MB=10
 MAX_UPLOAD_ROWS=50000
+MAX_UPLOAD_FILES=10
+MAX_ANALYSIS_PERIOD_DAYS=1826
 AI_REPORT_ENABLED=false
 AI_PROVIDER=gemini
 AI_MODEL=gemini-3.5-flash-lite
@@ -750,8 +764,15 @@ Không hỗ trợ:
 - Google Sheets URL.
 - File nén.
 - File có mật khẩu.
-- Nhiều file trong một request.
 - Nhiều sheet phân tích cùng lúc.
+
+Hai chế độ upload được hỗ trợ:
+
+- `single`: đúng một file CSV/XLSX.
+- `combined`: từ 2 đến 10 file CSV/XLSX cùng template.
+
+Trong chế độ `combined`, mọi file phải có tên khác nhau sau khi sanitize. Tổng
+dung lượng không quá 10 MB và tổng số dòng trước khử trùng không quá 50.000.
 
 ## 8.2. Cột bắt buộc
 
@@ -900,9 +921,18 @@ Ví dụ `Order ID` không tự đổi thành `order_id`; file đó phải báo 
 
 ## 9.3. Dữ liệu trùng
 
-Không tự xóa duplicate line item vì có thể là dữ liệu hợp lệ.
+Trong một file, không tự xóa duplicate line item vì có thể là dữ liệu hợp lệ.
 
-Có thể đưa warning nếu toàn bộ dòng trùng hoàn toàn, nhưng không block MVP.
+Trong chế độ gộp:
+
+- Nếu cùng `order_id` xuất hiện ở nhiều file và toàn bộ multiset line item của
+  đơn giống hệt nhau, chỉ giữ bản ở file được chọn trước và trả warning
+  `DUPLICATE_ORDERS_REMOVED`.
+- Nếu cùng `order_id` có nội dung khác nhau giữa các file, từ chối toàn bộ
+  request với `CONFLICTING_DATA_ACROSS_FILES`.
+- Nhất quán của `product_id` và `customer_id` phải được kiểm tra trên toàn bộ
+  nhóm file, không chỉ trong từng file.
+- Không lưu bất kỳ dòng thô nào sau request.
 
 ## 9.4. Lỗi validation
 
@@ -1111,23 +1141,34 @@ Response:
 - `method = null`
 - warning: `INSUFFICIENT_HISTORY`
 
-### Từ 14 đến 29 ngày
+### Từ 14 đến 27 ngày
 
-Dùng **Moving Average 7 ngày**.
+Dùng **Moving Average 7 ngày** làm fallback.
 
 - Tính trung bình 7 ngày gần nhất.
 - Dự báo mỗi ngày trong 7 ngày tiếp theo bằng giá trị trung bình đó.
 - Clip tối thiểu 0.
+- Model selection/evaluation trả unavailable nếu chưa đủ hai rolling-origin
+  fold trên một candidate hợp lệ.
 
-### Từ 30 ngày trở lên
+### Từ 28 ngày trở lên
 
-Dùng **Linear Trend** trên tối đa 30 ngày gần nhất.
+So sánh các candidate đủ điều kiện trên cùng rolling-origin origins:
 
-- `x = 0..n-1`.
-- `y = revenue_by_day`.
-- Dùng `numpy.polyfit(x, y, 1)` để lấy slope/intercept.
-- Dự báo `x = n..n+6`.
-- Clip giá trị âm về 0.
+- `seasonal_naive_7_days`;
+- `moving_average_7_days`;
+- `weekday_average_4_weeks`;
+- `linear_trend_30_days`.
+
+Primary metric là MAE. Nếu một candidate đơn giản hơn nằm trong 5% MAE của
+candidate tốt nhất, chọn candidate đơn giản hơn; tie-break còn lại
+deterministic. Dùng tối đa 8 fold không chồng lấn, horizon 7 ngày và tối thiểu
+2 fold. Production forecast chạy method đã chọn trên toàn bộ lịch sử; mọi
+prediction đều được làm tròn và chặn âm.
+
+Nếu có ít nhất 28 absolute residual của selected method, mỗi forecast point
+trả empirical interval mục tiêu 80% bằng quantile `higher`; lower bound bị
+chặn tại 0. Đây là khoảng bất định thực nghiệm, không phải cam kết xác suất.
 
 Đây là phép ước lượng thống kê tại request time, không phải pipeline training model riêng.
 
@@ -1160,46 +1201,120 @@ Dùng **Linear Trend** trên tối đa 30 ngày gần nhất.
 
 # 12. Report specification
 
-## 12.1. Report fallback — Rule-based
+## 12.1. Report V2 — schema dùng chung
 
-Report fallback được tạo hoàn toàn bằng backend template, không phụ thuộc
-external AI API.
-
-Cấu trúc:
+Report rule-based và AI bắt buộc dùng cùng schema `report_version = "2.0"`.
+Fallback được tạo hoàn toàn bằng backend và luôn hoạt động khi provider lỗi.
 
 ```json
 {
-  "title": "Báo cáo tổng quan kinh doanh",
-  "summary": "...",
-  "highlights": ["...", "..."],
-  "trend_analysis": "...",
+  "report_version": "2.0",
+  "source": "rule_based",
+  "language": "vi",
+  "generated_at": "2026-07-25T12:00:00Z",
+  "generator": {"provider": "rules", "model": null},
+  "title": "Báo cáo kinh doanh dựa trên bằng chứng",
+  "executive_summary": "...",
+  "kpi_snapshot": [
+    {
+      "metric_key": "summary.total_revenue",
+      "label": "Tổng doanh thu thuần",
+      "value": 113010000,
+      "unit": "vnd",
+      "context": null
+    },
+    {
+      "metric_key": "summary.total_orders",
+      "label": "Đơn hàng hoàn tất",
+      "value": 273,
+      "unit": "count",
+      "context": null
+    },
+    {
+      "metric_key": "summary.total_customers",
+      "label": "Khách hàng có đơn hoàn tất",
+      "value": 30,
+      "unit": "count",
+      "context": null
+    },
+    {
+      "metric_key": "summary.average_order_value",
+      "label": "Giá trị đơn hoàn tất trung bình",
+      "value": 413956.04,
+      "unit": "vnd",
+      "context": null
+    }
+  ],
+  "data_quality": {
+    "status": "good",
+    "summary": "...",
+    "signals": [],
+    "warning_codes": []
+  },
+  "sections": [
+    {
+      "key": "revenue",
+      "title": "Hiệu quả doanh thu",
+      "narrative": "...",
+      "evidence": [{"metric_key": "summary.total_revenue", "label": "Tổng doanh thu thuần", "value": 113010000, "unit": "vnd", "context": null}]
+    },
+    {
+      "key": "products",
+      "title": "Phân tích sản phẩm",
+      "narrative": "...",
+      "evidence": [{"metric_key": "sales.top_product.revenue", "label": "Doanh thu sản phẩm dẫn đầu", "value": 20350000, "unit": "vnd", "context": "Tai nghe Bluetooth"}]
+    },
+    {
+      "key": "customers",
+      "title": "Sức khỏe khách hàng",
+      "narrative": "...",
+      "evidence": [{"metric_key": "customers.repeat_customer_rate_percent", "label": "Tỷ lệ khách hàng quay lại", "value": 96.666667, "unit": "percent", "context": null}]
+    },
+    {
+      "key": "forecast",
+      "title": "Bằng chứng dự báo",
+      "narrative": "...",
+      "evidence": [{"metric_key": "forecast.history_days", "label": "Độ dài lịch sử dự báo", "value": 60, "unit": "days", "context": null}]
+    }
+  ],
+  "risk_signals": [],
   "recommendations": [
-    {"title": "...", "description": "..."}
+    {
+      "priority": "medium",
+      "title": "...",
+      "evidence": [{"metric_key": "sales.top_product.revenue", "label": "Doanh thu sản phẩm dẫn đầu", "value": 20350000, "unit": "vnd", "context": "Tai nghe Bluetooth"}],
+      "action": "...",
+      "success_metric": "..."
+    }
   ],
   "disclaimer": "..."
 }
 ```
 
-## 12.2. Rule tạo highlight
+Ví dụ trên chỉ rút gọn narrative; mọi collection vẫn minh họa đúng cardinality
+tối thiểu của runtime schema.
 
-Ví dụ:
+## 12.2. Evidence catalog
 
-- Nếu growth > 5% → highlight tăng trưởng tích cực.
-- Nếu growth < -5% → highlight doanh thu giảm cần theo dõi.
-- Sản phẩm top revenue → highlight đóng góp.
-- Returning + VIP rate cao → highlight retention.
-- Category có share quá cao → cảnh báo phụ thuộc một danh mục.
+Backend tạo catalog từ analysis V3. Mỗi item có `metric_key`, localized label,
+value, unit và optional context. KPI snapshot, data-quality note và mọi value
+trong report cuối đều được backend hydrate từ catalog này.
 
-## 12.3. Rule recommendation
+AI chỉ được trả narrative cùng `evidence_keys`; không được trả value. Unknown
+key, key sai domain của section hoặc schema sai đều fallback toàn bộ.
 
-Recommendation phải liên quan dữ liệu đã có.
+## 12.3. Rule fallback và recommendation
 
-Ví dụ hợp lệ:
+Fallback có executive summary, KPI snapshot, data-quality, bốn section,
+risk signals và 1-5 recommendation. Mỗi recommendation bắt buộc có:
 
-- Tăng ưu tiên quảng bá top product.
-- Chăm sóc VIP/returning customers.
-- Kiểm tra sản phẩm có lượng bán thấp.
-- Giảm phụ thuộc một category nếu share quá cao.
+- `priority`;
+- 1-3 evidence;
+- action cụ thể;
+- success metric đo được.
+
+Risk threshold hiện hành gồm revenue giảm trên 5%, top-product concentration
+từ 40%, repeat rate dưới 25% và forecast reliability low.
 
 Ví dụ không hợp lệ khi thiếu dữ liệu:
 
@@ -1208,17 +1323,19 @@ Ví dụ không hợp lệ khi thiếu dữ liệu:
 - “Tồn kho sắp hết.”
 - “Lợi nhuận giảm.”
 
-## 12.4. AI Report V1
+## 12.4. AI Report V2
 
 Khi `AI_REPORT_ENABLED=true`:
 
-1. Backend tạo aggregate JSON.
-2. Loại bỏ customer names và customer IDs.
-3. Gửi aggregate JSON tới AI API.
-4. Yêu cầu output JSON theo schema.
-5. Validate output.
-6. Nếu lỗi, dùng report template fallback.
-7. Trả `source = "ai"` hoặc `source = "rule_based"` để UI hiển thị trung thực.
+1. Backend tạo aggregate evidence catalog.
+2. Loại bỏ mọi raw row và customer identity.
+3. Gửi catalog, availability flags và warning codes tới provider.
+4. Yêu cầu draft JSON có đúng bốn section và evidence keys.
+5. Validate strict draft schema.
+6. Kiểm tra reference tồn tại/domain rồi hydrate evidence từ backend.
+7. Validate final Report V2.
+8. Nếu bất kỳ bước nào lỗi, persist fallback cùng schema.
+9. Trả `source` trung thực và lưu theo language.
 
 AI API không nhận:
 
@@ -1237,9 +1354,13 @@ Prompt phải yêu cầu model:
 - Chỉ sử dụng dữ liệu đã cung cấp.
 - Không đưa ra nguyên nhân như sự thật nếu không có dữ liệu.
 - Phân biệt actual và forecast.
-- Viết tiếng Việt rõ ràng.
+- Viết tiếng Anh rõ ràng, ngắn gọn và phù hợp với chủ shop.
 - Trả JSON đúng schema.
-- Tối đa 3 khuyến nghị.
+- Tối đa 5 risk signals và 5 khuyến nghị.
+- Mỗi risk/recommendation trích dẫn 1-3 exact metric keys.
+- Mỗi recommendation có action và success metric.
+
+Contract và gate chi tiết: `docs/AI_REPORT_V2.md`.
 
 ---
 
@@ -1252,6 +1373,8 @@ Prompt phải yêu cầu model:
 | `id` | uuid | Primary key |
 | `user_id` | uuid | Chủ sở hữu từ Supabase Auth |
 | `file_name` | text | Tên file upload |
+| `upload_mode` | text | `single` hoặc `combined` |
+| `source_file_count` | integer | Số file nguồn, từ 1 đến 10 |
 | `status` | text | processing/completed/failed |
 | `row_count` | integer | Số dòng sau khi bỏ dòng rỗng |
 | `date_from` | date nullable | Ngày nhỏ nhất |
@@ -1409,7 +1532,10 @@ Response 201:
 {
   "id": "uuid",
   "file_name": "sales.xlsx",
+  "upload_mode": "single",
+  "source_file_count": 1,
   "created_at": "2026-07-24T10:00:00Z",
+  "contract_version": "3.0",
   "period": {
     "from": "2026-06-01",
     "to": "2026-07-30",
@@ -1420,17 +1546,96 @@ Response 201:
     "total_orders": 489,
     "total_customers": 235,
     "total_quantity_sold": 1526,
-    "growth_rate_percent": 12.4
+    "growth_rate_percent": 12.4,
+    "average_order_value": 255623.72,
+    "average_revenue_per_customer": 531914.89
+  },
+  "orders": {
+    "total_orders_all_statuses": 540,
+    "by_status": {
+      "completed": 489,
+      "cancelled": 34,
+      "returned": 17
+    },
+    "status_rates_percent": {
+      "completed": 90.555556,
+      "cancelled": 6.296296,
+      "returned": 3.148148
+    },
+    "average_items_per_completed_order": 3.120654
   },
   "revenue_by_date": [
     {"date": "2026-06-01", "revenue": 1200000}
   ],
   "sales": {
+    "gross_revenue": 128250000,
+    "total_discount": 3250000,
+    "discount_rate_percent": 2.534113,
     "revenue_by_month": [],
+    "revenue_by_weekday": [],
     "revenue_by_category": [],
     "top_products_by_revenue": [],
     "top_products_by_quantity": [],
-    "lowest_quantity_products": []
+    "lowest_quantity_products": [],
+    "peak_revenue_day": {},
+    "lowest_nonzero_revenue_day": {},
+    "concentration": {
+      "top_product_revenue_share_percent": 24.1,
+      "top_category_revenue_share_percent": 38.7,
+      "top_20_percent_products_revenue_share_percent": 62.4,
+      "top_20_percent_product_count": 4
+    },
+    "product_intelligence": {
+      "abc": {
+        "method": "cumulative_revenue_80_95",
+        "classified_product_count": 20,
+        "classes": {
+          "A": {
+            "product_count": 4,
+            "revenue": 100000000,
+            "revenue_share_percent": 80
+          },
+          "B": {
+            "product_count": 6,
+            "revenue": 18750000,
+            "revenue_share_percent": 15
+          },
+          "C": {
+            "product_count": 10,
+            "revenue": 6250000,
+            "revenue_share_percent": 5
+          }
+        },
+        "representative_products": []
+      },
+      "associations": {
+        "available": true,
+        "reason": null,
+        "total_completed_orders": 489,
+        "eligible_completed_order_count": 489,
+        "basket_order_count": 140,
+        "eligible_basket_order_count": 140,
+        "skipped_oversized_order_count": 0,
+        "max_products_per_basket": 50,
+        "minimum_pair_order_count": 3,
+        "minimum_support_percent": 1,
+        "observed_pair_count": 45,
+        "qualified_pair_count": 12,
+        "rules": []
+      }
+    },
+    "discount_analysis": {
+      "available": true,
+      "reason": null,
+      "gross_revenue": 128250000,
+      "discount_amount": 3250000,
+      "net_revenue": 125000000,
+      "discount_rate_percent": 2.534113,
+      "discounted_order_count": 120,
+      "discounted_order_rate_percent": 24.539877,
+      "by_product": [],
+      "by_category": []
+    }
   },
   "customers": {
     "segments": {
@@ -1440,11 +1645,139 @@ Response 201:
     },
     "potential_count": 20,
     "potential_customers": [],
-    "top_customers": []
+    "top_customers": [],
+    "repeat_customer_count": 145,
+    "repeat_customer_rate_percent": 61.702128,
+    "revenue_by_segment": [],
+    "rfm": {
+      "available": true,
+      "reason": null,
+      "snapshot_date": "2026-07-31",
+      "customer_count": 235,
+      "minimum_customers": 5,
+      "score_scale": 5,
+      "scoring_method": "empirical_quintile_average_rank",
+      "segment_rules_version": "rfm_v1",
+      "segments": {
+        "new": 20,
+        "champion": 35,
+        "loyal": 70,
+        "at_risk": 40,
+        "regular": 70
+      },
+      "segment_revenue": [],
+      "top_customers": [],
+      "at_risk_customers": []
+    },
+    "cohort_analysis": {
+      "available": false,
+      "reason": "INSUFFICIENT_COHORT_HISTORY",
+      "method": "acquisition_month_completed_orders",
+      "period_from": "2026-06",
+      "period_to": "2026-07",
+      "observed_month_count": 2,
+      "minimum_month_count": 3,
+      "customer_count": 235,
+      "cohort_count": 0,
+      "maximum_observed_month_index": 1,
+      "cohorts": []
+    }
   },
-  "forecast": {},
+  "forecast": {
+    "available": true,
+    "method": "linear_trend_30_days",
+    "history_days": 60,
+    "forecast_days": 7,
+    "forecast_total": 15450331,
+    "change_vs_last_7_days_percent": -7.316548,
+    "points": [],
+    "selection": {
+      "available": true,
+      "reason": null,
+      "strategy": "rolling_origin_candidate_comparison",
+      "primary_metric": "mae",
+      "simplicity_tolerance_percent": 5,
+      "minimum_fold_count": 2,
+      "maximum_fold_count": 8,
+      "minimum_history_days": 28,
+      "fold_count": 4,
+      "evaluation_points": 28,
+      "selected_method": "linear_trend_30_days",
+      "selection_reason": "LOWEST_MAE",
+      "candidates": []
+    },
+    "evaluation": {
+      "available": true,
+      "reason": null,
+      "strategy": "rolling_origin_selected_method",
+      "evaluated_method": "linear_trend_30_days",
+      "baseline_method": "seasonal_naive_7_days",
+      "horizon_days": 7,
+      "minimum_fold_count": 2,
+      "maximum_fold_count": 8,
+      "minimum_history_days": 28,
+      "fold_count": 4,
+      "evaluation_points": 28,
+      "model_metrics": {
+        "mae": 856855.5,
+        "rmse": 1034308.06,
+        "smape_percent": 42.263957
+      },
+      "baseline_metrics": {
+        "mae": 1223928.57,
+        "rmse": 1432915.36,
+        "smape_percent": 67.306507
+      },
+      "mae_improvement_vs_baseline_percent": 29.99138,
+      "reliability": "low",
+      "folds": []
+    },
+    "uncertainty": {
+      "available": true,
+      "reason": null,
+      "method": "empirical_absolute_error_quantile",
+      "target_coverage_percent": 80,
+      "residual_count": 28,
+      "absolute_error_quantile": 1439007,
+      "observed_backtest_coverage_percent": 82.142857
+    },
+    "disclaimer": "Forecasts are based on historical data and are provided for reference only."
+  },
   "report": {},
   "warnings": []
+}
+```
+
+### `POST /analyses/combined`
+
+Auth: Có.
+
+Content type: `multipart/form-data`.
+
+Field:
+
+- `files`: field lặp lại từ 2 đến 10 CSV/XLSX.
+
+Request chỉ tạo đúng một record `analyses` sau khi mọi file đã được đọc,
+validate, kiểm tra trùng/xung đột và tính toán thành công. Response 201 dùng
+cùng `AnalysisDetailResponse` và có metadata:
+
+```json
+{
+  "upload_mode": "combined",
+  "source_file_count": 2,
+  "upload": {
+    "mode": "combined",
+    "file_count": 2,
+    "source_files": [
+      {"file_name": "january.csv", "row_count": 1000},
+      {"file_name": "february.csv", "row_count": 900}
+    ],
+    "source_row_count": 1900,
+    "effective_row_count": 1880,
+    "duplicate_order_count": 12,
+    "duplicate_row_count": 20
+  }
 }
 ```
 
@@ -1465,6 +1798,8 @@ Response 200:
     {
       "id": "uuid",
       "file_name": "sales.xlsx",
+      "upload_mode": "single",
+      "source_file_count": 1,
       "status": "completed",
       "row_count": 2000,
       "date_from": "2026-06-01",
@@ -1498,22 +1833,10 @@ Auth: Có.
 - Lưu report mới vào `result_json`.
 - Nếu provider lỗi/timeout, trả rule-based fallback với `source` rõ ràng.
 
-Response 200:
-
-```json
-{
-  "analysis_id": "uuid",
-  "source": "ai",
-  "report": {
-    "title": "Báo cáo tổng quan kinh doanh",
-    "summary": "...",
-    "highlights": [],
-    "trend_analysis": "...",
-    "recommendations": [],
-    "disclaimer": "..."
-  }
-}
-```
+Response 200 có `analysis_id`, `source`, `language`, `warning` và `report`.
+`report` bắt buộc là toàn bộ `ReportContent` V2 đúng schema tại mục 12.1;
+không trả partial object. `warning = null` khi AI thành công, ngược lại chứa
+fallback code/message và `source = "rule_based"`.
 
 ## 15.6. Delete analysis
 
@@ -1543,7 +1866,7 @@ Mọi lỗi do ứng dụng chủ động trả phải dùng format:
 {
   "error": {
     "code": "ERROR_CODE",
-    "message": "Thông báo tiếng Việt cho người dùng.",
+    "message": "English user-facing message.",
     "details": {}
   }
 }
@@ -1556,10 +1879,15 @@ Mọi lỗi do ứng dụng chủ động trả phải dùng format:
 | 400 | `INVALID_FILE_TYPE` | Không phải CSV/XLSX |
 | 400 | `FILE_TOO_LARGE` | Quá 10 MB |
 | 400 | `TOO_MANY_ROWS` | Quá 50.000 dòng |
+| 400 | `DATE_RANGE_TOO_LARGE` | Kỳ dữ liệu vượt quá 1.826 ngày |
 | 400 | `EMPTY_FILE` | File không có dữ liệu |
 | 400 | `INVALID_FILE_COLUMNS` | Thiếu/thừa sai template bắt buộc |
 | 400 | `INVALID_ROW_DATA` | Dữ liệu dòng không hợp lệ |
 | 400 | `NO_COMPLETED_ORDERS` | Không có đơn completed |
+| 400 | `NOT_ENOUGH_FILES` | Mode gộp có ít hơn 2 file |
+| 400 | `TOO_MANY_FILES` | Mode gộp vượt quá 10 file |
+| 400 | `DUPLICATE_FILE_NAMES` | Nhóm file có tên trùng nhau |
+| 400 | `CONFLICTING_DATA_ACROSS_FILES` | ID dùng chung có dữ liệu khác nhau |
 | 401 | `UNAUTHORIZED` | Không có/không hợp lệ token |
 | 404 | `ANALYSIS_NOT_FOUND` | Không tồn tại hoặc không thuộc user |
 | 500 | `ANALYSIS_PROCESSING_FAILED` | Lỗi không dự kiến |
@@ -1757,7 +2085,10 @@ Sử dụng TanStack Query:
 - `useAnalysis(id)` cho detail.
 - `useCreateAnalysis()` cho upload.
 
-Lưu `marketlens:lastAnalysisId` vào localStorage sau upload thành công.
+Selection nằm trong React Context dùng chung cho toàn bộ protected app và được
+lưu theo user bằng key `marketlens:lastAnalysisId:<user_id>`. Sidebar/mobile
+header có bộ chọn analysis gần đây. Đổi selection chỉ thay dữ liệu, không ép
+chuyển route.
 
 Khi vào dashboard:
 
@@ -1779,6 +2110,9 @@ UI states:
 
 Hỗ trợ cả kéo-thả và nút chọn file; hai cách phải đi qua cùng validation và
 upload mutation.
+
+UI có hai mode `single` và `combined`. Mode gộp hiển thị danh sách file, tổng
+dung lượng, cho phép bỏ từng file và gọi endpoint `/analyses/combined`.
 
 Validation frontend chỉ để UX:
 
@@ -1833,20 +2167,22 @@ Nếu available:
 
 ## 18.10. Report page
 
-- Summary.
-- Highlights.
-- Trend analysis.
-- Recommendations.
-- Disclaimer.
+- Dedicated Report V2 document: metadata, executive summary, KPI snapshot,
+  data quality, revenue/product/customer/forecast evidence, risks,
+  recommendations và disclaimer.
+- Hai SVG print-safe: actual revenue và actual/forecast/empirical interval.
 - Trạng thái `source`: AI hoặc rule-based fallback.
 - Nút tạo/tạo lại AI report.
-- Nút xuất PDF bằng print stylesheet/browser Save as PDF trong V1.
+- Nút `Print / Save as PDF` hoặc `In / Lưu thành PDF`; print stylesheet chỉ
+  xuất `#business-report`, không phải ảnh chụp toàn màn hình.
+- A4 12 mm, page-break có chủ đích và không in raw rows/customer identity.
 
 ## 18.11. History page
 
 - Danh sách analysis theo thời gian mới nhất.
 - Tên file, khoảng ngày, số dòng và trạng thái.
 - Mở một analysis cũ và đặt làm analysis đang xem.
+- Hiển thị rõ analysis gộp và số file nguồn.
 - Xóa analysis sau confirm.
 - Pagination offset/limit cơ bản.
 
@@ -1859,6 +2195,9 @@ Nếu available:
 - Đăng xuất.
 
 ## 18.13. Formatting
+
+Toàn bộ UI copy, validation, error và nội dung report dùng tiếng Anh. Tiền VND
+vẫn dùng locale `vi-VN` để giữ đúng cách nhóm chữ số và ký hiệu tiền tệ.
 
 Money:
 
@@ -1889,19 +2228,24 @@ Dates:
 ## 19.2. Design tokens gợi ý
 
 ```text
-Primary:       #2563EB
-Primary dark:  #1D4ED8
-Background:    #F8FAFC
+Primary:       #1769E0
+Primary dark:  #1057BD
+Background:    #F7FAFF
 Surface:       #FFFFFF
-Text primary:  #0F172A
-Text muted:    #64748B
-Border:        #E2E8F0
+Text primary:  #0B1F3A
+Text muted:    #566780
+Border:        #DCE8F7
 Success:       #16A34A
 Warning:       #D97706
 Danger:        #DC2626
 ```
 
 ## 19.3. Layout
+
+- Light theme only: nền trắng/xanh sáng, không tự đổi sang dark theme theo hệ
+  điều hành.
+- Landing dùng motion tiết chế và luôn tôn trọng `prefers-reduced-motion`.
+- Đăng xuất phải có dialog xác nhận, Escape, focus trap và focus restore.
 
 - Desktop-first.
 - Sidebar bên trái cho protected app.
@@ -1989,7 +2333,8 @@ Các giới hạn cố định:
 
 - File size: 10 MB.
 - Data rows: 50.000.
-- Một file/request.
+- Một file ở mode `single`; 2-10 file ở mode `combined`.
+- Tổng giới hạn cho một request vẫn là 10 MB và 50.000 dòng.
 - Xử lý sync.
 - Không concurrent job queue.
 - API list analyses mặc định 20 records.
@@ -2026,8 +2371,11 @@ Nếu file lớn hơn, trả lỗi rõ ràng thay vì cố xử lý.
 ### Forecast
 
 - Dưới 14 ngày unavailable.
-- 14–29 dùng moving average.
-- Từ 30 dùng linear trend.
+- 14–27 dùng moving-average fallback.
+- Từ 28 ngày so sánh mọi candidate đủ điều kiện trên common folds.
+- Candidate selection không leakage và tie-break deterministic.
+- Evaluation so sánh selected method với seasonal-naive baseline.
+- Empirical interval available/unavailable đúng residual threshold.
 - Không có predicted revenue âm.
 - Đúng 7 forecast points.
 
@@ -2036,6 +2384,15 @@ Nếu file lớn hơn, trả lỗi rõ ràng thay vì cố xử lý.
 - Không bịa field ngoài input.
 - Luôn có 3 recommendation hoặc ít hơn khi dữ liệu quá ít.
 - Có disclaimer.
+
+### Combined analysis
+
+- Gộp hai file rời trả KPI tổng.
+- File thứ hai lỗi thì không lưu record.
+- Đơn giống hệt lặp giữa file được tính một lần và có warning.
+- Cùng order ID nhưng dữ liệu khác nhau bị từ chối.
+- Product/customer ID không nhất quán giữa file bị từ chối.
+- Giới hạn số file, tổng dung lượng và tổng số dòng được kiểm tra.
 
 ## 22.2. API tests
 
@@ -2054,6 +2411,9 @@ Nếu file lớn hơn, trả lỗi rõ ràng thay vì cố xử lý.
 - Dashboard empty state.
 - Dashboard data state.
 - Navigate giữa các pages không mất selected analysis.
+- Đổi analysis từ sidebar/mobile selector giữ nguyên route.
+- Selection được tách riêng theo user.
+- Upload gộp hiển thị danh sách file, lỗi theo tên file và kết quả khử trùng.
 - Token hết hạn xử lý hợp lý.
 - Forgot/reset password.
 - Profile cập nhật display name và đổi mật khẩu.
@@ -2067,6 +2427,8 @@ Dùng:
 
 - `sample_sales_template.csv` cho template ngắn.
 - `sample_sales_demo_60_days.csv` cho full demo và linear forecast.
+- Hai file `marketlens_combined_demo_part_1.csv` và
+  `marketlens_combined_demo_part_2.csv` cho flow gộp và khử đơn trùng.
 - Tạo thêm file invalid thủ công cho từng test.
 
 ---
@@ -2222,6 +2584,7 @@ refresh không mất selected analysis.
 - API tạo/tạo lại report.
 - UI hiển thị report source.
 - Print stylesheet và nút xuất PDF.
+- Dedicated A4 document, chart SVG print-safe và automated browser PDF E2E.
 - Test provider success, invalid JSON, timeout và fallback.
 
 **Gate Phase 5:** AI report hoạt động với API thật; khi provider bị tắt/lỗi,
@@ -2437,6 +2800,9 @@ Hoặc Docker image dựa trên Python official image.
 - [ ] Forgot/reset/change password hoạt động.
 - [ ] Upload valid CSV hoạt động.
 - [ ] Upload valid XLSX hoạt động.
+- [ ] Upload gộp 2-10 file hoạt động atomically.
+- [ ] Đơn trùng giữa file được khử đúng; xung đột bị chặn.
+- [ ] Bộ chọn analysis đổi dữ liệu trên mọi trang mà không đổi route.
 - [ ] Drag-and-drop hoạt động.
 - [ ] Upload invalid file báo lỗi đẹp.
 - [ ] KPI đúng.
@@ -2489,13 +2855,16 @@ Supabase Hosted Auth + PostgreSQL
 
 Dữ liệu:
 Một template CSV/XLSX cố định
+Mode single hoặc combined 2-10 file
 Raw file không lưu
 Kết quả lưu JSONB trong analyses
 
 Forecast:
 <14 ngày: không dự báo
-14–29 ngày: Moving Average 7 ngày
->=30 ngày: Linear Trend tối đa 30 ngày
+14–27 ngày: Moving Average 7 ngày fallback
+>=28 ngày: rolling-origin candidate comparison và chọn theo MAE
+Candidate: Seasonal Naive, MA7, Weekday Average 4 tuần, Linear Trend 30 ngày
+Có evaluation, baseline và empirical interval khi đủ residual
 Không training model riêng
 
 AI:
@@ -2508,3 +2877,79 @@ Thời gian:
 Không khóa deadline
 Triển khai theo Phase 1 → 7 và không cắt chức năng V1
 ```
+
+---
+
+# 33. Chương trình cải tiến Data Science sau V1
+
+Feature-complete V1 tiếp tục là baseline bắt buộc. Các cải tiến có contract,
+thứ tự triển khai và Definition of Done riêng tại:
+
+```text
+docs/DS_ENHANCEMENT_PLAN.md
+```
+
+Thứ tự được chốt:
+
+```text
+E1 Advanced deterministic analytics
+→ E2 RFM / ABC / product intelligence
+→ E3 DS Core V3
+→ E4 AI Report V2
+→ E5 Dedicated report/PDF
+→ E6 Hardening, deploy, academic delivery
+```
+
+Các phase này không thay đổi quy tắc bất biến: KPI do backend tính, forecast
+không dùng LLM, AI không nhận raw rows/PII và raw upload không được lưu.
+
+Phương pháp, công thức, tie handling, threshold và giới hạn tính toán E2 được
+khóa tại:
+
+```text
+docs/E2_CUSTOMER_PRODUCT_INTELLIGENCE.md
+```
+
+Rolling-origin backtest, baseline, error metrics và reliability rules của E3
+được khóa tại:
+
+```text
+docs/E3_FORECAST_EVALUATION.md
+```
+
+E3 đã được mở rộng và khóa thành DS Core V3 gồm forecast model selection,
+empirical uncertainty, product association và customer cohort. Contract,
+methodology, gate và Definition of Done được khóa tại:
+
+```text
+docs/DS_CORE_V3.md
+```
+
+Runtime backend/frontend đã clean-cut sang contract V3 sau khi schema, type,
+persistence và tests đồng bộ. Development analyses đã reset và protected API
+smoke V3 đã xác nhận persist/reload/cleanup trên Supabase thật.
+
+AI Report V2 và Dedicated Report/PDF đã được khóa lần lượt tại:
+
+```text
+docs/AI_REPORT_V2.md
+docs/REPORT_PDF.md
+```
+
+E5 dùng browser print với nhãn hành vi chính xác, SVG deterministic và
+Playwright E2E xuất PDF A4 thật; không dùng server-side PDF renderer.
+
+E6 predeploy đã khóa input complexity/threadpool hardening, full protected
+browser journey gồm single/combined upload và analysis selector, benchmark
+50.000 dòng, dependency/security gate và academic delivery. Tài liệu chính:
+
+```text
+docs/E6_HARDENING.md
+docs/DATA_DICTIONARY.md
+docs/ACADEMIC_METHODOLOGY.md
+docs/EXPERIMENT_RESULTS.md
+docs/DEMO_DEFENSE_SCRIPT.md
+```
+
+Production deploy, SMTP/inbox và smoke trên URL thật là external gate tiếp
+theo; không nằm trong predeploy baseline.

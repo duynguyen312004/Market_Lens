@@ -1,11 +1,19 @@
 import axios from 'axios'
 
+import {
+  translate,
+  translations,
+  type Language,
+} from '../i18n/LanguageContext'
+
 export type ApiErrorDetails = {
   errors?: Array<{
     row?: number
-    column: string
+    column?: string
     reason: string
     identifier?: string
+    file_name?: string
+    files?: string[]
   }>
   total_error_count?: number
   [key: string]: unknown
@@ -18,7 +26,23 @@ export type ParsedApiError = {
   requestId: string | null
 }
 
-export function parseApiError(error: unknown): ParsedApiError {
+function localizedApiMessage(
+  code: string,
+  fallback: string,
+  language: Language,
+) {
+  const key = `api.${code}`
+  return translations[key]
+    ? translate(language, key)
+    : language === 'en'
+      ? fallback
+      : translate(language, 'api.UNKNOWN_ERROR')
+}
+
+export function parseApiError(
+  error: unknown,
+  language: Language = 'en',
+): ParsedApiError {
   if (axios.isAxiosError(error)) {
     const apiError = error.response?.data?.error
     const responseRequestId = error.response?.headers?.['x-request-id']
@@ -27,7 +51,11 @@ export function parseApiError(error: unknown): ParsedApiError {
     if (apiError?.code && apiError?.message) {
       return {
         code: apiError.code,
-        message: apiError.message,
+        message: localizedApiMessage(
+          apiError.code,
+          apiError.message,
+          language,
+        ),
         details: apiError.details ?? null,
         requestId,
       }
@@ -36,7 +64,7 @@ export function parseApiError(error: unknown): ParsedApiError {
     if (error.code === 'ECONNABORTED') {
       return {
         code: 'REQUEST_TIMEOUT',
-        message: 'Quá thời gian xử lý. Hãy thử lại với file nhỏ hơn.',
+        message: translate(language, 'api.REQUEST_TIMEOUT'),
         details: null,
         requestId,
       }
@@ -45,7 +73,7 @@ export function parseApiError(error: unknown): ParsedApiError {
     if (!error.response) {
       return {
         code: 'NETWORK_ERROR',
-        message: 'Không thể kết nối backend. Kiểm tra server rồi thử lại.',
+        message: translate(language, 'api.NETWORK_ERROR'),
         details: null,
         requestId: null,
       }
@@ -54,7 +82,7 @@ export function parseApiError(error: unknown): ParsedApiError {
 
   return {
     code: 'UNKNOWN_ERROR',
-    message: 'Đã có lỗi không mong đợi. Vui lòng thử lại.',
+    message: translate(language, 'api.UNKNOWN_ERROR'),
     details: null,
     requestId: null,
   }

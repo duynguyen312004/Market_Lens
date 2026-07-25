@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowRightIcon, CircleNotchIcon } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useForm } from 'react-hook-form'
-import { Link, useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router'
 
 import { getAuthErrorMessage } from '../auth/authErrors'
 import {
@@ -11,13 +11,14 @@ import {
   SESSION_EXPIRED_QUERY_KEY,
 } from '../auth/authNavigation'
 import {
-  loginSchema,
+  createLoginSchema,
   type LoginValues,
 } from '../auth/authSchemas'
 import { useAuth } from '../auth/useAuth'
 import { AuthLayout } from '../components/AuthLayout'
 import { AuthNotice } from '../components/AuthNotice'
 import { PasswordInput } from '../components/PasswordInput'
+import { useLanguage } from '../i18n/LanguageContext'
 
 type LoginLocationState = {
   from?: {
@@ -27,9 +28,11 @@ type LoginLocationState = {
 }
 
 const inputClassName =
-  'w-full rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-4 py-3 text-[var(--text-primary)] outline-none transition placeholder:text-[var(--text-muted)]/70 focus:border-[var(--primary)] focus:ring-3 focus:ring-[color-mix(in_srgb,var(--primary)_16%,transparent)] disabled:cursor-not-allowed disabled:opacity-60'
+  'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-indigo-600 focus:ring-3 focus:ring-indigo-100 disabled:cursor-not-allowed disabled:opacity-60'
 
 export function LoginPage() {
+  const { language, t } = useLanguage()
+  const loginSchema = useMemo(() => createLoginSchema(language), [language])
   const { configurationError, signIn } = useAuth()
   const [submitError, setSubmitError] = useState<string | null>(null)
   const navigate = useNavigate()
@@ -64,36 +67,36 @@ export function LoginPage() {
         replace: true,
       })
     } catch (error) {
-      setSubmitError(getAuthErrorMessage(error))
+      setSubmitError(getAuthErrorMessage(error, language))
     }
   })
 
   return (
     <AuthLayout
-      description="Đăng nhập để tiếp tục xem dữ liệu và các lần phân tích của shop."
+      description={t('auth.loginDesc')}
       footer={
         <>
-          Chưa có tài khoản?{' '}
+          {t('auth.noAccount')}{' '}
           <Link
-            className="font-extrabold text-[var(--primary)] hover:underline"
+            className="font-black text-indigo-600 hover:underline"
             to="/register"
           >
-            Đăng ký miễn phí
+            {t('auth.createOne')}
           </Link>
         </>
       }
-      title="Chào mừng trở lại"
+      title={t('auth.loginTitle')}
     >
       <div className="space-y-4">
         {state?.passwordReset && (
           <AuthNotice tone="success">
-            Mật khẩu đã được cập nhật. Bạn có thể đăng nhập bằng mật khẩu mới.
+            {t('auth.passwordUpdated')}
           </AuthNotice>
         )}
 
         {sessionExpired && (
           <AuthNotice tone="info">
-            Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại để tiếp tục.
+            {t('auth.sessionExpired')}
           </AuthNotice>
         )}
 
@@ -107,10 +110,10 @@ export function LoginPage() {
       <form className="mt-5 space-y-5" noValidate onSubmit={onSubmit}>
         <div>
           <label
-            className="text-sm font-extrabold text-[var(--text-primary)]"
+            className="text-xs font-black text-slate-800"
             htmlFor="login-email"
           >
-            Email
+            {t('auth.emailLabel')}
           </label>
           <input
             aria-describedby={errors.email ? 'login-email-error' : undefined}
@@ -120,13 +123,13 @@ export function LoginPage() {
             className={`${inputClassName} mt-2`}
             id="login-email"
             inputMode="email"
-            placeholder="ban@cuahang.vn"
+            placeholder={t('auth.emailPlaceholder')}
             type="email"
             {...register('email')}
           />
           {errors.email && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="login-email-error"
             >
               {errors.email.message}
@@ -137,16 +140,16 @@ export function LoginPage() {
         <div>
           <div className="flex items-center justify-between gap-4">
             <label
-              className="text-sm font-extrabold text-[var(--text-primary)]"
+              className="text-xs font-black text-slate-800"
               htmlFor="login-password"
             >
-              Mật khẩu
+              {t('auth.passwordLabel')}
             </label>
             <Link
-              className="shrink-0 whitespace-nowrap text-sm font-bold text-[var(--primary)] hover:underline"
+              className="shrink-0 whitespace-nowrap text-xs font-bold text-indigo-600 hover:underline"
               to="/forgot-password"
             >
-              Quên mật khẩu?
+              {t('auth.forgotPasswordLink')}
             </Link>
           </div>
           <PasswordInput
@@ -157,12 +160,12 @@ export function LoginPage() {
             autoComplete="current-password"
             className={inputClassName}
             id="login-password"
-            placeholder="Nhập mật khẩu"
+            placeholder={t('auth.passwordPlaceholder')}
             {...register('password')}
           />
           {errors.password && (
             <p
-              className="mt-2 text-sm font-medium text-[var(--danger)]"
+              className="mt-2 text-xs font-bold text-rose-600"
               id="login-password-error"
             >
               {errors.password.message}
@@ -171,23 +174,22 @@ export function LoginPage() {
         </div>
 
         <button
-          className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3.5 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
-          disabled={Boolean(configurationError) || isSubmitting}
+          className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 py-3.5 text-sm font-black text-white shadow-md shadow-indigo-600/30 transition hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+          disabled={isSubmitting}
           type="submit"
         >
           {isSubmitting ? (
             <>
               <CircleNotchIcon
                 aria-hidden="true"
-                className="animate-spin motion-reduce:animate-none"
+                className="animate-spin"
                 size={18}
-                weight="bold"
               />
-              Đang đăng nhập
+              <span>{t('auth.processing')}</span>
             </>
           ) : (
             <>
-              Đăng nhập
+              <span>{t('auth.signInButton')}</span>
               <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
             </>
           )}

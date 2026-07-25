@@ -104,7 +104,7 @@ def test_production_rejects_provider_endpoint_mismatch() -> None:
             ai_api_key="test-only-api-key",
         )
 
-    assert "endpoint chính thức" in str(error.value)
+    assert "official AI_PROVIDER endpoint" in str(error.value)
 
 
 @pytest.mark.parametrize(
@@ -112,6 +112,8 @@ def test_production_rejects_provider_endpoint_mismatch() -> None:
     [
         ("max_upload_mb", 0),
         ("max_upload_rows", 0),
+        ("max_upload_files", 1),
+        ("max_analysis_period_days", 13),
         ("ai_timeout_seconds", 0),
         ("ai_max_output_tokens", 0),
     ],

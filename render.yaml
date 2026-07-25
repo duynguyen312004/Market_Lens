@@ -28,6 +28,10 @@ services:
         value: 10
       - key: MAX_UPLOAD_ROWS
         value: 50000
+      - key: MAX_UPLOAD_FILES
+        value: 10
+      - key: MAX_ANALYSIS_PERIOD_DAYS
+        value: 1826
       - key: AI_REPORT_ENABLED
         value: true
       - key: AI_PROVIDER
@@ -41,7 +45,7 @@ services:
       - key: AI_TIMEOUT_SECONDS
         value: 20
       - key: AI_MAX_OUTPUT_TOKENS
-        value: 1200
+        value: 2400
 
   - type: web
     name: marketlens-web

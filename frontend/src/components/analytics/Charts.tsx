@@ -1,10 +1,12 @@
 import {
+  Area,
+  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Line,
-  LineChart,
   Pie,
   PieChart,
   ResponsiveContainer,
@@ -16,8 +18,10 @@ import {
 import type {
   CategoryMetric,
   ProductMetric,
+  WeekdayRevenueMetric,
 } from '../../api/analysesApi'
 import type { ForecastChartPoint } from '../../features/forecast/forecastPresentation'
+import { useLanguage } from '../../i18n/LanguageContext'
 import {
   formatCompactVnd,
   formatInteger,
@@ -27,17 +31,19 @@ import {
   formatVnd,
 } from '../../utils/formatters'
 
-const tooltipStyle = {
-  background: 'var(--surface-elevated)',
-  border: '1px solid var(--border)',
+const darkTooltipStyle = {
+  background: 'rgba(15, 23, 42, 0.92)',
+  backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255, 255, 255, 0.15)',
   borderRadius: '12px',
-  boxShadow: '0 14px 34px rgb(15 35 70 / 0.12)',
-  color: 'var(--text-primary)',
+  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.3)',
+  color: '#ffffff',
   fontSize: '13px',
+  padding: '10px 14px',
 }
 
 const axisTick = {
-  fill: 'var(--text-muted)',
+  fill: '#64748b',
   fontSize: 12,
   fontWeight: 600,
 }
@@ -47,59 +53,60 @@ export function RevenueLineChart({
 }: {
   data: Array<{ date: string; revenue: number }>
 }) {
+  const { language, t } = useLanguage()
+
   return (
-    <div
-      aria-label="Biểu đồ doanh thu theo ngày"
-      className="h-80 w-full"
-      role="img"
-    >
+    <div aria-label={t('analysis.dailyChart')} className="h-80 w-full" role="img">
       <ResponsiveContainer height="100%" width="100%">
-        <LineChart
+        <AreaChart
           accessibilityLayer
           data={data}
-          margin={{ bottom: 4, left: 0, right: 8, top: 10 }}
+          margin={{ bottom: 4, left: 0, right: 12, top: 12 }}
         >
-          <CartesianGrid
-            stroke="var(--chart-grid)"
-            strokeDasharray="3 5"
-            vertical={false}
-          />
+          <defs>
+            <linearGradient id="revenueGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="5%" stopColor="#4f46e5" stopOpacity={0.35} />
+              <stop offset="95%" stopColor="#4f46e5" stopOpacity={0.0} />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 4" vertical={false} />
           <XAxis
             axisLine={false}
             dataKey="date"
             minTickGap={28}
             tick={axisTick}
-            tickFormatter={formatShortDate}
+            tickFormatter={(value) => formatShortDate(value, language)}
             tickLine={false}
           />
           <YAxis
             axisLine={false}
             tick={axisTick}
-            tickFormatter={formatCompactVnd}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
             tickLine={false}
             width={62}
           />
           <Tooltip
-            contentStyle={tooltipStyle}
-            cursor={{ stroke: 'var(--border-strong)', strokeDasharray: '4 4' }}
-            formatter={(value) => [formatVnd(Number(value)), 'Doanh thu']}
-            labelFormatter={(label) => `Ngày ${formatShortDate(String(label))}`}
+            contentStyle={darkTooltipStyle}
+            cursor={{ stroke: '#cbd5e1', strokeDasharray: '4 4' }}
+            formatter={(value) => [formatVnd(Number(value), language), t('dashboard.totalRevenue')]}
+            labelFormatter={(label) => `${t('common.date')}: ${formatShortDate(String(label), language)}`}
           />
-          <Line
+          <Area
             activeDot={{
-              fill: 'var(--surface)',
-              r: 5,
-              stroke: 'var(--primary)',
+              fill: '#ffffff',
+              r: 6,
+              stroke: '#4f46e5',
               strokeWidth: 3,
             }}
             dataKey="revenue"
-            dot={false}
-            name="Doanh thu"
-            stroke="var(--primary)"
+            fill="url(#revenueGradient)"
+            isAnimationActive={false}
+            name={t('dashboard.totalRevenue')}
+            stroke="#4f46e5"
             strokeWidth={3}
             type="monotone"
           />
-        </LineChart>
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   )
@@ -110,48 +117,49 @@ export function MonthlyRevenueChart({
 }: {
   data: Array<{ month: string; revenue: number }>
 }) {
+  const { language, t } = useLanguage()
+
   return (
-    <div
-      aria-label="Biểu đồ doanh thu theo tháng"
-      className="h-72 w-full"
-      role="img"
-    >
+    <div aria-label={t('analysis.monthlyChart')} className="h-72 w-full" role="img">
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           accessibilityLayer
           data={data}
-          margin={{ bottom: 4, left: 0, right: 8, top: 10 }}
+          margin={{ bottom: 4, left: 0, right: 12, top: 12 }}
         >
-          <CartesianGrid
-            stroke="var(--chart-grid)"
-            strokeDasharray="3 5"
-            vertical={false}
-          />
+          <defs>
+            <linearGradient id="monthlyGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#4f46e5" />
+              <stop offset="100%" stopColor="#06b6d4" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 4" vertical={false} />
           <XAxis
             axisLine={false}
             dataKey="month"
             tick={axisTick}
-            tickFormatter={formatMonth}
+            tickFormatter={(value) => formatMonth(value, language)}
             tickLine={false}
           />
           <YAxis
             axisLine={false}
             tick={axisTick}
-            tickFormatter={formatCompactVnd}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
             tickLine={false}
             width={62}
           />
           <Tooltip
-            contentStyle={tooltipStyle}
-            cursor={{ fill: 'var(--primary-soft)' }}
-            formatter={(value) => [formatVnd(Number(value)), 'Doanh thu']}
-            labelFormatter={(label) => formatMonth(String(label))}
+            contentStyle={darkTooltipStyle}
+            cursor={{ fill: 'rgba(238, 242, 255, 0.6)' }}
+            formatter={(value) => [formatVnd(Number(value), language), t('dashboard.totalRevenue')]}
+            labelFormatter={(label) => formatMonth(String(label), language)}
           />
           <Bar
             dataKey="revenue"
-            fill="var(--primary)"
-            name="Doanh thu"
-            radius={[7, 7, 2, 2]}
+            fill="url(#monthlyGradient)"
+            isAnimationActive={false}
+            name={t('dashboard.totalRevenue')}
+            radius={[8, 8, 2, 2]}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -159,33 +167,89 @@ export function MonthlyRevenueChart({
   )
 }
 
-export function CategoryRevenueChart({
+export function WeekdayRevenueChart({
   data,
 }: {
-  data: CategoryMetric[]
+  data: WeekdayRevenueMetric[]
 }) {
+  const { language, t } = useLanguage()
+
   return (
     <div
-      aria-label="Biểu đồ doanh thu theo danh mục"
-      className="h-80 w-full"
+      aria-label={t('sales.weekdayRevenue')}
+      className="h-72 w-full"
       role="img"
     >
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           accessibilityLayer
           data={data}
-          layout="vertical"
-          margin={{ bottom: 4, left: 8, right: 14, top: 4 }}
+          margin={{ bottom: 4, left: 0, right: 12, top: 12 }}
         >
           <CartesianGrid
-            horizontal={false}
-            stroke="var(--chart-grid)"
-            strokeDasharray="3 5"
+            stroke="#f1f5f9"
+            strokeDasharray="3 4"
+            vertical={false}
           />
           <XAxis
             axisLine={false}
+            dataKey="weekday"
             tick={axisTick}
-            tickFormatter={formatCompactVnd}
+            tickFormatter={(value) => t(`weekday.${value}`)}
+            tickLine={false}
+          />
+          <YAxis
+            axisLine={false}
+            tick={axisTick}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
+            tickLine={false}
+            width={62}
+          />
+          <Tooltip
+            contentStyle={darkTooltipStyle}
+            cursor={{ fill: 'rgba(238, 242, 255, 0.6)' }}
+            formatter={(value) => [
+              formatVnd(Number(value), language),
+              t('dashboard.totalRevenue'),
+            ]}
+            labelFormatter={(label) => t(`weekday.${String(label)}`)}
+          />
+          <Bar
+            dataKey="revenue"
+            fill="#1f64d8"
+            isAnimationActive={false}
+            name={t('dashboard.totalRevenue')}
+            radius={[8, 8, 2, 2]}
+          />
+        </BarChart>
+      </ResponsiveContainer>
+    </div>
+  )
+}
+
+export function CategoryRevenueChart({ data }: { data: CategoryMetric[] }) {
+  const { language, t } = useLanguage()
+
+  return (
+    <div aria-label={t('analysis.categoryChart')} className="h-80 w-full" role="img">
+      <ResponsiveContainer height="100%" width="100%">
+        <BarChart
+          accessibilityLayer
+          data={data}
+          layout="vertical"
+          margin={{ bottom: 4, left: 8, right: 16, top: 4 }}
+        >
+          <defs>
+            <linearGradient id="categoryGradient" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#4f46e5" />
+              <stop offset="100%" stopColor="#6366f1" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid horizontal={false} stroke="#f1f5f9" strokeDasharray="3 4" />
+          <XAxis
+            axisLine={false}
+            tick={axisTick}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
             tickLine={false}
             type="number"
           />
@@ -195,18 +259,19 @@ export function CategoryRevenueChart({
             tick={axisTick}
             tickLine={false}
             type="category"
-            width={105}
+            width={110}
           />
           <Tooltip
-            contentStyle={tooltipStyle}
-            cursor={{ fill: 'var(--primary-soft)' }}
-            formatter={(value) => [formatVnd(Number(value)), 'Doanh thu']}
+            contentStyle={darkTooltipStyle}
+            cursor={{ fill: 'rgba(238, 242, 255, 0.6)' }}
+            formatter={(value) => [formatVnd(Number(value), language), t('dashboard.totalRevenue')]}
           />
           <Bar
             dataKey="revenue"
-            fill="var(--primary)"
-            name="Doanh thu"
-            radius={[2, 7, 7, 2]}
+            fill="url(#categoryGradient)"
+            isAnimationActive={false}
+            name={t('dashboard.totalRevenue')}
+            radius={[0, 8, 8, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -214,33 +279,29 @@ export function CategoryRevenueChart({
   )
 }
 
-export function ProductRevenueChart({
-  data,
-}: {
-  data: ProductMetric[]
-}) {
+export function ProductRevenueChart({ data }: { data: ProductMetric[] }) {
+  const { language, t } = useLanguage()
+
   return (
-    <div
-      aria-label="Biểu đồ doanh thu theo sản phẩm"
-      className="h-80 w-full"
-      role="img"
-    >
+    <div aria-label={t('analysis.productChart')} className="h-80 w-full" role="img">
       <ResponsiveContainer height="100%" width="100%">
         <BarChart
           accessibilityLayer
           data={data}
           layout="vertical"
-          margin={{ bottom: 4, left: 8, right: 14, top: 4 }}
+          margin={{ bottom: 4, left: 8, right: 16, top: 4 }}
         >
-          <CartesianGrid
-            horizontal={false}
-            stroke="var(--chart-grid)"
-            strokeDasharray="3 5"
-          />
+          <defs>
+            <linearGradient id="productGradient" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stopColor="#06b6d4" />
+              <stop offset="100%" stopColor="#3b82f6" />
+            </linearGradient>
+          </defs>
+          <CartesianGrid horizontal={false} stroke="#f1f5f9" strokeDasharray="3 4" />
           <XAxis
             axisLine={false}
             tick={axisTick}
-            tickFormatter={formatCompactVnd}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
             tickLine={false}
             type="number"
           />
@@ -250,18 +311,19 @@ export function ProductRevenueChart({
             tick={axisTick}
             tickLine={false}
             type="category"
-            width={118}
+            width={125}
           />
           <Tooltip
-            contentStyle={tooltipStyle}
-            cursor={{ fill: 'var(--primary-soft)' }}
-            formatter={(value) => [formatVnd(Number(value)), 'Doanh thu']}
+            contentStyle={darkTooltipStyle}
+            cursor={{ fill: 'rgba(238, 242, 255, 0.6)' }}
+            formatter={(value) => [formatVnd(Number(value), language), t('dashboard.totalRevenue')]}
           />
           <Bar
             dataKey="revenue"
-            fill="var(--chart-2)"
-            name="Doanh thu"
-            radius={[2, 7, 7, 2]}
+            fill="url(#productGradient)"
+            isAnimationActive={false}
+            name={t('dashboard.totalRevenue')}
+            radius={[0, 8, 8, 0]}
           />
         </BarChart>
       </ResponsiveContainer>
@@ -269,102 +331,102 @@ export function ProductRevenueChart({
   )
 }
 
-export function ForecastRevenueChart({
-  data,
-}: {
-  data: ForecastChartPoint[]
-}) {
+export function ForecastRevenueChart({ data }: { data: ForecastChartPoint[] }) {
+  const { language, t } = useLanguage()
   return (
-    <div
-      aria-label="Biểu đồ doanh thu thực tế và dự báo"
-      className="h-96 w-full"
-      role="img"
-    >
+    <div aria-label={t('analysis.forecastChart')} className="h-96 w-full" role="img">
       <ResponsiveContainer height="100%" width="100%">
-        <LineChart
+        <ComposedChart
           accessibilityLayer
           data={data}
-          margin={{ bottom: 4, left: 0, right: 8, top: 10 }}
+          margin={{ bottom: 4, left: 0, right: 12, top: 12 }}
         >
-          <CartesianGrid
-            stroke="var(--chart-grid)"
-            strokeDasharray="3 5"
-            vertical={false}
-          />
+          <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 4" vertical={false} />
           <XAxis
             axisLine={false}
             dataKey="date"
             minTickGap={28}
             tick={axisTick}
-            tickFormatter={formatShortDate}
+            tickFormatter={(value) => formatShortDate(value, language)}
             tickLine={false}
           />
           <YAxis
             axisLine={false}
             tick={axisTick}
-            tickFormatter={formatCompactVnd}
+            tickFormatter={(value) => formatCompactVnd(value, language)}
             tickLine={false}
             width={62}
           />
           <Tooltip
-            contentStyle={tooltipStyle}
-            cursor={{ stroke: 'var(--border-strong)', strokeDasharray: '4 4' }}
-            formatter={(value, name) => [
-              formatVnd(Number(value)),
-              name === 'actual' ? 'Thực tế' : 'Dự báo',
-            ]}
-            labelFormatter={(label) => `Ngày ${formatShortDate(String(label))}`}
+            contentStyle={darkTooltipStyle}
+            cursor={{ stroke: '#cbd5e1', strokeDasharray: '4 4' }}
+            formatter={(value, name) => {
+              if (name === 'interval' && Array.isArray(value)) {
+                return [
+                  `${formatVnd(Number(value[0]), language)} – ${formatVnd(
+                    Number(value[1]),
+                    language,
+                  )}`,
+                  t('forecast.empiricalInterval'),
+                ]
+              }
+              return [
+                formatVnd(Number(value), language),
+                name === 'actual'
+                  ? t('common.actual')
+                  : t('common.predicted'),
+              ]
+            }}
+            labelFormatter={(label) => `${t('common.date')}: ${formatShortDate(String(label), language)}`}
+          />
+          <Area
+            connectNulls={false}
+            dataKey="interval"
+            fill="#fef3c7"
+            fillOpacity={0.65}
+            isAnimationActive={false}
+            name="interval"
+            stroke="#fcd34d"
+            strokeWidth={1}
+            type="monotone"
           />
           <Line
             activeDot={{
-              fill: 'var(--surface)',
-              r: 5,
-              stroke: 'var(--primary)',
+              fill: '#ffffff',
+              r: 6,
+              stroke: '#4f46e5',
               strokeWidth: 3,
             }}
             connectNulls={false}
             dataKey="actual"
             dot={false}
+            isAnimationActive={false}
             name="actual"
-            stroke="var(--primary)"
+            stroke="#4f46e5"
             strokeWidth={3}
             type="monotone"
           />
           <Line
             activeDot={{
-              fill: 'var(--surface)',
-              r: 5,
-              stroke: 'var(--forecast)',
+              fill: '#ffffff',
+              r: 6,
+              stroke: '#f59e0b',
               strokeWidth: 3,
             }}
             connectNulls={false}
             dataKey="predicted"
-            dot={{ fill: 'var(--surface)', r: 3, strokeWidth: 2 }}
+            dot={{ fill: '#ffffff', r: 4, stroke: '#f59e0b', strokeWidth: 2 }}
+            isAnimationActive={false}
             name="predicted"
-            stroke="var(--forecast)"
-            strokeDasharray="7 6"
+            stroke="#f59e0b"
+            strokeDasharray="6 6"
             strokeWidth={3}
             type="monotone"
           />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   )
-}
-
-const segmentMeta = {
-  new: {
-    label: 'Khách một đơn trong kỳ',
-    color: 'var(--chart-3)',
-  },
-  returning: {
-    label: 'Khách quay lại',
-    color: 'var(--chart-2)',
-  },
-  vip: {
-    label: 'Khách VIP',
-    color: 'var(--primary)',
-  },
 }
 
 export function CustomerSegmentChart({
@@ -372,6 +434,23 @@ export function CustomerSegmentChart({
 }: {
   segments: { new: number; returning: number; vip: number }
 }) {
+  const { language, t } = useLanguage()
+
+  const segmentMeta = {
+    new: {
+      label: t('customers.new'),
+      color: '#10b981',
+    },
+    returning: {
+      label: t('customers.returning'),
+      color: '#06b6d4',
+    },
+    vip: {
+      label: t('customers.vip'),
+      color: '#4f46e5',
+    },
+  }
+
   const data = (Object.keys(segmentMeta) as Array<keyof typeof segmentMeta>).map(
     (key) => ({
       key,
@@ -383,20 +462,13 @@ export function CustomerSegmentChart({
   const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return (
-    <div className="grid items-center gap-5 sm:grid-cols-[minmax(13rem,0.8fr)_minmax(14rem,1.2fr)]">
-      <div
-        aria-label="Biểu đồ phân loại khách hàng"
-        className="relative h-56"
-        role="img"
-      >
+    <div className="grid items-center gap-6 sm:grid-cols-[minmax(13rem,0.8fr)_minmax(14rem,1.2fr)]">
+      <div aria-label={t('analysis.segmentChart')} className="relative h-56" role="img">
         <ResponsiveContainer height="100%" width="100%">
           <PieChart accessibilityLayer>
             <Tooltip
-              contentStyle={tooltipStyle}
-              formatter={(value) => [
-                `${formatInteger(Number(value))} khách`,
-                'Số lượng',
-              ]}
+              contentStyle={darkTooltipStyle}
+              formatter={(value) => [`${formatInteger(Number(value), language)}`, t('dashboard.totalCustomers')]}
             />
             <Pie
               cx="50%"
@@ -404,10 +476,11 @@ export function CustomerSegmentChart({
               data={data}
               dataKey="value"
               innerRadius={65}
+              isAnimationActive={false}
               nameKey="name"
-              outerRadius={90}
-              paddingAngle={3}
-              stroke="var(--surface)"
+              outerRadius={92}
+              paddingAngle={4}
+              stroke="#ffffff"
               strokeWidth={3}
             >
               {data.map((item) => (
@@ -418,11 +491,11 @@ export function CustomerSegmentChart({
         </ResponsiveContainer>
         <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
-            <p className="text-2xl font-extrabold text-[var(--text-primary)]">
-              {formatInteger(total)}
+            <p className="text-2xl font-black text-slate-900 tracking-tight">
+              {formatInteger(total, language)}
             </p>
-            <p className="text-xs font-bold text-[var(--text-muted)]">
-              khách hàng
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+              {t('dashboard.totalCustomers')}
             </p>
           </div>
         </div>
@@ -431,24 +504,24 @@ export function CustomerSegmentChart({
       <ul className="space-y-3">
         {data.map((item) => (
           <li
-            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3"
+            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2 hover:bg-slate-50 transition"
             key={item.key}
           >
             <span
               aria-hidden="true"
-              className="size-2.5 rounded-full"
+              className="size-3 rounded-full shadow-xs"
               style={{ background: item.color }}
             />
-            <span className="text-sm font-bold text-[var(--text-muted)]">
+            <span className="text-sm font-semibold text-slate-700 truncate">
               {item.name}
             </span>
             <span className="text-right">
-              <strong className="block text-sm text-[var(--text-primary)]">
-                {formatInteger(item.value)}
+              <strong className="block text-sm font-extrabold text-slate-900">
+                {formatInteger(item.value, language)}
               </strong>
-              <span className="text-xs text-[var(--text-muted)]">
+              <span className="text-xs font-semibold text-slate-500">
                 {total > 0
-                  ? `${formatPercent((item.value / total) * 100)}%`
+                  ? `${formatPercent((item.value / total) * 100, 1, false, language)}%`
                   : '0%'}
               </span>
             </span>

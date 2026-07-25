@@ -9,9 +9,10 @@ import {
 
 import { AuthContext, type AuthContextValue } from './authContext'
 import { supabase } from './supabase'
+import { useLanguage } from '../i18n/LanguageContext'
 
 const missingConfigurationMessage =
-  'Supabase chưa được cấu hình. Hãy điền URL và publishable key trong frontend/.env.local.'
+  'Supabase is not configured. Add the URL and publishable key to frontend/.env.local.'
 const passwordRecoveryStorageKey = 'marketlens:passwordRecovery'
 
 function readPasswordRecoveryState() {
@@ -35,6 +36,7 @@ function writePasswordRecoveryState(active: boolean) {
 }
 
 export function AuthProvider({ children }: PropsWithChildren) {
+  const { t } = useLanguage()
   const [session, setSession] = useState<Session | null>(null)
   const [loading, setLoading] = useState(true)
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(
@@ -181,7 +183,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
 
   const value = useMemo<AuthContextValue>(
     () => ({
-      configurationError: supabase ? null : missingConfigurationMessage,
+      configurationError: supabase ? null : t('auth.configMissing'),
       isPasswordRecovery,
       loading,
       session,
@@ -203,6 +205,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       signUp,
       updateDisplayName,
       updatePassword,
+      t,
     ],
   )
 

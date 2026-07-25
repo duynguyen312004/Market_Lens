@@ -52,6 +52,45 @@ def test_valid_data_is_normalized_and_revenue_is_calculated() -> None:
     assert result.loc[0, "order_date"].date().isoformat() == "2026-07-01"
 
 
+def test_analysis_period_at_inclusive_limit_is_accepted() -> None:
+    frame = pd.concat([valid_frame(), valid_frame()], ignore_index=True)
+    frame.loc[0, "order_id"] = "DH001"
+    frame.loc[0, "order_date"] = "2026-06-18"
+    frame.loc[1, "order_id"] = "DH002"
+    frame.loc[1, "order_date"] = "2026-07-01"
+
+    result = validate_sales_data(
+        frame,
+        max_rows=50_000,
+        max_period_days=14,
+    )
+
+    assert len(result) == 2
+
+
+def test_analysis_period_over_limit_is_rejected_without_daily_expansion() -> None:
+    frame = pd.concat([valid_frame(), valid_frame()], ignore_index=True)
+    frame.loc[0, "order_id"] = "DH001"
+    frame.loc[0, "order_date"] = "2026-06-17"
+    frame.loc[1, "order_id"] = "DH002"
+    frame.loc[1, "order_date"] = "2026-07-01"
+
+    with pytest.raises(AppError) as error:
+        validate_sales_data(
+            frame,
+            max_rows=50_000,
+            max_period_days=14,
+        )
+
+    app_error = assert_app_error(error, "DATE_RANGE_TOO_LARGE")
+    assert app_error.details == {
+        "max_period_days": 14,
+        "actual_period_days": 15,
+        "date_from": "2026-06-17",
+        "date_to": "2026-07-01",
+    }
+
+
 def test_missing_column_returns_invalid_file_columns() -> None:
     frame = valid_frame().drop(columns=["discount"])
 

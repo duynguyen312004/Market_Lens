@@ -1,26 +1,29 @@
 import { CheckCircleIcon, CircleIcon } from '@phosphor-icons/react'
 
+import { useLanguage } from '../i18n/LanguageContext'
+
 const requirements = [
-  { label: 'Ít nhất 8 ký tự', test: (password: string) => password.length >= 8 },
-  { label: 'Một chữ hoa', test: (password: string) => /[A-Z]/.test(password) },
+  { key: 'auth.passwordLength', test: (password: string) => password.length >= 8 },
+  { key: 'auth.passwordUppercase', test: (password: string) => /[A-Z]/.test(password) },
   {
-    label: 'Một chữ thường',
+    key: 'auth.passwordLowercase',
     test: (password: string) => /[a-z]/.test(password),
   },
-  { label: 'Một chữ số', test: (password: string) => /[0-9]/.test(password) },
+  { key: 'auth.passwordNumber', test: (password: string) => /[0-9]/.test(password) },
   {
-    label: 'Không có khoảng trắng',
+    key: 'auth.passwordNoSpaces',
     test: (password: string) => password.length > 0 && /^\S+$/.test(password),
   },
 ]
 
 export function PasswordRequirements({ password }: { password: string }) {
+  const { t } = useLanguage()
   return (
     <ul
-      aria-label="Yêu cầu mật khẩu"
+      aria-label={t('auth.passwordRequirements')}
       className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-3"
     >
-      {requirements.map(({ label, test }) => {
+      {requirements.map(({ key, test }) => {
         const isMet = test(password)
 
         return (
@@ -28,14 +31,14 @@ export function PasswordRequirements({ password }: { password: string }) {
             className={`flex items-center gap-1.5 ${
               isMet ? 'text-[var(--success)]' : 'text-[var(--text-muted)]'
             }`}
-            key={label}
+            key={key}
           >
             {isMet ? (
               <CheckCircleIcon aria-hidden="true" size={14} weight="fill" />
             ) : (
               <CircleIcon aria-hidden="true" size={14} />
             )}
-            {label}
+            {t(key)}
           </li>
         )
       })}

@@ -1,7 +1,16 @@
-import { CalendarBlankIcon, FileCsvIcon } from '@phosphor-icons/react'
+import {
+  CalendarBlankIcon,
+  FileCsvIcon,
+  FilesIcon,
+} from '@phosphor-icons/react'
 
 import type { AnalysisDetail } from '../../api/analysesApi'
 import { formatDate, formatInteger } from '../../utils/formatters'
+import { useLanguage } from '../../i18n/LanguageContext'
+import {
+  getAnalysisFileLabel,
+  getAnalysisSourceNames,
+} from '../../features/analysis/presentation'
 
 export function AnalysisHeader({
   analysis,
@@ -12,37 +21,54 @@ export function AnalysisHeader({
   description: string
   title: string
 }) {
+  const { language, t } = useLanguage()
   return (
-    <header className="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+    <header className="border-b border-[var(--border)] pb-6">
       <div className="max-w-3xl">
-        <h1 className="text-3xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
+        <h1 className="text-2xl font-extrabold tracking-[-0.035em] text-[var(--text-primary)] sm:text-[2rem]">
           {title}
         </h1>
-        <p className="mt-3 leading-7 text-[var(--text-muted)]">{description}</p>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-muted)]">
+          {description}
+        </p>
       </div>
-      <div className="flex flex-col gap-2 text-sm text-[var(--text-muted)] sm:flex-row sm:flex-wrap sm:items-center sm:gap-4">
-        <span className="flex min-w-0 items-center gap-2">
-          <FileCsvIcon
-            aria-hidden="true"
-            className="shrink-0 text-[var(--primary)]"
-            size={18}
-            weight="duotone"
-          />
-          <span className="truncate font-bold text-[var(--text-primary)]">
-            {analysis.file_name}
-          </span>
-          <span className="shrink-0">
-            ({formatInteger(analysis.row_count)} dòng)
+      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs font-semibold text-[var(--text-muted)]">
+        <span className="inline-flex min-w-0 items-center gap-2">
+          {analysis.upload_mode === 'combined' ? (
+            <FilesIcon
+              aria-hidden="true"
+              className="shrink-0 text-[var(--primary)]"
+              size={16}
+              weight="bold"
+            />
+          ) : (
+            <FileCsvIcon
+              aria-hidden="true"
+              className="shrink-0 text-[var(--primary)]"
+              size={16}
+              weight="bold"
+            />
+          )}
+          <span
+            className="max-w-64 truncate text-[var(--text-primary)]"
+            title={getAnalysisSourceNames(analysis)}
+          >
+            {getAnalysisFileLabel(analysis, language)}
           </span>
         </span>
-        <span className="flex items-center gap-2">
-          <CalendarBlankIcon
-            aria-hidden="true"
-            className="text-[var(--primary)]"
-            size={18}
-            weight="duotone"
-          />
-          {formatDate(analysis.period.from)} - {formatDate(analysis.period.to)}
+        <span className="hidden h-4 w-px bg-[var(--border)] sm:block" />
+        <span className="inline-flex items-center gap-2">
+          <CalendarBlankIcon aria-hidden="true" size={16} />
+          {t('common.dateRange', {
+            from: formatDate(analysis.period.from, language),
+            to: formatDate(analysis.period.to, language),
+          })}
+        </span>
+        <span className="hidden h-4 w-px bg-[var(--border)] sm:block" />
+        <span>
+          {t('common.rowsProcessed', {
+            count: formatInteger(analysis.row_count, language),
+          })}
         </span>
       </div>
     </header>

@@ -19,9 +19,15 @@ Từ thư mục gốc:
 
 ```bash
 .venv/bin/pytest backend/tests -q
+.venv/bin/python scripts/generate_ds_demo_data.py --check
+.venv/bin/python scripts/verify_academic_evidence.py --check
+.venv/bin/python scripts/benchmark_analysis.py --max-seconds 30
 .venv/bin/python scripts/check_secrets.py
+.venv/bin/python scripts/run_browser_journey_e2e.py
+.venv/bin/python scripts/run_report_e2e.py
 cd frontend
 npm ci
+npm audit --omit=dev
 npm test
 npm run lint
 npm run build
@@ -178,7 +184,7 @@ Automated smoke không thay thế các bước cần browser/inbox:
 - History mở/xóa với dialog xác nhận.
 - Refresh trực tiếp từng protected route.
 - Logout, login lại và mở analysis cũ.
-- Light mode, dark mode, keyboard focus và mobile navigation.
+- Light theme, keyboard focus và mobile navigation.
 
 ## 8. Rollback
 

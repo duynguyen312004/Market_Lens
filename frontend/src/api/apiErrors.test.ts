@@ -18,7 +18,7 @@ describe('parseApiError', () => {
           'x-request-id': 'request-123',
         },
       },
-    })
+    }, 'vi')
 
     expect(result).toEqual({
       code: 'DATABASE_UNAVAILABLE',
@@ -36,5 +36,32 @@ describe('parseApiError', () => {
 
     expect(result.code).toBe('NETWORK_ERROR')
     expect(result.requestId).toBeNull()
+  })
+
+  it('localizes the bounded analysis-period contract', () => {
+    const result = parseApiError(
+      {
+        isAxiosError: true,
+        response: {
+          data: {
+            error: {
+              code: 'DATE_RANGE_TOO_LARGE',
+              message: 'The analysis period exceeds the 1,826-day limit.',
+              details: {
+                actual_period_days: 2000,
+                max_period_days: 1826,
+              },
+            },
+          },
+          headers: {},
+        },
+      },
+      'vi',
+    )
+
+    expect(result.code).toBe('DATE_RANGE_TOO_LARGE')
+    expect(result.message).toBe(
+      'Khoảng thời gian dữ liệu quá dài. Hãy dùng file bao phủ tối đa năm năm.',
+    )
   })
 })

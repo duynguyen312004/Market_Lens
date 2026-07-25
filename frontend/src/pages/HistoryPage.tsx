@@ -1,26 +1,20 @@
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
-  CalendarBlankIcon,
   CircleNotchIcon,
   ClockCounterClockwiseIcon,
   CloudArrowUpIcon,
   FileCsvIcon,
   FileXlsIcon,
+  FilesIcon,
   FolderOpenIcon,
-  RowsIcon,
   TrashIcon,
   WarningCircleIcon,
   XIcon,
 } from '@phosphor-icons/react'
 import { useMutation, useQuery } from '@tanstack/react-query'
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-} from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useEffect, useRef, useState } from 'react'
+import { Link, useNavigate } from 'react-router'
 
 import {
   deleteAnalysis,
@@ -29,28 +23,27 @@ import {
 } from '../api/analysesApi'
 import { parseApiError } from '../api/apiErrors'
 import { queryClient } from '../app/queryClient'
-import {
-  analysisKeys,
-  readStoredAnalysisId,
-  storeSelectedAnalysisId,
-} from '../features/analysis/analysisQueries'
+import { useActiveAnalysis } from '../features/analysis/ActiveAnalysisContext'
+import { analysisKeys } from '../features/analysis/analysisQueries'
 import {
   getAnalysisPeriodLabel,
   getAnalysisStatusPresentation,
   HISTORY_PAGE_SIZE,
 } from '../features/analysis/historyPresentation'
+import { useLanguage } from '../i18n/LanguageContext'
 import {
-  formatDate,
   formatDateTime,
   formatInteger,
 } from '../utils/formatters'
 
 export function HistoryPage() {
+  const { language, t } = useLanguage()
+  const { activeAnalysisId, selectAnalysis } = useActiveAnalysis()
   const [page, setPage] = useState(0)
-  const [deleteTarget, setDeleteTarget] =
-    useState<AnalysisListItem | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<AnalysisListItem | null>(null)
   const navigate = useNavigate()
   const offset = page * HISTORY_PAGE_SIZE
+
   const historyQuery = useQuery({
     queryKey: analysisKeys.list(HISTORY_PAGE_SIZE, offset),
     queryFn: () => listAnalyses(HISTORY_PAGE_SIZE, offset),
@@ -61,8 +54,13 @@ export function HistoryPage() {
   const deleteMutation = useMutation({
     mutationFn: (item: AnalysisListItem) => deleteAnalysis(item.id),
     onSuccess: (_, item) => {
-      if (readStoredAnalysisId() === item.id) {
-        storeSelectedAnalysisId(null)
+      if (activeAnalysisId === item.id) {
+        const nextCompleted = items.find(
+          (candidate) =>
+            candidate.id !== item.id &&
+            candidate.status === 'completed',
+        )
+        selectAnalysis(nextCompleted?.id ?? null)
       }
       queryClient.removeQueries({
         queryKey: analysisKeys.detail(item.id),
@@ -93,38 +91,37 @@ export function HistoryPage() {
 
   function openAnalysis(item: AnalysisListItem) {
     if (item.status !== 'completed') return
-    storeSelectedAnalysisId(item.id)
+    selectAnalysis(item.id)
     navigate('/dashboard')
   }
 
   const hasPreviousPage = page > 0
   const hasNextPage = items.length === HISTORY_PAGE_SIZE
   const deleteError = deleteMutation.error
-    ? parseApiError(deleteMutation.error)
+    ? parseApiError(deleteMutation.error, language)
     : null
 
   return (
     <main className="px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
       <div className="mx-auto max-w-7xl">
-        <header className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-          <div className="max-w-3xl">
-            <p className="text-sm font-extrabold text-[var(--primary)]">
-              Dữ liệu đã lưu
+        <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between border-b border-slate-200/80 pb-6">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-indigo-600">
+              {t('nav.history')}
             </p>
-            <h1 className="mt-2 text-3xl font-extrabold tracking-[-0.04em] text-[var(--text-primary)] sm:text-4xl">
-              Lịch sử phân tích
+            <h1 className="mt-1 text-3xl font-black tracking-tight text-slate-900 sm:text-4xl">
+              {t('history.title')}
             </h1>
-            <p className="mt-3 leading-7 text-[var(--text-muted)]">
-              Mở lại kết quả cũ hoặc xóa những lần phân tích bạn không còn sử
-              dụng.
+            <p className="mt-2 text-sm text-slate-500 max-w-2xl">
+              {t('history.desc')}
             </p>
           </div>
           <Link
-            className="inline-flex w-fit items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition"
             to="/upload"
           >
             <CloudArrowUpIcon aria-hidden="true" size={18} weight="bold" />
-            Upload dữ liệu
+            {t('nav.upload')}
           </Link>
         </header>
 
@@ -132,28 +129,11 @@ export function HistoryPage() {
 
         {historyQuery.isError && (
           <section
-            className="mt-8 rounded-2xl border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[var(--surface)] p-6"
+            className="mt-6 rounded-2xl border border-rose-200 bg-rose-50 p-6 text-xs text-rose-900"
             role="alert"
           >
-            <WarningCircleIcon
-              aria-hidden="true"
-              className="text-[var(--danger)]"
-              size={28}
-              weight="fill"
-            />
-            <h2 className="mt-4 text-xl font-extrabold text-[var(--text-primary)]">
-              Không tải được lịch sử
-            </h2>
-            <p className="mt-2 leading-7 text-[var(--text-muted)]">
-              {parseApiError(historyQuery.error).message}
-            </p>
-            <button
-              className="mt-5 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98]"
-              onClick={() => void historyQuery.refetch()}
-              type="button"
-            >
-              Thử lại
-            </button>
+            <WarningCircleIcon className="text-rose-600 mb-2" size={28} weight="bold" />
+            <p className="font-extrabold">{parseApiError(historyQuery.error, language).message}</p>
           </section>
         )}
 
@@ -161,104 +141,134 @@ export function HistoryPage() {
           <HistoryEmptyState />
         )}
 
-        {historyQuery.isSuccess && items.length > 0 && (
-          <>
-            <section className="mt-8 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]">
-              <div className="flex flex-col gap-2 border-b border-[var(--border)] px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                <div>
-                  <h2 className="font-extrabold text-[var(--text-primary)]">
-                    Các lần phân tích
-                  </h2>
-                  <p className="mt-1 text-sm text-[var(--text-muted)]">
-                    Trang {page + 1}, tối đa {HISTORY_PAGE_SIZE} mục mỗi trang.
-                  </p>
-                </div>
-                {historyQuery.isFetching && (
-                  <p
-                    className="flex items-center gap-2 text-sm font-bold text-[var(--primary)]"
-                    role="status"
-                  >
-                    <CircleNotchIcon
-                      aria-hidden="true"
-                      className="animate-spin motion-reduce:animate-none"
-                      size={17}
-                      weight="bold"
-                    />
-                    Đang làm mới
-                  </p>
-                )}
-              </div>
-
-              <div className="hidden overflow-x-auto md:block">
-                <table className="w-full min-w-[55rem] text-left text-sm">
-                  <thead className="bg-[var(--surface-subtle)] text-[var(--text-muted)]">
-                    <tr>
-                      <th className="px-6 py-3.5 font-bold">File dữ liệu</th>
-                      <th className="px-4 py-3.5 font-bold">Khoảng dữ liệu</th>
-                      <th className="px-4 py-3.5 text-right font-bold">
-                        Số dòng
-                      </th>
-                      <th className="px-4 py-3.5 font-bold">Ngày tạo</th>
-                      <th className="px-4 py-3.5 font-bold">Trạng thái</th>
-                      <th className="px-6 py-3.5 text-right font-bold">
-                        Thao tác
-                      </th>
+        {items.length > 0 && (
+          <section className="mt-7">
+            {/* Desktop Table View */}
+            <div className="hidden overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs md:block">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-100 bg-slate-50/70 font-bold uppercase tracking-wider text-slate-400">
+                  <tr>
+                    <th className="py-3.5 pl-6 pr-4">{t('history.fileName')}</th>
+                    <th className="py-3.5 pr-4">{t('history.status')}</th>
+                    <th className="py-3.5 pr-4">{t('history.period')}</th>
+                    <th className="py-3.5 pr-4 text-right">{t('history.rowCount')}</th>
+                    <th className="py-3.5 pr-4 text-right">{t('history.createdAt')}</th>
+                    <th className="py-3.5 pr-6 text-right">{t('history.actions')}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 font-medium">
+                  {items.map((item) => (
+                    <tr
+                      className="hover:bg-slate-50/70 transition"
+                      key={item.id}
+                    >
+                      <td className="py-4 pl-6 pr-4">
+                        <div className="flex items-center gap-3">
+                          <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+                            {item.upload_mode === 'combined' ? (
+                              <FilesIcon size={20} weight="duotone" />
+                            ) : item.file_name.toLowerCase().endsWith('.xlsx') ? (
+                              <FileXlsIcon size={20} weight="duotone" />
+                            ) : (
+                              <FileCsvIcon size={20} weight="duotone" />
+                            )}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block max-w-[200px] truncate font-extrabold text-slate-900">
+                              {item.file_name}
+                            </span>
+                            {item.upload_mode === 'combined' && (
+                              <span className="mt-0.5 block text-[10px] font-bold text-slate-500">
+                                {t('selector.fileCount', {
+                                  count: item.source_file_count,
+                                })}
+                              </span>
+                            )}
+                          </span>
+                        </div>
+                      </td>
+                      <td className="py-4 pr-4">
+                        <StatusBadge language={language} status={item.status} />
+                      </td>
+                      <td className="py-4 pr-4 text-slate-600 font-semibold">
+                        {getAnalysisPeriodLabel(item, language)}
+                      </td>
+                      <td className="py-4 pr-4 text-right font-bold text-slate-900">
+                        {formatInteger(item.row_count, language)}
+                      </td>
+                      <td className="py-4 pr-4 text-right text-slate-500">
+                        {formatDateTime(item.created_at, language)}
+                      </td>
+                      <td className="py-4 pl-4 pr-6 text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-bold text-indigo-600 hover:bg-indigo-100 transition disabled:opacity-40"
+                            disabled={item.status !== 'completed'}
+                            onClick={() => openAnalysis(item)}
+                            type="button"
+                          >
+                            <FolderOpenIcon size={15} weight="bold" />
+                            {t('history.open')}
+                          </button>
+                          <button
+                            aria-label={t('history.deleteAria', { name: item.file_name })}
+                            className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
+                            onClick={() => setDeleteTarget(item)}
+                            type="button"
+                          >
+                            <TrashIcon size={16} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {items.map((item) => (
-                      <HistoryTableRow
-                        item={item}
-                        key={item.id}
-                        onDelete={setDeleteTarget}
-                        onOpen={openAnalysis}
-                      />
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
 
-              <div className="divide-y divide-[var(--border)] md:hidden">
-                {items.map((item) => (
-                  <HistoryMobileItem
-                    item={item}
-                    key={item.id}
-                    onDelete={setDeleteTarget}
-                    onOpen={openAnalysis}
-                  />
-                ))}
-              </div>
-            </section>
+            {/* Mobile Card List */}
+            <div className="grid gap-4 md:hidden">
+              {items.map((item) => (
+                <HistoryCard
+                  item={item}
+                  language={language}
+                  key={item.id}
+                  onDelete={setDeleteTarget}
+                  onOpen={openAnalysis}
+                />
+              ))}
+            </div>
 
-            <nav
-              aria-label="Phân trang lịch sử"
-              className="mt-5 flex items-center justify-between gap-4"
-            >
-              <button
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--border-strong)] px-4 py-2.5 text-sm font-extrabold text-[var(--text-primary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                disabled={!hasPreviousPage || historyQuery.isFetching}
-                onClick={() =>
-                  setPage((currentPage) => Math.max(0, currentPage - 1))
-                }
-                type="button"
-              >
-                <ArrowLeftIcon aria-hidden="true" size={17} weight="bold" />
-                Trang trước
-              </button>
-              <span className="text-sm font-bold text-[var(--text-muted)]">
-                Trang {page + 1}
-              </span>
-              <button
-                className="inline-flex items-center gap-2 whitespace-nowrap rounded-xl border border-[var(--border-strong)] px-4 py-2.5 text-sm font-extrabold text-[var(--text-primary)] transition hover:border-[var(--primary)] hover:text-[var(--primary)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
-                disabled={!hasNextPage || historyQuery.isFetching}
-                onClick={() => setPage((currentPage) => currentPage + 1)}
-                type="button"
-              >
-                Trang sau
-                <ArrowRightIcon aria-hidden="true" size={17} weight="bold" />
-              </button>
-            </nav>
-          </>
+            {/* Pagination Controls */}
+            {(hasPreviousPage || hasNextPage) && (
+              <div className="mt-6 flex items-center justify-between border-t border-slate-200/80 pt-4 text-xs">
+                <button
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  disabled={!hasPreviousPage}
+                  onClick={() => setPage((p) => p - 1)}
+                  type="button"
+                >
+                  <ArrowLeftIcon size={15} />
+                  {t('common.previous')}
+                </button>
+                <span className="font-bold text-slate-500">
+                  {t('common.pageOf', {
+                    page: page + 1,
+                    total: hasNextPage ? page + 2 : page + 1,
+                  })}
+                </span>
+                <button
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-4 py-2 font-bold text-slate-700 hover:bg-slate-50 transition disabled:opacity-40"
+                  disabled={!hasNextPage}
+                  onClick={() => setPage((p) => p + 1)}
+                  type="button"
+                >
+                  {t('common.next')}
+                  <ArrowRightIcon size={15} />
+                </button>
+              </div>
+            )}
+          </section>
         )}
       </div>
 
@@ -267,12 +277,7 @@ export function HistoryPage() {
           errorMessage={deleteError?.message ?? null}
           isDeleting={deleteMutation.isPending}
           item={deleteTarget}
-          onCancel={() => {
-            if (!deleteMutation.isPending) {
-              deleteMutation.reset()
-              setDeleteTarget(null)
-            }
-          }}
+          onCancel={() => setDeleteTarget(null)}
           onConfirm={() => deleteMutation.mutate(deleteTarget)}
         />
       )}
@@ -280,164 +285,100 @@ export function HistoryPage() {
   )
 }
 
-function HistoryTableRow({
-  item,
-  onDelete,
-  onOpen,
+function StatusBadge({
+  language,
+  status,
 }: {
-  item: AnalysisListItem
-  onDelete: (item: AnalysisListItem) => void
-  onOpen: (item: AnalysisListItem) => void
+  language: 'en' | 'vi'
+  status: AnalysisListItem['status']
 }) {
-  const status = getAnalysisStatusPresentation(item.status)
-  const isExcel = item.file_name.toLowerCase().endsWith('.xlsx')
-
+  const { className, label } = getAnalysisStatusPresentation(status, language)
   return (
-    <tr className="border-t border-[var(--border)] first:border-t-0">
-      <td className="px-6 py-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-            {isExcel ? (
-              <FileXlsIcon aria-hidden="true" size={22} weight="duotone" />
-            ) : (
-              <FileCsvIcon aria-hidden="true" size={22} weight="duotone" />
-            )}
-          </span>
-          <span
-            className="max-w-[16rem] truncate font-extrabold text-[var(--text-primary)]"
-            title={item.file_name}
-          >
-            {item.file_name}
-          </span>
-        </div>
-      </td>
-      <td className="px-4 py-4 text-[var(--text-muted)]">
-        {item.date_from && item.date_to
-          ? `${formatDate(item.date_from)} - ${formatDate(item.date_to)}`
-          : 'Chưa có dữ liệu'}
-      </td>
-      <td className="px-4 py-4 text-right font-bold text-[var(--text-primary)]">
-        {formatInteger(item.row_count)}
-      </td>
-      <td className="px-4 py-4 text-[var(--text-muted)]">
-        {formatDateTime(item.created_at)}
-      </td>
-      <td className="px-4 py-4">
-        <span
-          className={`inline-flex whitespace-nowrap rounded-lg px-2.5 py-1.5 text-xs font-extrabold ${status.className}`}
-        >
-          {status.label}
-        </span>
-      </td>
-      <td className="px-6 py-4">
-        <div className="flex justify-end gap-2">
-          <button
-            aria-label={`Mở phân tích ${item.file_name}`}
-            className="inline-flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 font-extrabold text-[var(--primary)] transition hover:bg-[var(--primary-soft)] disabled:cursor-not-allowed disabled:opacity-45"
-            disabled={item.status !== 'completed'}
-            onClick={() => onOpen(item)}
-            type="button"
-          >
-            <FolderOpenIcon aria-hidden="true" size={17} weight="bold" />
-            Mở
-          </button>
-          <button
-            aria-label={`Xóa phân tích ${item.file_name}`}
-            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
-            onClick={() => onDelete(item)}
-            type="button"
-          >
-            <TrashIcon aria-hidden="true" size={18} />
-          </button>
-        </div>
-      </td>
-    </tr>
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${className}`}
+    >
+      <span className="size-1.5 rounded-full bg-current" />
+      {label}
+    </span>
   )
 }
 
-function HistoryMobileItem({
+function HistoryCard({
   item,
+  language,
   onDelete,
   onOpen,
 }: {
   item: AnalysisListItem
+  language: 'en' | 'vi'
   onDelete: (item: AnalysisListItem) => void
   onOpen: (item: AnalysisListItem) => void
 }) {
-  const status = getAnalysisStatusPresentation(item.status)
-  const isExcel = item.file_name.toLowerCase().endsWith('.xlsx')
-
+  const { t } = useLanguage()
   return (
-    <article className="p-5">
-      <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-          {isExcel ? (
-            <FileXlsIcon aria-hidden="true" size={22} weight="duotone" />
-          ) : (
-            <FileCsvIcon aria-hidden="true" size={22} weight="duotone" />
-          )}
-        </span>
-        <div className="min-w-0 flex-1">
-          <h2 className="truncate font-extrabold text-[var(--text-primary)]">
-            {item.file_name}
-          </h2>
-          <span
-            className={`mt-2 inline-flex rounded-lg px-2.5 py-1.5 text-xs font-extrabold ${status.className}`}
-          >
-            {status.label}
+    <article className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="grid size-9 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+            {item.upload_mode === 'combined' ? (
+              <FilesIcon size={20} weight="duotone" />
+            ) : item.file_name.toLowerCase().endsWith('.xlsx') ? (
+              <FileXlsIcon size={20} weight="duotone" />
+            ) : (
+              <FileCsvIcon size={20} weight="duotone" />
+            )}
           </span>
+          <div className="min-w-0">
+            <h2 className="max-w-[180px] truncate font-extrabold text-slate-900">
+              {item.file_name}
+            </h2>
+            {item.upload_mode === 'combined' && (
+              <p className="mt-0.5 text-[10px] font-bold text-slate-500">
+                {t('selector.fileCount', {
+                  count: item.source_file_count,
+                })}
+              </p>
+            )}
+          </div>
         </div>
+        <StatusBadge language={language} status={item.status} />
       </div>
 
-      <dl className="mt-4 grid gap-3 text-sm">
-        <div className="flex items-start gap-2">
-          <CalendarBlankIcon
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-            size={17}
-          />
-          <div>
-            <dt className="sr-only">Khoảng dữ liệu</dt>
-            <dd className="text-[var(--text-muted)]">
-              {item.date_from && item.date_to
-                ? `${formatDate(item.date_from)} - ${formatDate(item.date_to)}`
-                : 'Chưa có khoảng dữ liệu'}
-            </dd>
-          </div>
+      <dl className="mt-4 space-y-1.5 text-xs text-slate-500 font-medium">
+        <div className="flex items-center justify-between">
+          <dt>{t('history.period')}:</dt>
+          <dd className="font-semibold text-slate-700">
+            {getAnalysisPeriodLabel(item, language)}
+          </dd>
         </div>
-        <div className="flex items-start gap-2">
-          <RowsIcon
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-[var(--text-muted)]"
-            size={17}
-          />
-          <div>
-            <dt className="sr-only">Số dòng và thời điểm tạo</dt>
-            <dd className="text-[var(--text-muted)]">
-              {formatInteger(item.row_count)} dòng, tạo lúc{' '}
-              {formatDateTime(item.created_at)}
-            </dd>
-          </div>
+        <div className="flex items-center justify-between">
+          <dt>{t('history.rowsAndCreated')}:</dt>
+          <dd className="font-semibold text-slate-700">
+            {t('history.rowsCreatedValue', {
+              count: formatInteger(item.row_count, language),
+              date: formatDateTime(item.created_at, language),
+            })}
+          </dd>
         </div>
       </dl>
 
-      <div className="mt-5 flex gap-3">
+      <div className="mt-5 flex gap-2 pt-3 border-t border-slate-100">
         <button
-          className="inline-flex flex-1 items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-bold text-white shadow-xs hover:bg-indigo-700 transition disabled:opacity-40"
           disabled={item.status !== 'completed'}
           onClick={() => onOpen(item)}
           type="button"
         >
-          <FolderOpenIcon aria-hidden="true" size={17} weight="bold" />
-          Mở kết quả
+          <FolderOpenIcon size={16} weight="bold" />
+          {t('history.openResult')}
         </button>
         <button
-          aria-label={`Xóa phân tích ${item.file_name}`}
-          className="rounded-xl border border-[var(--border-strong)] p-2.5 text-[var(--text-muted)] transition hover:border-[var(--danger)] hover:bg-[var(--danger-soft)] hover:text-[var(--danger)]"
+          aria-label={t('history.deleteAria', { name: item.file_name })}
+          className="rounded-xl border border-slate-200 p-2.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition"
           onClick={() => onDelete(item)}
           type="button"
         >
-          <TrashIcon aria-hidden="true" size={18} />
+          <TrashIcon size={18} />
         </button>
       </div>
     </article>
@@ -446,48 +387,34 @@ function HistoryMobileItem({
 
 function HistoryLoadingState() {
   return (
-    <section
-      aria-label="Đang tải lịch sử phân tích"
-      className="mt-8 overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--surface)]"
-      role="status"
-    >
-      <span className="sr-only">Đang tải lịch sử phân tích...</span>
-      <div className="h-16 animate-pulse border-b border-[var(--border)] bg-[var(--surface-subtle)] motion-reduce:animate-none" />
-      <div className="space-y-1 p-4 sm:p-6">
-        {Array.from({ length: 5 }, (_, index) => (
-          <div
-            className="h-16 animate-pulse rounded-xl bg-[var(--surface-subtle)] motion-reduce:animate-none"
-            key={index}
-          />
-        ))}
-      </div>
-    </section>
+    <div className="mt-8 space-y-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div className="h-16 rounded-2xl bg-slate-100 animate-pulse" key={i} />
+      ))}
+    </div>
   )
 }
 
 function HistoryEmptyState() {
+  const { t } = useLanguage()
+
   return (
-    <section className="mt-8 rounded-2xl border border-dashed border-[var(--border-strong)] bg-[var(--surface)] px-5 py-14 text-center sm:px-8">
-      <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-[var(--primary-soft)] text-[var(--primary)]">
-        <ClockCounterClockwiseIcon
-          aria-hidden="true"
-          size={29}
-          weight="duotone"
-        />
+    <section className="mt-8 rounded-2xl border border-dashed border-slate-200 bg-white px-5 py-14 text-center sm:px-8 shadow-xs">
+      <span className="mx-auto grid size-14 place-items-center rounded-2xl bg-indigo-50 text-indigo-600">
+        <ClockCounterClockwiseIcon size={30} weight="duotone" />
       </span>
-      <h2 className="mt-5 text-2xl font-extrabold tracking-[-0.03em] text-[var(--text-primary)]">
-        Chưa có lịch sử phân tích
+      <h2 className="mt-5 text-2xl font-black tracking-tight text-slate-900">
+        {t('history.emptyTitle')}
       </h2>
-      <p className="mx-auto mt-3 max-w-md leading-7 text-[var(--text-muted)]">
-        Upload file bán hàng đầu tiên để MarketLens lưu kết quả vào tài khoản
-        của bạn.
+      <p className="mx-auto mt-2 max-w-md text-xs text-slate-500">
+        {t('history.emptyDesc')}
       </p>
       <Link
-        className="mt-7 inline-flex items-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-5 py-3 text-sm font-extrabold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98]"
+        className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-700 transition"
         to="/upload"
       >
-        <CloudArrowUpIcon aria-hidden="true" size={18} weight="bold" />
-        Upload dữ liệu
+        <CloudArrowUpIcon size={18} weight="bold" />
+        {t('nav.upload')}
       </Link>
     </section>
   )
@@ -506,140 +433,75 @@ function DeleteAnalysisDialog({
   onCancel: () => void
   onConfirm: () => void
 }) {
+  const { t } = useLanguage()
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
-  const deletingRef = useRef(isDeleting)
-  const cancelRef = useRef(onCancel)
 
   useEffect(() => {
-    deletingRef.current = isDeleting
-    cancelRef.current = onCancel
-  }, [isDeleting, onCancel])
-
-  useEffect(() => {
-    const previousActiveElement = document.activeElement
     cancelButtonRef.current?.focus()
-
-    function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape' && !deletingRef.current) {
-        cancelRef.current()
-        return
-      }
-
-      if (event.key !== 'Tab' || !dialogRef.current) return
-      const focusableElements = Array.from(
-        dialogRef.current.querySelectorAll<HTMLElement>(
-          'button:not(:disabled), [href], input:not(:disabled), '
-            + 'select:not(:disabled), textarea:not(:disabled), '
-            + '[tabindex]:not([tabindex="-1"])',
-        ),
-      )
-      if (focusableElements.length === 0) return
-
-      const firstElement = focusableElements[0]
-      const lastElement = focusableElements.at(-1)
-      if (event.shiftKey && document.activeElement === firstElement) {
-        event.preventDefault()
-        lastElement?.focus()
-      } else if (
-        !event.shiftKey &&
-        document.activeElement === lastElement
-      ) {
-        event.preventDefault()
-        firstElement.focus()
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => {
-      document.removeEventListener('keydown', handleKeyDown)
-      if (previousActiveElement instanceof HTMLElement) {
-        previousActiveElement.focus()
-      }
-    }
   }, [])
-
-  function handleBackdropClick(event: MouseEvent<HTMLDivElement>) {
-    if (event.currentTarget === event.target && !isDeleting) onCancel()
-  }
 
   return (
     <div
       aria-labelledby="delete-analysis-title"
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-[#071225]/65 p-4"
-      onMouseDown={handleBackdropClick}
+      className="fixed inset-0 z-50 grid place-items-center bg-slate-900/60 backdrop-blur-xs p-4"
       role="dialog"
     >
       <section
-        className="w-full max-w-md rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl shadow-blue-950/20 sm:p-7"
+        className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl"
         ref={dialogRef}
       >
         <div className="flex items-start justify-between gap-4">
-          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-[var(--danger-soft)] text-[var(--danger)]">
-            <TrashIcon aria-hidden="true" size={24} weight="duotone" />
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-rose-50 text-rose-600">
+            <TrashIcon size={24} weight="duotone" />
           </span>
           <button
-            aria-label="Đóng hộp thoại"
-            className="rounded-lg p-2 text-[var(--text-muted)] transition hover:bg-[var(--surface-subtle)] hover:text-[var(--text-primary)] disabled:opacity-45"
+            aria-label={t('common.close')}
+            className="rounded-lg p-2 text-slate-400 hover:bg-slate-100 transition"
             disabled={isDeleting}
             onClick={onCancel}
             type="button"
           >
-            <XIcon aria-hidden="true" size={19} />
+            <XIcon size={18} />
           </button>
         </div>
 
-        <h2
-          className="mt-5 text-xl font-extrabold tracking-[-0.025em] text-[var(--text-primary)]"
-          id="delete-analysis-title"
-        >
-          Xóa lần phân tích này?
+        <h2 className="mt-4 text-xl font-black tracking-tight text-slate-900" id="delete-analysis-title">
+          {t('history.deleteTitle')}
         </h2>
-        <p className="mt-3 leading-7 text-[var(--text-muted)]">
-          Kết quả từ <strong>{item.file_name}</strong> sẽ bị xóa vĩnh viễn.
-          File gốc không được MarketLens lưu trữ.
-        </p>
-        <p className="mt-3 rounded-xl bg-[var(--surface-subtle)] px-4 py-3 text-sm text-[var(--text-muted)]">
-          {getAnalysisPeriodLabel(item)}
+        <p className="mt-2 text-xs text-slate-500 leading-relaxed">
+          {t('history.deleteFileDesc', { name: item.file_name })}
         </p>
 
         {errorMessage && (
-          <p
-            className="mt-4 rounded-xl bg-[var(--danger-soft)] px-4 py-3 text-sm font-bold text-[var(--danger)]"
-            role="alert"
-          >
+          <p className="mt-4 rounded-xl bg-rose-50 p-3 text-xs font-bold text-rose-800">
             {errorMessage}
           </p>
         )}
 
-        <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+        <div className="mt-6 flex gap-3 justify-end">
           <button
-            className="whitespace-nowrap rounded-xl border border-[var(--border-strong)] px-5 py-3 text-sm font-extrabold text-[var(--text-primary)] transition hover:border-[var(--primary)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-45"
+            className="rounded-xl border border-slate-300 px-4 py-2.5 text-xs font-extrabold text-slate-700 hover:bg-slate-50 transition"
             disabled={isDeleting}
             onClick={onCancel}
             ref={cancelButtonRef}
             type="button"
           >
-            Giữ lại
+            {t('common.cancel')}
           </button>
           <button
-            className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--danger)] px-5 py-3 text-sm font-extrabold text-white transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-55"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-rose-600 px-4 py-2.5 text-xs font-black text-white hover:bg-rose-700 transition disabled:opacity-50"
             disabled={isDeleting}
             onClick={onConfirm}
             type="button"
           >
             {isDeleting ? (
-              <CircleNotchIcon
-                aria-hidden="true"
-                className="animate-spin motion-reduce:animate-none"
-                size={18}
-                weight="bold"
-              />
+              <CircleNotchIcon className="animate-spin" size={16} />
             ) : (
-              <TrashIcon aria-hidden="true" size={18} weight="bold" />
+              <TrashIcon size={16} weight="bold" />
             )}
-            {isDeleting ? 'Đang xóa' : 'Xóa phân tích'}
+            {isDeleting ? t('history.deleting') : t('common.delete')}
           </button>
         </div>
       </section>

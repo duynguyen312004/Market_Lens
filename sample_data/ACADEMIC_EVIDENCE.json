@@ -1,0 +1,83 @@
+{
+  "analysis_contract_version": "3.0",
+  "datasets": {
+    "association_ground_truth": {
+      "confidence_p001_to_p002_percent": 60.0,
+      "eligible_completed_orders": 100,
+      "input_rows": 130,
+      "lift": 1.5,
+      "pair_order_count": 30,
+      "support_percent": 30.0
+    },
+    "cohort_ground_truth": {
+      "input_rows": 57,
+      "january_cohort_size": 10,
+      "january_retention_percent": [
+        100.0,
+        60.0,
+        40.0,
+        20.0,
+        10.0,
+        0.0
+      ]
+    },
+    "integrated_365_days": {
+      "candidate_mae": {
+        "linear_trend_30_days": 7085566.71,
+        "moving_average_7_days": 5659224.61,
+        "seasonal_naive_7_days": 5981357.14,
+        "weekday_average_4_weeks": 6016406.25
+      },
+      "cohort_count": 10,
+      "fold_count": 8,
+      "history_days": 365,
+      "input_rows": 21277,
+      "model_mae": 5659224.61,
+      "model_smape_percent": 28.501206,
+      "observed_backtest_coverage_percent": 80.357143,
+      "reliability": "medium",
+      "selected_method": "moving_average_7_days",
+      "selection_reason": "LOWEST_MAE",
+      "top_association_lift": 3.176403,
+      "total_revenue": 5177265000,
+      "uncertainty_absolute_error_quantile": 11533286
+    },
+    "regression_60_days": {
+      "candidate_mae": {
+        "linear_trend_30_days": 856855.5,
+        "moving_average_7_days": 913316.32,
+        "seasonal_naive_7_days": 1223928.57,
+        "weekday_average_4_weeks": 993125.0
+      },
+      "fold_count": 4,
+      "history_days": 60,
+      "input_rows": 393,
+      "model_mae": 856855.5,
+      "model_smape_percent": 42.263957,
+      "observed_backtest_coverage_percent": 82.142857,
+      "reliability": "low",
+      "selected_method": "linear_trend_30_days",
+      "selection_reason": "LOWEST_MAE",
+      "uncertainty_absolute_error_quantile": 1439007
+    },
+    "weekly_ground_truth": {
+      "candidate_mae": {
+        "linear_trend_30_days": 46442.57,
+        "moving_average_7_days": 46938.71,
+        "seasonal_naive_7_days": 0.0,
+        "weekday_average_4_weeks": 0.0
+      },
+      "fold_count": 7,
+      "history_days": 84,
+      "input_rows": 84,
+      "model_mae": 0.0,
+      "model_smape_percent": 0.0,
+      "observed_backtest_coverage_percent": 100.0,
+      "reliability": "high",
+      "selected_method": "seasonal_naive_7_days",
+      "selection_reason": "LOWEST_MAE",
+      "uncertainty_absolute_error_quantile": 0
+    }
+  },
+  "evidence_version": "1.0"
+}

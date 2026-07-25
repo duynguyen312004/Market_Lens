@@ -75,9 +75,26 @@ def main() -> None:
         raise SystemExit(
             "AI provider smoke: FAIL (provider không trả source=ai)."
         )
+    if generation.report.get("report_version") != "2.0":
+        raise SystemExit(
+            "AI provider smoke: FAIL (report_version không phải 2.0)."
+        )
+    if not all(
+        recommendation.get("evidence")
+        and recommendation.get("action")
+        and recommendation.get("success_metric")
+        for recommendation in generation.report.get(
+            "recommendations",
+            [],
+        )
+    ):
+        raise SystemExit(
+            "AI provider smoke: FAIL "
+            "(recommendation thiếu evidence/action/success_metric)."
+        )
 
     print(
-        "AI provider smoke: PASS "
+        "AI provider smoke: PASS (report_version=2.0, evidence=validated) "
         f"(provider={settings.ai_provider}, model={settings.ai_model})."
     )
 

@@ -1,8 +1,11 @@
+from copy import deepcopy
 from datetime import UTC, datetime
+import inspect
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
 
+import pandas as pd
 import pytest
 from fastapi.testclient import TestClient
 
@@ -11,6 +14,14 @@ from backend.app.core.config import Settings, get_settings
 from backend.app.main import app
 from backend.app.repositories.analyses_repository import (
     get_analyses_repository,
+)
+from backend.app.routers.analyses import (
+    create_analysis,
+    create_combined_analysis,
+    delete_analysis,
+    generate_analysis_ai_report,
+    get_analysis,
+    list_analyses,
 )
 from backend.app.services.ai_report import AIReportGeneration
 
@@ -55,6 +66,8 @@ class FakeAnalysesRepository:
                 for key in (
                     "id",
                     "file_name",
+                    "upload_mode",
+                    "source_file_count",
                     "status",
                     "row_count",
                     "date_from",
@@ -97,6 +110,7 @@ class FakeAnalysesRepository:
         analysis_id: str,
         user_id: str,
         report: dict[str, Any],
+        language: str = "en",
     ) -> dict[str, Any] | None:
         record = self.get_analysis_for_user(
             analysis_id=analysis_id,
@@ -104,9 +118,14 @@ class FakeAnalysesRepository:
         )
         if record is None:
             return None
+        reports = {
+            **record["result_json"].get("reports", {}),
+            language: report,
+        }
         record["result_json"] = {
             **record["result_json"],
             "report": report,
+            "reports": reports,
         }
         return record
 
@@ -139,6 +158,22 @@ def test_upload_requires_authentication() -> None:
     assert response.json()["error"]["code"] == "UNAUTHORIZED"
 
 
+def test_blocking_analysis_routes_run_as_sync_path_operations() -> None:
+    path_operations = (
+        create_analysis,
+        create_combined_analysis,
+        list_analyses,
+        get_analysis,
+        generate_analysis_ai_report,
+        delete_analysis,
+    )
+
+    assert all(
+        not inspect.iscoroutinefunction(operation)
+        for operation in path_operations
+    )
+
+
 @pytest.mark.parametrize(
     ("method", "path"),
     [
@@ -155,6 +190,7 @@ def test_upload_requires_authentication() -> None:
             "POST",
             "/api/v1/analyses/11111111-1111-1111-1111-111111111111/ai-report",
         ),
+        ("POST", "/api/v1/analyses/combined"),
     ],
 )
 def test_analysis_routes_require_authentication(
@@ -188,7 +224,7 @@ def test_invalid_analysis_id_uses_error_contract(
     assert response.status_code == 422
     payload = response.json()["error"]
     assert payload["code"] == "REQUEST_VALIDATION_ERROR"
-    assert payload["message"] == "Yêu cầu có tham số không hợp lệ."
+    assert payload["message"] == "The request contains invalid parameters."
     assert payload["details"]["errors"][0]["location"] == [
         "path",
         "analysis_id",
@@ -235,7 +271,7 @@ def test_unexpected_upload_failure_uses_processing_error_contract(
     assert response.json() == {
         "error": {
             "code": "ANALYSIS_PROCESSING_FAILED",
-            "message": "Không thể xử lý file dữ liệu lúc này.",
+                "message": "The data file cannot be processed right now.",
             "details": None,
         }
     }
@@ -255,6 +291,10 @@ def test_upload_valid_csv_persists_and_returns_analysis(
     assert response.status_code == 201
     payload = response.json()
     assert payload["file_name"] == "sales.csv"
+    assert payload["upload_mode"] == "single"
+    assert payload["contract_version"] == "3.0"
+    assert payload["source_file_count"] == 1
+    assert payload["upload"]["mode"] == "single"
     assert payload["row_count"] == 4
     assert payload["summary"] == {
         "total_revenue": 740_000,
@@ -262,10 +302,323 @@ def test_upload_valid_csv_persists_and_returns_analysis(
         "total_customers": 2,
         "total_quantity_sold": 4,
         "growth_rate_percent": None,
+        "average_order_value": 370_000,
+        "average_revenue_per_customer": 370_000,
     }
+    assert payload["orders"]["by_status"] == {
+        "completed": 2,
+        "cancelled": 1,
+        "returned": 0,
+    }
+    assert payload["customers"]["rfm"]["available"] is False
+    assert payload["customers"]["rfm"]["reason"] == (
+        "INSUFFICIENT_CUSTOMERS"
+    )
+    assert payload["sales"]["product_intelligence"]["abc"][
+        "classified_product_count"
+    ] == 3
+    associations = payload["sales"]["product_intelligence"][
+        "associations"
+    ]
+    assert associations["available"] is False
+    assert associations["reason"] == "INSUFFICIENT_ASSOCIATION_SUPPORT"
+    assert associations["observed_pair_count"] == 1
+    assert payload["customers"]["cohort_analysis"]["available"] is False
+    assert payload["sales"]["discount_analysis"]["discount_amount"] == 30_000
     assert payload["forecast"]["available"] is False
     assert payload["report"]["source"] == "rule_based"
     assert len(fake_repository.records) == 1
+
+
+def test_combined_upload_persists_one_analysis_atomically(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    header, *rows = SAMPLE_TEMPLATE.read_text(encoding="utf-8").splitlines()
+    first_file = "\n".join([header, *rows[:2]]).encode()
+    second_file = "\n".join([header, *rows[2:]]).encode()
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", ("first.csv", first_file, "text/csv")),
+            ("files", ("second.csv", second_file, "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["upload_mode"] == "combined"
+    assert payload["source_file_count"] == 2
+    assert payload["row_count"] == 4
+    assert payload["summary"]["total_revenue"] == 740_000
+    assert payload["upload"] == {
+        "mode": "combined",
+        "file_count": 2,
+        "source_files": [
+            {"file_name": "first.csv", "row_count": 2},
+            {"file_name": "second.csv", "row_count": 2},
+        ],
+        "source_row_count": 4,
+        "effective_row_count": 4,
+        "duplicate_order_count": 0,
+        "duplicate_row_count": 0,
+    }
+    assert len(fake_repository.records) == 1
+
+
+def test_combined_upload_rejects_invalid_second_file_without_persisting(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            (
+                "files",
+                ("valid.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            ),
+            ("files", ("invalid.csv", b"wrong,columns\n1,2", "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["error"]
+    assert payload["code"] == "INVALID_FILE_COLUMNS"
+    assert payload["details"]["file_name"] == "invalid.csv"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_rejects_duplicate_file_names(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            (
+                "files",
+                ("sales.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            ),
+            (
+                "files",
+                ("SALES.CSV", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            ),
+        ],
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "DUPLICATE_FILE_NAMES"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_deduplicates_exact_repeated_orders(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            (
+                "files",
+                ("first.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            ),
+            (
+                "files",
+                ("duplicate.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            ),
+        ],
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["row_count"] == 4
+    assert payload["upload"]["source_row_count"] == 8
+    assert payload["upload"]["duplicate_order_count"] == 3
+    assert payload["upload"]["duplicate_row_count"] == 4
+    assert "DUPLICATE_ORDERS_REMOVED" in payload["warnings"]
+    assert len(fake_repository.records) == 1
+
+
+def test_combined_upload_rejects_conflicting_order_without_persisting(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    original = SAMPLE_TEMPLATE.read_text(encoding="utf-8")
+    changed = original.replace(
+        "DH0001,2026-07-01,C001,Nguyen Van A,P001,Ao thun basic,"
+        "Thoi trang,2,150000,20000,completed",
+        "DH0001,2026-07-01,C001,Nguyen Van A,P001,Ao thun basic,"
+        "Thoi trang,3,150000,20000,completed",
+    )
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", ("original.csv", original.encode(), "text/csv")),
+            ("files", ("changed.csv", changed.encode(), "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["error"]
+    assert payload["code"] == "CONFLICTING_DATA_ACROSS_FILES"
+    assert payload["details"]["errors"][0]["identifier"] == "DH0001"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_requires_two_files(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            (
+                "files",
+                ("sales.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv"),
+            )
+        ],
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "NOT_ENOUGH_FILES"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_enforces_file_count_limit(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        ai_report_enabled=False,
+        max_upload_files=2,
+    )
+    content = SAMPLE_TEMPLATE.read_bytes()
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", ("one.csv", content, "text/csv")),
+            ("files", ("two.csv", content, "text/csv")),
+            ("files", ("three.csv", content, "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "TOO_MANY_FILES"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_enforces_total_size_before_parsing(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        ai_report_enabled=False,
+        max_upload_mb=1,
+    )
+    padded = SAMPLE_TEMPLATE.read_bytes() + (b"\n" * 600_000)
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", ("one.csv", padded, "text/csv")),
+            ("files", ("two.csv", padded, "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "FILE_TOO_LARGE"
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_enforces_total_row_limit_during_validation(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        ai_report_enabled=False,
+        max_upload_rows=5,
+    )
+    content = SAMPLE_TEMPLATE.read_bytes()
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", ("one.csv", content, "text/csv")),
+            ("files", ("two.csv", content, "text/csv")),
+        ],
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["error"]
+    assert payload["code"] == "TOO_MANY_ROWS"
+    assert payload["details"]["actual_rows"] == 8
+    assert payload["details"]["file_name"] == "two.csv"
+    assert fake_repository.records == {}
+
+
+def test_single_upload_rejects_analysis_period_over_configured_limit(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        ai_report_enabled=False,
+        max_analysis_period_days=14,
+    )
+    source = pd.read_csv(SAMPLE_TEMPLATE).iloc[[0, 0]].copy()
+    source["order_id"] = ["RANGE-001", "RANGE-002"]
+    source["order_date"] = ["2026-06-17", "2026-07-01"]
+
+    response = client.post(
+        "/api/v1/analyses",
+        files={
+            "file": (
+                "long-period.csv",
+                source.to_csv(index=False).encode(),
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["error"]
+    assert payload["code"] == "DATE_RANGE_TOO_LARGE"
+    assert payload["details"]["actual_period_days"] == 15
+    assert fake_repository.records == {}
+
+
+def test_combined_upload_checks_period_across_source_boundaries(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    app.dependency_overrides[get_settings] = lambda: Settings(
+        ai_report_enabled=False,
+        max_analysis_period_days=14,
+    )
+    first = pd.read_csv(SAMPLE_TEMPLATE).iloc[[0]].copy()
+    first["order_id"] = ["RANGE-001"]
+    first["order_date"] = ["2026-06-17"]
+    second = pd.read_csv(SAMPLE_TEMPLATE).iloc[[0]].copy()
+    second["order_id"] = ["RANGE-002"]
+    second["order_date"] = ["2026-07-01"]
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            (
+                "files",
+                (
+                    "first.csv",
+                    first.to_csv(index=False).encode(),
+                    "text/csv",
+                ),
+            ),
+            (
+                "files",
+                (
+                    "second.csv",
+                    second.to_csv(index=False).encode(),
+                    "text/csv",
+                ),
+            ),
+        ],
+    )
+
+    assert response.status_code == 400
+    payload = response.json()["error"]
+    assert payload["code"] == "DATE_RANGE_TOO_LARGE"
+    assert payload["details"]["actual_period_days"] == 15
+    assert fake_repository.records == {}
 
 
 def test_list_get_and_delete_analysis(
@@ -345,6 +698,7 @@ def test_ai_report_disabled_returns_and_persists_fallback(
     payload = response.json()
     assert payload["analysis_id"] == analysis_id
     assert payload["source"] == "rule_based"
+    assert payload["language"] == "en"
     assert payload["warning"]["code"] == "AI_DISABLED"
     detail = client.get(f"/api/v1/analyses/{analysis_id}").json()
     assert detail["report"]["source"] == "rule_based"
@@ -378,22 +732,21 @@ def test_ai_report_success_is_persisted(
         files={"file": ("sales.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv")},
     )
     analysis_id = create_response.json()["id"]
-    ai_report = {
-        "source": "ai",
-        "title": "Báo cáo AI",
-        "summary": "Báo cáo AI dựa trên aggregate của kỳ dữ liệu hiện tại.",
-        "highlights": ["Sản phẩm dẫn đầu đóng góp doanh thu cao nhất."],
-        "trend_analysis": "Chưa đủ dữ liệu để so sánh hai kỳ 7 ngày.",
-        "recommendations": [
-            {
-                "title": "Theo dõi sản phẩm dẫn đầu",
-                "description": (
-                    "Tiếp tục theo dõi đóng góp doanh thu qua các kỳ sau."
-                ),
-            }
-        ],
-        "disclaimer": "Báo cáo chỉ mang tính tham khảo.",
-    }
+    ai_report = deepcopy(create_response.json()["report"])
+    ai_report.update(
+        {
+            "source": "ai",
+            "generator": {
+                "provider": "gemini",
+                "model": "gemini-3.5-flash-lite",
+            },
+            "title": "Báo cáo AI dựa trên bằng chứng",
+            "executive_summary": (
+                "Báo cáo AI sử dụng duy nhất các bằng chứng tổng hợp "
+                "của kỳ dữ liệu hiện tại."
+            ),
+        }
+    )
     monkeypatch.setattr(
         "backend.app.routers.analyses.generate_ai_report",
         lambda **_: AIReportGeneration(report=ai_report),
@@ -406,6 +759,35 @@ def test_ai_report_success_is_persisted(
     assert response.json()["warning"] is None
     detail = client.get(f"/api/v1/analyses/{analysis_id}").json()
     assert detail["report"] == ai_report
+    assert detail["reports"]["en"] == ai_report
+
+
+def test_vietnamese_ai_report_fallback_is_localized_and_persisted(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    create_response = client.post(
+        "/api/v1/analyses",
+        files={"file": ("sales.csv", SAMPLE_TEMPLATE.read_bytes(), "text/csv")},
+    )
+    analysis_id = create_response.json()["id"]
+
+    response = client.post(
+        f"/api/v1/analyses/{analysis_id}/ai-report",
+        params={"language": "vi"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["language"] == "vi"
+    assert payload["source"] == "rule_based"
+    assert payload["report"]["title"] == (
+        "Báo cáo kinh doanh dựa trên bằng chứng"
+    )
+    detail = client.get(f"/api/v1/analyses/{analysis_id}").json()
+    assert detail["reports"]["vi"] == payload["report"]
+    assert detail["reports"]["en"]["title"] == (
+        "Evidence-based business report"
+    )
 
 
 def test_ai_rate_limit_returns_and_persists_rule_based_fallback(
@@ -432,6 +814,6 @@ def test_ai_rate_limit_returns_and_persists_rule_based_fallback(
     payload = response.json()
     assert payload["source"] == "rule_based"
     assert payload["warning"]["code"] == "AI_RATE_LIMITED"
-    assert "giới hạn sử dụng" in payload["warning"]["message"]
+    assert "rate-limited" in payload["warning"]["message"]
     detail = client.get(f"/api/v1/analyses/{analysis_id}").json()
     assert detail["report"] == fallback_report

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo } from 'react'
 
 import {
   getAnalysis,
@@ -8,34 +8,14 @@ import {
   type AnalysisListItem,
 } from '../../api/analysesApi'
 import { parseApiError, type ParsedApiError } from '../../api/apiErrors'
-
-export const LAST_ANALYSIS_ID_KEY = 'marketlens:lastAnalysisId'
+import { useLanguage } from '../../i18n/LanguageContext'
+import { useActiveAnalysis } from './ActiveAnalysisContext'
 
 export const analysisKeys = {
   all: ['analyses'] as const,
   list: (limit = 20, offset = 0) =>
     ['analyses', 'list', limit, offset] as const,
   detail: (analysisId: string) => ['analyses', analysisId] as const,
-}
-
-export function readStoredAnalysisId() {
-  try {
-    return localStorage.getItem(LAST_ANALYSIS_ID_KEY)
-  } catch {
-    return null
-  }
-}
-
-export function storeSelectedAnalysisId(analysisId: string | null) {
-  try {
-    if (analysisId) {
-      localStorage.setItem(LAST_ANALYSIS_ID_KEY, analysisId)
-    } else {
-      localStorage.removeItem(LAST_ANALYSIS_ID_KEY)
-    }
-  } catch {
-    // The app still works when storage is unavailable or blocked.
-  }
 }
 
 export function findLatestCompletedAnalysis(items: AnalysisListItem[]) {
@@ -58,8 +38,48 @@ type CurrentAnalysisState = {
   retry: () => void
 }
 
+type AnalysisViewStateInput = {
+  hasActiveId: boolean
+  hasAnalysis: boolean
+  hasError: boolean
+  hasLatestAnalysis: boolean
+  hasPreferredId: boolean
+  isDetailPending: boolean
+  isListSuccess: boolean
+  preferredIsMissing: boolean
+}
+
+export function deriveAnalysisViewState({
+  hasActiveId,
+  hasAnalysis,
+  hasError,
+  hasLatestAnalysis,
+  hasPreferredId,
+  isDetailPending,
+  isListSuccess,
+  preferredIsMissing,
+}: AnalysisViewStateInput) {
+  const isEmpty =
+    isListSuccess &&
+    !hasLatestAnalysis &&
+    !hasPreferredId
+
+  return {
+    isEmpty,
+    isLoading:
+      !isEmpty &&
+      !hasAnalysis &&
+      !hasError &&
+      (!hasActiveId || isDetailPending || preferredIsMissing),
+  }
+}
+
 export function useCurrentAnalysis(): CurrentAnalysisState {
-  const [preferredId, setPreferredId] = useState(readStoredAnalysisId)
+  const { language } = useLanguage()
+  const {
+    activeAnalysisId: preferredId,
+    selectAnalysis,
+  } = useActiveAnalysis()
 
   const listQuery = useQuery({
     queryKey: analysisKeys.list(),
@@ -83,7 +103,7 @@ export function useCurrentAnalysis(): CurrentAnalysisState {
   })
 
   const detailError = detailQuery.error
-    ? parseApiError(detailQuery.error)
+    ? parseApiError(detailQuery.error, language)
     : null
   const preferredIsMissing =
     Boolean(preferredId) &&
@@ -91,10 +111,9 @@ export function useCurrentAnalysis(): CurrentAnalysisState {
 
   useEffect(() => {
     if (!preferredId && latestAnalysis) {
-      setPreferredId(latestAnalysis.id)
-      storeSelectedAnalysisId(latestAnalysis.id)
+      selectAnalysis(latestAnalysis.id)
     }
-  }, [latestAnalysis, preferredId])
+  }, [latestAnalysis, preferredId, selectAnalysis])
 
   useEffect(() => {
     if (!preferredIsMissing || listQuery.isPending) return
@@ -103,34 +122,39 @@ export function useCurrentAnalysis(): CurrentAnalysisState {
       preferredId as string,
       listItems,
     )
-    setPreferredId(fallbackId)
-    storeSelectedAnalysisId(fallbackId)
+    selectAnalysis(fallbackId)
   }, [
     latestAnalysis,
     listItems,
     listQuery.isPending,
     preferredId,
     preferredIsMissing,
+    selectAnalysis,
   ])
 
   const analysis = detailQuery.data ?? null
   const listError =
-    !preferredId && listQuery.error ? parseApiError(listQuery.error) : null
+    !preferredId && listQuery.error
+      ? parseApiError(listQuery.error, language)
+      : null
   const effectiveDetailError =
     detailError && !preferredIsMissing ? detailError : null
+  const effectiveError = listError ?? effectiveDetailError
+  const viewState = deriveAnalysisViewState({
+    hasActiveId: Boolean(activeId),
+    hasAnalysis: Boolean(analysis),
+    hasError: Boolean(effectiveError),
+    hasLatestAnalysis: Boolean(latestAnalysis),
+    hasPreferredId: Boolean(preferredId),
+    isDetailPending: detailQuery.isPending,
+    isListSuccess: listQuery.isSuccess,
+    preferredIsMissing,
+  })
 
   return {
     analysis,
-    error: listError ?? effectiveDetailError,
-    isEmpty:
-      listQuery.isSuccess &&
-      !latestAnalysis &&
-      !preferredId,
-    isLoading:
-      !analysis &&
-      !listError &&
-      !effectiveDetailError &&
-      (!activeId || detailQuery.isPending || preferredIsMissing),
+    error: effectiveError,
+    ...viewState,
     retry: () => {
       void listQuery.refetch()
       if (activeId) void detailQuery.refetch()

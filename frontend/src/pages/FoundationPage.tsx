@@ -6,8 +6,10 @@ import {
   CheckCircleIcon,
   FileCsvIcon,
   FileMagnifyingGlassIcon,
+  GlobeIcon,
   ListIcon,
   LockKeyIcon,
+  ShieldCheckIcon,
   SparkleIcon,
   TrendUpIcon,
   UsersThreeIcon,
@@ -15,106 +17,145 @@ import {
 } from '@phosphor-icons/react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useState } from 'react'
-import { Link } from 'react-router-dom'
-
-const audiences = [
-  'Chủ shop Shopee',
-  'TikTok Shop',
-  'Cửa hàng bán lẻ',
-  'Doanh nghiệp vừa và nhỏ',
-]
-
-const workflow = [
-  {
-    title: 'Tải dữ liệu lên',
-    description: 'Chọn file CSV hoặc XLSX từ hệ thống bán hàng của bạn.',
-    icon: FileCsvIcon,
-  },
-  {
-    title: 'MarketLens phân tích',
-    description: 'Dữ liệu được kiểm tra, chuẩn hóa và tính toán tự động.',
-    icon: FileMagnifyingGlassIcon,
-  },
-  {
-    title: 'Nhận góc nhìn rõ ràng',
-    description: 'Xem dashboard, dự báo và báo cáo có thể hành động.',
-    icon: TrendUpIcon,
-  },
-]
+import { Link } from 'react-router'
+import { useLanguage } from '../i18n/LanguageContext'
 
 export function FoundationPage() {
+  const { language, setLanguage, t } = useLanguage()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const reduceMotion = useReducedMotion()
-  const reveal = reduceMotion
+
+  const revealVariants = reduceMotion
     ? {}
     : {
-        initial: { opacity: 0, y: 24 },
+        initial: { opacity: 0, y: 20 },
         whileInView: { opacity: 1, y: 0 },
-        viewport: { once: true, amount: 0.2 },
-        transition: { duration: 0.65, ease: [0.16, 1, 0.3, 1] as const },
+        viewport: { once: true, amount: 0.15 },
+        transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const },
       }
 
+  const workflow = [
+    {
+      title: t('landing.step1Title'),
+      description: t('landing.step1Desc'),
+      icon: FileCsvIcon,
+    },
+    {
+      title: t('landing.step2Title'),
+      description: t('landing.step2Desc'),
+      icon: FileMagnifyingGlassIcon,
+    },
+    {
+      title: t('landing.step3Title'),
+      description: t('landing.step3Desc'),
+      icon: TrendUpIcon,
+    },
+  ]
+
+  const securityFeatures = [
+    {
+      title: t('landing.sec1Title'),
+      description: t('landing.sec1Desc'),
+      icon: LockKeyIcon,
+    },
+    {
+      title: t('landing.sec2Title'),
+      description: t('landing.sec2Desc'),
+      icon: ShieldCheckIcon,
+    },
+    {
+      title: t('landing.sec3Title'),
+      description: t('landing.sec3Desc'),
+      icon: BrainIcon,
+    },
+    {
+      title: t('landing.sec4Title'),
+      description: t('landing.sec4Desc'),
+      icon: CheckCircleIcon,
+    },
+  ]
+  const audiences = [
+    t('landing.audienceShopee'),
+    t('landing.audienceTikTok'),
+    t('landing.audienceRetail'),
+    t('landing.audienceSmallBusiness'),
+  ]
+
   return (
-    <div className="min-h-[100dvh] overflow-x-hidden bg-[var(--page)] text-[var(--text-primary)]">
-      <header className="sticky top-0 z-30 border-b border-[var(--border)]/80 bg-[color-mix(in_srgb,var(--page)_88%,transparent)] backdrop-blur-xl">
+    <div className="min-h-[100dvh] overflow-x-hidden bg-slate-50 text-slate-900">
+      {/* Solid Clear Header (No Backdrop Blur) */}
+      <header className="sticky top-0 z-30 border-b border-slate-200 bg-white shadow-xs">
         <nav
-          aria-label="Điều hướng trang chủ"
-          className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8"
+          aria-label={t('common.homeNavigation')}
+          className="mx-auto flex h-[76px] max-w-7xl items-center justify-between px-5 sm:px-8"
         >
           <Link
-            aria-label="MarketLens, trang chủ"
-            className="flex items-center gap-2.5 rounded-lg text-lg font-extrabold tracking-[-0.035em]"
+            aria-label={t('common.marketLensHome')}
+            className="flex items-center gap-2.5 rounded-lg text-xl font-black tracking-tight text-slate-900"
             to="/"
           >
-            <span className="grid size-9 place-items-center rounded-xl bg-[var(--primary)] text-[var(--primary-contrast)] shadow-[0_8px_24px_color-mix(in_srgb,var(--primary)_24%,transparent)]">
-              <ChartLineUpIcon aria-hidden="true" size={21} weight="bold" />
+            <span className="grid size-10 place-items-center rounded-xl bg-indigo-600 text-white shadow-md shadow-indigo-600/20">
+              <ChartLineUpIcon aria-hidden="true" size={22} weight="bold" />
             </span>
-            <span>
-              Market<span className="text-[var(--primary)]">Lens</span>
-            </span>
+            <span>Market<span className="text-indigo-600">Lens</span></span>
           </Link>
 
           <div className="hidden items-center gap-8 lg:flex">
             <a
-              className="text-sm font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
+              className="text-xs font-bold text-slate-700 transition hover:text-indigo-600"
               href="#tinh-nang"
             >
-              Tính năng
+              {t('landing.features')}
             </a>
             <a
-              className="text-sm font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
+              className="text-xs font-bold text-slate-700 transition hover:text-indigo-600"
               href="#cach-hoat-dong"
             >
-              Cách hoạt động
+              {t('landing.howItWorks')}
             </a>
             <a
-              className="text-sm font-semibold text-[var(--text-muted)] transition hover:text-[var(--text-primary)]"
+              className="text-xs font-bold text-slate-700 transition hover:text-indigo-600"
               href="#bao-mat"
             >
-              Bảo mật
+              {t('landing.security')}
             </a>
           </div>
 
-          <div className="hidden items-center gap-3 lg:flex">
+          <div className="hidden items-center gap-3.5 lg:flex">
+            {/* Language Switcher Button */}
+            <button
+              className="flex items-center gap-1.5 rounded-xl border border-slate-300 bg-slate-100 px-3.5 py-2 text-xs font-black text-indigo-700 hover:bg-slate-200 transition"
+              onClick={() => setLanguage(language === 'en' ? 'vi' : 'en')}
+              type="button"
+            >
+              <GlobeIcon size={15} />
+              {language.toUpperCase()}
+            </button>
+
+            {/* Solid High-Contrast Sign In Button */}
             <Link
-              className="rounded-xl px-4 py-2.5 text-sm font-bold text-[var(--text-primary)] transition hover:bg-[var(--surface-subtle)] active:scale-[0.98]"
+              className="rounded-xl border border-slate-300 bg-white px-4.5 py-2.5 text-xs font-black text-slate-900 shadow-2xs hover:bg-slate-100 hover:text-indigo-600 transition"
               to="/login"
             >
-              Đăng nhập
+              {t('landing.signIn')}
             </Link>
+
+            {/* Glowing CTA Button */}
             <Link
-              className="whitespace-nowrap rounded-xl bg-[var(--primary)] px-4 py-2.5 text-sm font-bold text-[var(--primary-contrast)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98]"
+              className="whitespace-nowrap rounded-xl bg-indigo-600 px-5.5 py-2.5 text-xs font-black text-white shadow-md shadow-indigo-600/30 hover:bg-indigo-700 transition active:scale-[0.98]"
               to="/register"
             >
-              Bắt đầu miễn phí
+              {t('landing.startFree')}
             </Link>
           </div>
 
           <button
             aria-controls="mobile-navigation"
             aria-expanded={isMenuOpen}
-            aria-label={isMenuOpen ? 'Đóng menu' : 'Mở menu'}
-            className="grid size-10 place-items-center rounded-xl border border-[var(--border)] text-[var(--text-primary)] lg:hidden"
+            aria-label={
+              isMenuOpen ? t('landing.closeMenu') : t('landing.openMenu')
+            }
+            className="grid size-10 place-items-center rounded-xl border border-slate-300 text-slate-900 lg:hidden"
             onClick={() => setIsMenuOpen((current) => !current)}
             type="button"
           >
@@ -128,38 +169,33 @@ export function FoundationPage() {
 
         {isMenuOpen && (
           <div
-            className="border-t border-[var(--border)] bg-[var(--page)] px-5 py-5 lg:hidden"
+            className="border-t border-slate-200 bg-white px-5 py-5 lg:hidden"
             id="mobile-navigation"
           >
-            <div className="mx-auto grid max-w-7xl gap-2">
-              {[
-                ['Tính năng', '#tinh-nang'],
-                ['Cách hoạt động', '#cach-hoat-dong'],
-                ['Bảo mật', '#bao-mat'],
-              ].map(([label, href]) => (
-                <a
-                  className="rounded-xl px-3 py-3 font-semibold text-[var(--text-muted)] hover:bg-[var(--surface-subtle)]"
-                  href={href}
-                  key={href}
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  {label}
-                </a>
-              ))}
+            <div className="mx-auto grid max-w-7xl gap-2 text-xs font-bold text-slate-800">
+              <a className="rounded-xl px-3 py-2.5 hover:bg-slate-100" href="#tinh-nang" onClick={() => setIsMenuOpen(false)}>
+                {t('landing.features')}
+              </a>
+              <a className="rounded-xl px-3 py-2.5 hover:bg-slate-100" href="#cach-hoat-dong" onClick={() => setIsMenuOpen(false)}>
+                {t('landing.howItWorks')}
+              </a>
+              <a className="rounded-xl px-3 py-2.5 hover:bg-slate-100" href="#bao-mat" onClick={() => setIsMenuOpen(false)}>
+                {t('landing.security')}
+              </a>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <Link
-                  className="rounded-xl border border-[var(--border-strong)] px-4 py-3 text-center text-sm font-bold"
+                  className="rounded-xl border border-slate-300 bg-slate-50 px-4 py-2.5 text-center font-black text-slate-900"
                   onClick={() => setIsMenuOpen(false)}
                   to="/login"
                 >
-                  Đăng nhập
+                  {t('landing.signIn')}
                 </Link>
                 <Link
-                  className="rounded-xl bg-[var(--primary)] px-4 py-3 text-center text-sm font-bold text-[var(--primary-contrast)]"
+                  className="rounded-xl bg-indigo-600 px-4 py-2.5 text-center font-black text-white shadow-md shadow-indigo-600/25"
                   onClick={() => setIsMenuOpen(false)}
                   to="/register"
                 >
-                  Bắt đầu miễn phí
+                  {t('landing.startFree')}
                 </Link>
               </div>
             </div>
@@ -168,87 +204,87 @@ export function FoundationPage() {
       </header>
 
       <main>
-        <section className="relative">
-          <div className="mx-auto grid min-h-[calc(100dvh-72px)] max-w-7xl items-center gap-10 px-5 py-14 sm:px-8 lg:grid-cols-[0.92fr_1.08fr] lg:py-16">
+        {/* Hero Section */}
+        <section className="relative overflow-hidden pt-12 pb-20 lg:pt-16 lg:pb-28 bg-white border-b border-slate-200">
+          <div className="mx-auto grid max-w-7xl items-center gap-12 px-5 sm:px-8 lg:grid-cols-[0.95fr_1.05fr]">
             <motion.div
               animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
-              initial={reduceMotion ? undefined : { opacity: 0, y: 22 }}
-              transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+              initial={reduceMotion ? undefined : { opacity: 0, y: 16 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             >
-              <div className="mb-7 flex w-fit items-center gap-2 text-sm font-bold text-[var(--primary)]">
-                <SparkleIcon aria-hidden="true" size={18} weight="fill" />
-                Phân tích bán hàng cho shop online
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-indigo-200 bg-indigo-50 px-3.5 py-1 text-xs font-black text-indigo-700">
+                <SparkleIcon aria-hidden="true" size={16} weight="fill" />
+                {t('landing.badge')}
               </div>
-              <h1 className="max-w-[13ch] text-5xl font-extrabold leading-[1.04] tracking-[-0.055em] sm:text-6xl lg:text-[4.35rem]">
-                Hiểu dữ liệu. Tăng doanh thu.
+
+              <h1 className="max-w-[13ch] text-4xl font-black leading-[1.06] tracking-tight sm:text-5xl lg:text-[4.15rem] text-slate-950">
+                {t('landing.heroTitle1')}{' '}
+                <span className="text-indigo-600 block sm:inline">{t('landing.heroTitle2')}</span>
               </h1>
-              <p className="mt-6 max-w-[52ch] text-lg leading-8 text-[var(--text-muted)]">
-                Biến file bán hàng thành dashboard, dự báo và khuyến nghị rõ
-                ràng chỉ trong vài phút.
+
+              {/* 100% Solid Dark Crisp Text - Zero Blur */}
+              <p className="mt-6 max-w-[50ch] text-base sm:text-lg font-bold leading-relaxed text-slate-800">
+                {t('landing.heroSub')}
               </p>
-              <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+
+              {/* Prominent High-Contrast Call To Action Buttons */}
+              <div className="mt-8 flex flex-col gap-3.5 sm:flex-row">
                 <Link
-                  className="flex items-center justify-center gap-2 whitespace-nowrap rounded-xl bg-[var(--primary)] px-6 py-3.5 text-sm font-bold text-[var(--primary-contrast)] shadow-[0_14px_36px_color-mix(in_srgb,var(--primary)_22%,transparent)] transition hover:bg-[var(--primary-hover)] active:scale-[0.98]"
+                  className="flex items-center justify-center gap-2.5 whitespace-nowrap rounded-xl bg-indigo-600 px-7 py-4 text-sm font-black text-white shadow-lg shadow-indigo-600/30 hover:bg-indigo-700 active:scale-[0.98] transition"
                   to="/register"
                 >
-                  Bắt đầu miễn phí
+                  {t('landing.startFree')}
                   <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
                 </Link>
                 <a
-                  className="flex items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface)] px-6 py-3.5 text-sm font-bold transition hover:border-[var(--primary)] hover:text-[var(--primary)] active:scale-[0.98]"
+                  className="flex items-center justify-center rounded-xl border border-slate-300 bg-white px-6 py-4 text-sm font-black text-slate-900 shadow-2xs hover:bg-slate-50 hover:text-indigo-600 transition active:scale-[0.98]"
                   href="#cach-hoat-dong"
                 >
-                  Xem cách hoạt động
+                  {t('landing.seeHowItWorks')}
                 </a>
               </div>
             </motion.div>
 
+            {/* Hero Image Preview - Solid Border & Crisp Shadow */}
             <motion.figure
               animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
-              className="relative lg:ml-5"
+              className="relative lg:ml-4"
               initial={reduceMotion ? undefined : { opacity: 0, scale: 0.97 }}
               transition={{
-                duration: 0.85,
+                duration: 0.6,
                 delay: 0.1,
                 ease: [0.16, 1, 0.3, 1],
               }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
             >
-              <div className="absolute -inset-5 -z-10 rounded-[2rem] bg-[var(--primary-soft)] blur-2xl" />
               <img
-                alt="Báo cáo bán hàng với biểu đồ tăng trưởng được trực quan hóa"
-                className="aspect-[3/2] w-full rounded-2xl object-cover shadow-[0_30px_90px_color-mix(in_srgb,var(--primary)_18%,transparent)]"
+                alt={t('landing.heroAlt')}
+                className="aspect-[3/2] w-full rounded-2xl object-cover border border-slate-300 shadow-xl"
                 fetchPriority="high"
                 height="1024"
                 src="/images/marketlens-hero.webp"
                 width="1536"
               />
-              <figcaption className="mt-4 text-sm leading-6 text-[var(--text-muted)]">
-                Từ dữ liệu rời rạc đến một góc nhìn kinh doanh thống nhất.
+              <figcaption className="mt-3.5 text-xs font-bold text-slate-700 text-center">
+                {t('landing.caption')}
               </figcaption>
             </motion.figure>
           </div>
         </section>
 
-        <section
-          aria-label="Đối tượng sử dụng"
-          className="border-y border-[var(--border)] bg-[var(--surface)]"
-        >
-          <div className="mx-auto grid max-w-7xl gap-5 px-5 py-7 sm:px-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
-            <p className="text-sm font-bold text-[var(--text-primary)]">
-              Xây cho người trực tiếp vận hành bán hàng
+        {/* Target Audience Banner */}
+        <section className="border-b border-slate-200 bg-slate-100/80 py-8">
+          <div className="mx-auto grid max-w-7xl gap-6 px-5 sm:px-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
+            <p className="text-xs font-black uppercase tracking-wider text-slate-900">
+              {t('landing.tailoredFor')}
             </p>
-            <div className="grid grid-cols-2 gap-x-6 gap-y-4 lg:grid-cols-4">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {audiences.map((audience) => (
                 <div
-                  className="flex items-center gap-2 text-sm font-semibold text-[var(--text-muted)]"
+                  className="flex items-center gap-2.5 text-xs font-black text-slate-800"
                   key={audience}
                 >
-                  <CheckCircleIcon
-                    aria-hidden="true"
-                    className="shrink-0 text-[var(--primary)]"
-                    size={17}
-                    weight="fill"
-                  />
+                  <CheckCircleIcon aria-hidden="true" className="shrink-0 text-emerald-600" size={18} weight="fill" />
                   {audience}
                 </div>
               ))}
@@ -256,268 +292,229 @@ export function FoundationPage() {
           </div>
         </section>
 
-        <section
-          className="scroll-mt-24 px-5 py-24 sm:px-8 lg:py-32"
-          id="cach-hoat-dong"
-        >
-          <motion.div className="mx-auto max-w-7xl" {...reveal}>
+        {/* Workflow Section */}
+        <section className="scroll-mt-24 px-5 py-20 sm:px-8 lg:py-28" id="cach-hoat-dong">
+          <motion.div className="mx-auto max-w-7xl" {...revealVariants}>
             <div className="max-w-2xl">
-              <h2 className="text-4xl font-extrabold leading-tight tracking-[-0.045em] sm:text-5xl">
-                Một file. Ba chuyển động rõ ràng.
+              <span className="text-xs font-black uppercase tracking-wider text-indigo-700">{t('landing.howItWorks')}</span>
+              <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                {t('landing.workflowTitle')}
               </h2>
-              <p className="mt-5 max-w-[58ch] text-lg leading-8 text-[var(--text-muted)]">
-                Không cần nối nhiều công cụ hoặc tự dựng công thức Excel phức
-                tạp.
+              <p className="mt-2 text-sm leading-relaxed text-slate-700 font-bold">
+                {t('landing.workflowSubtitle')}
               </p>
             </div>
 
-            <div className="mt-12 grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
-              <img
-                alt="Dữ liệu bảng tính được sắp xếp thành các nhóm báo cáo rõ ràng"
-                className="aspect-[8/5] w-full rounded-2xl object-cover shadow-[0_24px_70px_color-mix(in_srgb,var(--primary)_13%,transparent)]"
+            <div className="mt-10 grid gap-8 lg:grid-cols-[1.05fr_0.95fr] lg:items-center">
+              <motion.img
+                alt={t('landing.workflowAlt')}
+                className="aspect-[8/5] w-full rounded-2xl border border-slate-300 object-cover shadow-lg"
                 height="1024"
                 loading="lazy"
                 src="/images/marketlens-workflow.webp"
+                whileHover={{ scale: 1.01 }}
                 width="1536"
               />
-              <ol className="grid gap-3">
-                {workflow.map(({ description, icon: Icon, title }) => (
-                  <li
-                    className="grid grid-cols-[auto_1fr] gap-4 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 transition hover:border-[var(--border-strong)]"
+              <ol className="grid gap-4">
+                {workflow.map(({ description, icon: Icon, title }, idx) => (
+                  <motion.li
+                    className="data-panel grid grid-cols-[auto_1fr] gap-4 rounded-2xl border border-slate-300 bg-white p-5 shadow-xs"
                     key={title}
+                    initial={{ opacity: 0, x: 16 }}
+                    transition={{ delay: idx * 0.08, duration: 0.4 }}
+                    viewport={{ once: true }}
+                    whileInView={{ opacity: 1, x: 0 }}
                   >
-                    <span className="grid size-11 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
-                      <Icon aria-hidden="true" size={23} weight="duotone" />
+                    <span className="grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700 font-black">
+                      <Icon aria-hidden="true" size={24} weight="bold" />
                     </span>
                     <div>
-                      <h3 className="font-extrabold">{title}</h3>
-                      <p className="mt-1.5 text-sm leading-6 text-[var(--text-muted)]">
+                      <h3 className="font-black text-slate-950 text-base">{title}</h3>
+                      <p className="mt-1 text-xs text-slate-700 font-bold leading-relaxed">
                         {description}
                       </p>
                     </div>
-                  </li>
+                  </motion.li>
                 ))}
               </ol>
             </div>
           </motion.div>
         </section>
 
-        <section
-          className="scroll-mt-24 bg-[var(--surface-subtle)] px-5 py-24 sm:px-8 lg:py-32"
-          id="tinh-nang"
-        >
-          <motion.div className="mx-auto max-w-7xl" {...reveal}>
+        {/* Feature Grid Section */}
+        <section className="scroll-mt-24 bg-slate-200/60 px-5 py-20 sm:px-8 lg:py-28" id="tinh-nang">
+          <motion.div className="mx-auto max-w-7xl" {...revealVariants}>
             <div className="max-w-2xl">
-              <h2 className="text-4xl font-extrabold leading-tight tracking-[-0.045em] sm:text-5xl">
-                Đủ góc nhìn để ra quyết định.
+              <span className="text-xs font-black uppercase tracking-wider text-indigo-700">{t('landing.features')}</span>
+              <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                {t('landing.featuresTitle')}
               </h2>
-              <p className="mt-5 text-lg leading-8 text-[var(--text-muted)]">
-                Số liệu được tính một lần ở backend và dùng thống nhất trên mọi
-                màn hình.
+              <p className="mt-2 text-sm leading-relaxed text-slate-800 font-bold">
+                {t('landing.featuresSubtitle')}
               </p>
             </div>
 
-            <div className="mt-12 grid gap-4 md:grid-cols-2 lg:grid-cols-12">
-              <article className="rounded-2xl bg-[#102b61] p-7 text-blue-50 lg:col-span-7 lg:min-h-72">
-                <ChartBarIcon
-                  aria-hidden="true"
-                  className="text-blue-200"
-                  size={30}
-                  weight="duotone"
-                />
-                <h3 className="mt-12 text-2xl font-extrabold tracking-[-0.03em]">
-                  Dashboard thống nhất
+            <div className="mt-10 grid gap-5 md:grid-cols-2 lg:grid-cols-12">
+              <motion.article
+                className="data-panel rounded-2xl bg-indigo-700 p-8 text-white shadow-xl lg:col-span-7"
+                whileHover={{ y: -4 }}
+              >
+                <ChartBarIcon aria-hidden="true" className="text-indigo-200" size={32} weight="bold" />
+                <h3 className="mt-10 text-2xl font-black tracking-tight text-white">
+                  {t('landing.feat1Title')}
                 </h3>
-                <p className="mt-3 max-w-[48ch] leading-7 text-blue-100/75">
-                  Theo dõi doanh thu, đơn hàng, sản phẩm và khách hàng trong
-                  cùng một khoảng thời gian.
+                <p className="mt-2.5 text-xs text-white leading-relaxed font-bold">
+                  {t('landing.feat1Desc')}
                 </p>
-              </article>
+              </motion.article>
 
-              <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 lg:col-span-5">
-                <UsersThreeIcon
-                  aria-hidden="true"
-                  className="text-[var(--primary)]"
-                  size={30}
-                  weight="duotone"
-                />
-                <h3 className="mt-12 text-2xl font-extrabold tracking-[-0.03em]">
-                  Hiểu khách hàng
+              <motion.article
+                className="data-panel rounded-2xl border border-slate-300 bg-white p-8 shadow-xs lg:col-span-5"
+                whileHover={{ y: -4 }}
+              >
+                <UsersThreeIcon aria-hidden="true" className="text-indigo-700" size={32} weight="bold" />
+                <h3 className="mt-10 text-2xl font-black tracking-tight text-slate-950">
+                  {t('landing.feat2Title')}
                 </h3>
-                <p className="mt-3 leading-7 text-[var(--text-muted)]">
-                  Phân biệt khách mới, quay lại, VIP và nhóm tiềm năng để chăm
-                  sóc đúng người.
+                <p className="mt-2.5 text-xs text-slate-800 leading-relaxed font-bold">
+                  {t('landing.feat2Desc')}
                 </p>
-              </article>
+              </motion.article>
 
-              <article className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-7 lg:col-span-4">
-                <TrendUpIcon
-                  aria-hidden="true"
-                  className="text-[var(--success)]"
-                  size={30}
-                  weight="duotone"
-                />
-                <h3 className="mt-10 text-xl font-extrabold">
-                  Dự báo có giải thích
+              <motion.article
+                className="data-panel rounded-2xl border border-slate-300 bg-white p-8 shadow-xs lg:col-span-4"
+                whileHover={{ y: -4 }}
+              >
+                <TrendUpIcon aria-hidden="true" className="text-emerald-600" size={32} weight="bold" />
+                <h3 className="mt-8 text-xl font-black tracking-tight text-slate-950">
+                  {t('landing.feat3Title')}
                 </h3>
-                <p className="mt-3 text-sm leading-6 text-[var(--text-muted)]">
-                  So sánh doanh thu thực tế và xu hướng dự kiến, kèm giới hạn
-                  rõ ràng của dữ liệu.
+                <p className="mt-2 text-xs text-slate-800 leading-relaxed font-bold">
+                  {t('landing.feat3Desc')}
                 </p>
-              </article>
+              </motion.article>
 
-              <article className="relative overflow-hidden rounded-2xl lg:col-span-8">
+              <motion.article
+                className="data-panel relative overflow-hidden rounded-2xl lg:col-span-8 shadow-xs"
+                whileHover={{ y: -4 }}
+              >
                 <img
-                  alt="Báo cáo kinh doanh cùng các khuyến nghị được chọn lọc"
+                  alt={t('landing.reportAlt')}
                   className="absolute inset-0 size-full object-cover"
                   height="1024"
                   loading="lazy"
                   src="/images/marketlens-report.webp"
                   width="1536"
                 />
-                <div className="relative min-h-80 bg-gradient-to-r from-[#071a3b]/95 via-[#071a3b]/72 to-transparent p-7 text-white">
-                  <BrainIcon
-                    aria-hidden="true"
-                    className="text-blue-200"
-                    size={30}
-                    weight="duotone"
-                  />
-                  <h3 className="mt-28 max-w-sm text-2xl font-extrabold tracking-[-0.03em]">
-                    Báo cáo AI dựa trên số liệu đã tính
+                <div className="relative min-h-72 bg-slate-950/90 p-8 text-white">
+                  <BrainIcon aria-hidden="true" className="text-indigo-400" size={32} weight="bold" />
+                  <h3 className="mt-20 max-w-sm text-2xl font-black tracking-tight text-white">
+                    {t('landing.feat4Title')}
                   </h3>
-                  <p className="mt-3 max-w-sm leading-7 text-blue-100/80">
-                    AI diễn giải xu hướng và khuyến nghị. KPI gốc luôn do hệ
-                    thống tính toán.
+                  <p className="mt-2 max-w-sm text-xs text-slate-100 leading-relaxed font-bold">
+                    {t('landing.feat4Desc')}
                   </p>
                 </div>
-              </article>
+              </motion.article>
             </div>
           </motion.div>
         </section>
 
-        <section
-          className="scroll-mt-24 px-5 py-24 sm:px-8 lg:py-32"
-          id="bao-mat"
-        >
-          <motion.div
-            className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[0.85fr_1.15fr] lg:items-center"
-            {...reveal}
-          >
-            <div>
-              <LockKeyIcon
-                aria-hidden="true"
-                className="text-[var(--primary)]"
-                size={34}
-                weight="duotone"
-              />
-              <h2 className="mt-6 text-4xl font-extrabold leading-tight tracking-[-0.045em] sm:text-5xl">
-                Dữ liệu của shop chỉ thuộc về shop.
+        {/* Security Section (4 Cards Grid) */}
+        <section className="scroll-mt-24 px-5 py-20 sm:px-8 lg:py-28" id="bao-mat">
+          <motion.div className="mx-auto max-w-7xl" {...revealVariants}>
+            <div className="max-w-2xl">
+              <span className="text-xs font-black uppercase tracking-wider text-indigo-700">{t('landing.security')}</span>
+              <h2 className="mt-1 text-3xl font-black tracking-tight text-slate-950 sm:text-4xl">
+                {t('landing.secTitle')}
               </h2>
-              <p className="mt-5 max-w-[58ch] text-lg leading-8 text-[var(--text-muted)]">
-                Mỗi tài khoản có vùng dữ liệu riêng. Backend xác minh danh tính
-                trước mọi thao tác.
+              <p className="mt-2 text-sm leading-relaxed text-slate-800 font-bold">
+                {t('landing.secDesc')}
               </p>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[
-                {
-                  title: 'Không lưu mật khẩu',
-                  text: 'Supabase Auth quản lý thông tin đăng nhập và session.',
-                },
-                {
-                  title: 'Phân quyền theo tài khoản',
-                  text: 'Row Level Security ngăn truy cập analysis của người khác.',
-                },
-                {
-                  title: 'AI không nhận dữ liệu thô',
-                  text: 'Chỉ aggregate đã loại bỏ định danh mới được gửi tới AI API.',
-                },
-                {
-                  title: 'Secret chỉ ở backend',
-                  text: 'Khóa server không xuất hiện trong bundle trình duyệt.',
-                },
-              ].map(({ text, title }) => (
-                <article
-                  className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-6"
+            <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+              {securityFeatures.map(({ description, icon: Icon, title }) => (
+                <motion.article
+                  className="data-panel rounded-2xl border border-slate-300 bg-white p-6 shadow-xs"
                   key={title}
+                  whileHover={{ y: -4 }}
                 >
-                  <CheckCircleIcon
-                    aria-hidden="true"
-                    className="text-[var(--success)]"
-                    size={22}
-                    weight="fill"
-                  />
-                  <h3 className="mt-5 font-extrabold">{title}</h3>
-                  <p className="mt-2 text-sm leading-6 text-[var(--text-muted)]">
-                    {text}
+                  <span className="grid size-11 place-items-center rounded-xl bg-indigo-100 text-indigo-700">
+                    <Icon aria-hidden="true" size={24} weight="bold" />
+                  </span>
+                  <h3 className="mt-5 font-black text-slate-950 text-base">{title}</h3>
+                  <p className="mt-1.5 text-xs text-slate-700 leading-relaxed font-bold">
+                    {description}
                   </p>
-                </article>
+                </motion.article>
               ))}
             </div>
           </motion.div>
         </section>
 
-        <section className="px-5 pb-24 sm:px-8 lg:pb-32">
+        {/* CTA Callout Banner Section */}
+        <section className="px-5 pb-20 sm:px-8 lg:pb-28">
           <motion.div
-            className="mx-auto grid max-w-7xl gap-8 rounded-2xl bg-[#102b61] px-7 py-12 text-white sm:px-10 lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-14"
-            {...reveal}
+            className="mx-auto grid max-w-7xl gap-8 rounded-3xl bg-slate-900 px-8 py-12 text-white shadow-2xl lg:grid-cols-[1fr_auto] lg:items-center lg:px-14 lg:py-16"
+            {...revealVariants}
           >
             <div>
-              <h2 className="text-3xl font-extrabold tracking-[-0.04em] sm:text-4xl">
-                Bắt đầu với dữ liệu bạn đang có.
+              <h2 className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+                {t('landing.ctaTitle')}
               </h2>
-              <p className="mt-4 max-w-[54ch] leading-7 text-blue-100/78">
-                Tạo tài khoản, tải file mẫu và kiểm tra toàn bộ luồng phân tích
-                của MarketLens.
+              <p className="mt-3 max-w-xl text-xs sm:text-sm text-slate-200 font-bold leading-relaxed">
+                {t('landing.ctaDesc')}
               </p>
             </div>
             <Link
-              className="flex w-fit items-center gap-2 whitespace-nowrap rounded-xl bg-blue-50 px-6 py-3.5 text-sm font-extrabold text-[#102b61] transition hover:bg-white active:scale-[0.98]"
+              className="flex w-fit items-center gap-2.5 whitespace-nowrap rounded-xl bg-indigo-500 px-7 py-4 text-xs font-black text-white shadow-lg hover:bg-indigo-600 transition active:scale-[0.98]"
               to="/register"
             >
-              Bắt đầu miễn phí
-              <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
+              {t('landing.startFree')}
+              <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
             </Link>
           </motion.div>
         </section>
       </main>
 
-      <footer className="border-t border-[var(--border)] bg-[var(--surface)]">
-        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1fr_auto_auto]">
+      {/* Multi-Column Rich Footer */}
+      <footer className="border-t border-slate-300 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-10 px-5 py-12 sm:px-8 md:grid-cols-[1.2fr_0.8fr_0.8fr]">
           <div>
-            <div className="flex items-center gap-2.5 font-extrabold tracking-[-0.03em]">
-              <span className="grid size-8 place-items-center rounded-lg bg-[var(--primary)] text-[var(--primary-contrast)]">
+            <div className="flex items-center gap-2.5 font-black text-slate-950 text-lg">
+              <span className="grid size-8 place-items-center rounded-xl bg-indigo-600 text-white">
                 <ChartLineUpIcon aria-hidden="true" size={18} weight="bold" />
               </span>
               MarketLens
             </div>
-            <p className="mt-4 max-w-sm text-sm leading-6 text-[var(--text-muted)]">
-              Phân tích dữ liệu bán hàng dành cho shop online và doanh nghiệp
-              nhỏ.
+            <p className="mt-3 max-w-sm text-xs text-slate-700 leading-relaxed font-bold">
+              {t('landing.footerDesc')}
             </p>
           </div>
+
           <div>
-            <h2 className="text-sm font-extrabold">Sản phẩm</h2>
-            <div className="mt-4 grid gap-3 text-sm text-[var(--text-muted)]">
-              <a href="#tinh-nang">Tính năng</a>
-              <a href="#cach-hoat-dong">Cách hoạt động</a>
-              <a href="/sample_sales_template.csv">File dữ liệu mẫu</a>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-950">{t('landing.product')}</h3>
+            <div className="mt-3 grid gap-2 text-xs font-bold text-slate-700">
+              <a className="hover:text-indigo-600 transition" href="#tinh-nang">{t('landing.features')}</a>
+              <a className="hover:text-indigo-600 transition" href="#cach-hoat-dong">{t('landing.howItWorks')}</a>
+              <a className="hover:text-indigo-600 transition" href="#bao-mat">{t('landing.security')}</a>
+              <a className="hover:text-indigo-600 transition" download href="/marketlens_ds_demo_365_days.csv">{t('landing.sampleFile')}</a>
             </div>
           </div>
+
           <div>
-            <h2 className="text-sm font-extrabold">Tài khoản</h2>
-            <div className="mt-4 grid gap-3 text-sm text-[var(--text-muted)]">
-              <Link to="/login">Đăng nhập</Link>
-              <Link to="/register">Đăng ký</Link>
-              <Link to="/forgot-password">Quên mật khẩu</Link>
+            <h3 className="text-xs font-black uppercase tracking-wider text-slate-950">{t('landing.account')}</h3>
+            <div className="mt-3 grid gap-2 text-xs font-bold text-slate-700">
+              <Link className="hover:text-indigo-600 transition" to="/login">{t('landing.signIn')}</Link>
+              <Link className="hover:text-indigo-600 transition" to="/register">{t('landing.startFree')}</Link>
+              <Link className="hover:text-indigo-600 transition" to="/forgot-password">{t('auth.forgotPasswordLink')}</Link>
             </div>
           </div>
         </div>
-        <div className="border-t border-[var(--border)]">
-          <p className="mx-auto max-w-7xl px-5 py-5 text-xs text-[var(--text-muted)] sm:px-8">
-            © 2026 MarketLens. Dữ liệu rõ ràng, quyết định vững vàng.
-          </p>
+
+        <div className="border-t border-slate-200 py-6 text-center text-xs font-bold text-slate-700">
+          <p>© {new Date().getFullYear()} MarketLens. {t('landing.footerTagline')}</p>
         </div>
       </footer>
     </div>

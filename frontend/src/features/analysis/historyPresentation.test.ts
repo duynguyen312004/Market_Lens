@@ -8,6 +8,8 @@ import {
 const baseItem = {
   id: 'analysis-id',
   file_name: 'sales.csv',
+  upload_mode: 'single' as const,
+  source_file_count: 1,
   status: 'completed' as const,
   row_count: 120,
   date_from: '2026-07-01',
@@ -18,19 +20,19 @@ const baseItem = {
 describe('history presentation', () => {
   it('hiển thị đúng trạng thái analysis', () => {
     expect(getAnalysisStatusPresentation('completed').label).toBe(
-      'Đã hoàn thành',
+      'Completed',
     )
     expect(getAnalysisStatusPresentation('processing').label).toBe(
-      'Đang xử lý',
+      'Processing',
     )
     expect(getAnalysisStatusPresentation('failed').label).toBe(
-      'Không thành công',
+      'Failed',
     )
   })
 
   it('mô tả khoảng dữ liệu mà không thay đổi date-only', () => {
     expect(getAnalysisPeriodLabel(baseItem)).toBe(
-      '2026-07-01 đến 2026-07-24',
+      '07/01/2026 to 07/24/2026',
     )
     expect(
       getAnalysisPeriodLabel({
@@ -38,13 +40,16 @@ describe('history presentation', () => {
         date_from: '2026-07-24',
         date_to: '2026-07-24',
       }),
-    ).toBe('2026-07-24')
+    ).toBe('07/24/2026')
     expect(
       getAnalysisPeriodLabel({
         ...baseItem,
         date_from: null,
         date_to: null,
       }),
-    ).toBe('Chưa có khoảng dữ liệu')
+    ).toBe('No data period')
+    expect(getAnalysisPeriodLabel(baseItem, 'vi')).toBe(
+      '01/07/2026 đến 24/07/2026',
+    )
   })
 })

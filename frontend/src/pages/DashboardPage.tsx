@@ -9,7 +9,7 @@ import {
   TrendUpIcon,
   UsersThreeIcon,
 } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
 import {
@@ -24,6 +24,7 @@ import {
 import { MetricCard } from '../components/analytics/MetricCard'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
 import { formatAnalysisWarning } from '../features/analysis/presentation'
+import { useLanguage } from '../i18n/LanguageContext'
 import {
   formatInteger,
   formatPercent,
@@ -31,6 +32,7 @@ import {
 } from '../utils/formatters'
 
 export function DashboardPage() {
+  const { language, t } = useLanguage()
   const { analysis, error, isEmpty, isLoading, retry } = useCurrentAnalysis()
 
   if (isLoading) return <AnalysisLoadingState />
@@ -41,11 +43,11 @@ export function DashboardPage() {
   const growthChange =
     growth === null
       ? {
-          label: 'Chưa đủ dữ liệu so sánh',
+          label: t('dashboard.notEnoughData'),
           tone: 'neutral' as const,
         }
       : {
-          label: `${formatPercent(growth, 1, true)}% so với 7 ngày trước`,
+          label: `${formatPercent(growth, 1, true, language)}% ${t('dashboard.vsPrevious')}`,
           tone:
             growth > 0
               ? ('positive' as const)
@@ -55,64 +57,139 @@ export function DashboardPage() {
         }
 
   return (
-    <main className="px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
-      <div className="mx-auto max-w-7xl">
+    <main className="px-4 py-6 sm:px-7 lg:px-8 lg:py-8">
+      <div className="mx-auto max-w-[1440px]">
         <AnalysisHeader
           analysis={analysis}
-          description="Theo dõi các chỉ số quan trọng nhất từ file bán hàng đang được chọn."
-          title="Tổng quan kinh doanh"
+          description={t('dashboard.desc')}
+          title={t('dashboard.title')}
         />
 
         {analysis.warnings.length > 0 && (
-          <div className="mt-6 rounded-xl border border-[var(--border)] bg-[var(--primary-soft)] px-4 py-3 text-sm leading-6 text-[var(--text-muted)]">
-            {analysis.warnings.map(formatAnalysisWarning).join(' ')}
+          <div className="mt-6 rounded-2xl border border-amber-200/80 bg-amber-50/80 p-4 text-sm text-amber-900 shadow-xs">
+            {analysis.warnings
+              .map((warning) => formatAnalysisWarning(warning, language))
+              .join(' ')}
           </div>
         )}
 
+        {/* Top 4 KPI Metrics */}
         <section
-          aria-label="Chỉ số kinh doanh chính"
+          aria-label={t('dashboard.metricsAria')}
           className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         >
           <MetricCard
             change={growthChange}
+            featured
             icon={CurrencyCircleDollarIcon}
-            label="Tổng doanh thu"
-            value={formatVnd(analysis.summary.total_revenue)}
+            label={t('dashboard.totalRevenue')}
+            value={formatVnd(analysis.summary.total_revenue, language)}
           />
           <MetricCard
-            helper="Đếm theo mã đơn, không đếm theo số dòng."
+            helper={t('dashboard.uniqueOrders')}
             icon={ShoppingBagOpenIcon}
-            label="Tổng đơn hàng"
-            value={formatInteger(analysis.summary.total_orders)}
+            label={t('dashboard.totalOrders')}
+            value={formatInteger(analysis.summary.total_orders, language)}
           />
           <MetricCard
             icon={UsersThreeIcon}
-            label="Tổng khách hàng"
-            value={formatInteger(analysis.summary.total_customers)}
+            label={t('dashboard.totalCustomers')}
+            value={formatInteger(analysis.summary.total_customers, language)}
           />
           <MetricCard
-            helper="Tổng quantity của các đơn completed."
+            helper={t('dashboard.itemsSold')}
             icon={PackageIcon}
-            label="Sản phẩm đã bán"
-            value={formatInteger(analysis.summary.total_quantity_sold)}
+            label={t('dashboard.unitsSold')}
+            value={formatInteger(analysis.summary.total_quantity_sold, language)}
           />
         </section>
 
-        <section className="mt-6 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+        <section className="mt-6">
+          <div>
+            <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+              {t('dashboard.businessHealth')}
+            </h2>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">
+              {t('dashboard.businessHealthDesc')}
+            </p>
+          </div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <MetricCard
+              helper={t('dashboard.completedOrdersHelper', {
+                count: formatInteger(
+                  analysis.orders.by_status.completed,
+                  language,
+                ),
+              })}
+              icon={CurrencyCircleDollarIcon}
+              label={t('dashboard.averageOrderValue')}
+              value={formatVnd(
+                analysis.summary.average_order_value,
+                language,
+              )}
+            />
+            <MetricCard
+              helper={t('dashboard.allOrderStatuses')}
+              icon={ShoppingBagOpenIcon}
+              label={t('dashboard.completionRate')}
+              value={`${formatPercent(
+                analysis.orders.status_rates_percent.completed,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <MetricCard
+              helper={t('dashboard.discountHelper', {
+                amount: formatVnd(
+                  analysis.sales.total_discount,
+                  language,
+                ),
+              })}
+              icon={PackageIcon}
+              label={t('dashboard.discountRate')}
+              value={`${formatPercent(
+                analysis.sales.discount_rate_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <MetricCard
+              helper={t('dashboard.repeatHelper', {
+                count: formatInteger(
+                  analysis.customers.repeat_customer_count,
+                  language,
+                ),
+              })}
+              icon={UsersThreeIcon}
+              label={t('dashboard.repeatRate')}
+              value={`${formatPercent(
+                analysis.customers.repeat_customer_rate_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+          </div>
+        </section>
+
+        {/* Revenue Over Time Area Chart */}
+        <section className="mt-5 rounded-xl border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-6">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <div>
-              <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                Doanh thu theo thời gian
+              <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+                {t('dashboard.revenueOverTime')}
               </h2>
-              <p className="mt-1 text-sm text-[var(--text-muted)]">
-                Các ngày không có doanh thu được hiển thị bằng 0.
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {t('dashboard.revenueOverTimeDesc')}
               </p>
             </div>
             <Link
-              className="inline-flex w-fit items-center gap-2 whitespace-nowrap text-sm font-extrabold text-[var(--primary)] hover:underline"
+              className="inline-flex w-fit items-center gap-2 whitespace-nowrap text-xs font-bold text-[var(--primary)] transition hover:text-[var(--primary-hover)]"
               to="/sales"
             >
-              Phân tích chi tiết
+              {t('dashboard.viewDetailed')}
               <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
             </Link>
           </div>
@@ -121,60 +198,59 @@ export function DashboardPage() {
           </div>
         </section>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.05fr)_minmax(22rem,0.95fr)]">
-          <section className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+        {/* Top Products & Customer Segments Grid */}
+        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.08fr)_minmax(22rem,0.92fr)]">
+          {/* Top Products Table */}
+          <section className="min-w-0 rounded-xl border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-6">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                  Top sản phẩm theo doanh thu
+                <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+                  {t('dashboard.topProducts')}
                 </h2>
-                <p className="mt-1 text-sm text-[var(--text-muted)]">
-                  Xếp hạng từ các đơn completed.
+                <p className="mt-1 text-xs text-[var(--text-muted)]">
+                  {t('dashboard.topProductsDesc')}
                 </p>
               </div>
-              <ChartLineUpIcon
-                aria-hidden="true"
-                className="shrink-0 text-[var(--primary)]"
-                size={25}
-                weight="duotone"
-              />
+              <span className="grid size-8 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
+                <ChartLineUpIcon aria-hidden="true" size={21} weight="duotone" />
+              </span>
             </div>
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[34rem] text-left text-sm">
-                <thead className="text-[var(--text-muted)]">
+              <table className="w-full min-w-[32rem] text-left text-sm">
+                <thead className="border-b border-[var(--border)] text-xs font-semibold text-[var(--text-muted)]">
                   <tr>
-                    <th className="pb-3 pr-4 font-bold">Sản phẩm</th>
-                    <th className="pb-3 pr-4 text-right font-bold">Số lượng</th>
-                    <th className="pb-3 text-right font-bold">Doanh thu</th>
+                    <th className="pb-3 pr-4">{t('common.product')}</th>
+                    <th className="pb-3 pr-4 text-right">{t('common.quantity')}</th>
+                    <th className="pb-3 text-right">{t('common.revenue')}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {analysis.sales.top_products_by_revenue.map(
                     (product, index) => (
                       <tr
-                        className="border-t border-[var(--border)]"
+                        className="hover:bg-slate-50/70 transition"
                         key={product.product_id}
                       >
                         <td className="py-3.5 pr-4">
                           <div className="flex items-center gap-3">
-                            <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-[var(--surface-subtle)] text-xs font-extrabold text-[var(--primary)]">
+                            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-[var(--surface-subtle)] text-[11px] font-bold text-[var(--text-muted)]">
                               {index + 1}
                             </span>
                             <div>
-                              <p className="font-extrabold text-[var(--text-primary)]">
+                              <p className="font-bold text-slate-900">
                                 {product.product_name}
                               </p>
-                              <p className="mt-0.5 text-xs text-[var(--text-muted)]">
+                              <p className="mt-0.5 text-xs text-slate-500">
                                 {product.category}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="py-3.5 pr-4 text-right font-bold text-[var(--text-muted)]">
-                          {formatInteger(product.quantity)}
+                        <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
+                          {formatInteger(product.quantity, language)}
                         </td>
-                        <td className="py-3.5 text-right font-extrabold text-[var(--text-primary)]">
-                          {formatVnd(product.revenue)}
+                        <td className="py-3.5 text-right font-black text-slate-900">
+                          {formatVnd(product.revenue, language)}
                         </td>
                       </tr>
                     ),
@@ -184,57 +260,55 @@ export function DashboardPage() {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
+          {/* Customer Segments Chart */}
+          <section className="rounded-xl border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-6">
             <div>
-              <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-                Phân loại khách hàng
+              <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+                {t('dashboard.customerSegments')}
               </h2>
-              <p className="mt-1 text-sm leading-6 text-[var(--text-muted)]">
-                Ba nhóm không trùng nhau, tổng luôn bằng tổng khách hàng.
+              <p className="mt-1 text-xs text-[var(--text-muted)]">
+                {t('dashboard.customerSegmentsDesc')}
               </p>
             </div>
-            <div className="mt-3">
+            <div className="mt-4">
               <CustomerSegmentChart segments={analysis.customers.segments} />
             </div>
-            <p className="mt-2 rounded-xl bg-[var(--surface-subtle)] px-4 py-3 text-xs leading-5 text-[var(--text-muted)]">
-              “Khách một đơn” chỉ có nghĩa là khách có đúng một đơn trong kỳ dữ
-              liệu, không khẳng định đây là lần mua đầu tiên.
-            </p>
           </section>
         </div>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
-          <section className="min-w-0 rounded-2xl border border-[var(--border)] bg-[var(--surface)] p-5 sm:p-6">
-            <h2 className="text-lg font-extrabold text-[var(--text-primary)]">
-              Top khách hàng theo doanh thu
+        {/* Top Customers Table & Quick Actions Grid */}
+        <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+          <section className="min-w-0 rounded-xl border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-6">
+            <h2 className="text-base font-extrabold text-[var(--text-primary)]">
+              {t('dashboard.topCustomers')}
             </h2>
             <div className="mt-5 overflow-x-auto">
-              <table className="w-full min-w-[36rem] text-left text-sm">
-                <thead className="text-[var(--text-muted)]">
+              <table className="w-full min-w-[34rem] text-left text-sm">
+                <thead className="border-b border-[var(--border)] text-xs font-semibold text-[var(--text-muted)]">
                   <tr>
-                    <th className="pb-3 pr-4 font-bold">Khách hàng</th>
-                    <th className="pb-3 pr-4 text-right font-bold">Số đơn</th>
-                    <th className="pb-3 pr-4 text-right font-bold">Số lượng</th>
-                    <th className="pb-3 text-right font-bold">Doanh thu</th>
+                    <th className="pb-3 pr-4">{t('common.customer')}</th>
+                    <th className="pb-3 pr-4 text-right">{t('common.orders')}</th>
+                    <th className="pb-3 pr-4 text-right">{t('common.units')}</th>
+                    <th className="pb-3 text-right">{t('common.totalSpent')}</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-slate-100">
                   {analysis.customers.top_customers.map((customer) => (
                     <tr
-                      className="border-t border-[var(--border)]"
+                      className="hover:bg-slate-50/70 transition"
                       key={customer.customer_id}
                     >
-                      <td className="py-3.5 pr-4 font-extrabold text-[var(--text-primary)]">
+                      <td className="py-3.5 pr-4 font-bold text-slate-900">
                         {customer.customer_name}
                       </td>
-                      <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                        {formatInteger(customer.order_count)}
+                      <td className="py-3.5 pr-4 text-right font-medium text-slate-600">
+                        {formatInteger(customer.order_count, language)}
                       </td>
-                      <td className="py-3.5 pr-4 text-right text-[var(--text-muted)]">
-                        {formatInteger(customer.quantity)}
+                      <td className="py-3.5 pr-4 text-right font-medium text-slate-600">
+                        {formatInteger(customer.quantity, language)}
                       </td>
-                      <td className="py-3.5 text-right font-extrabold text-[var(--text-primary)]">
-                        {formatVnd(customer.revenue)}
+                      <td className="py-3.5 text-right font-black text-slate-900">
+                        {formatVnd(customer.revenue, language)}
                       </td>
                     </tr>
                   ))}
@@ -243,23 +317,26 @@ export function DashboardPage() {
             </div>
           </section>
 
-          <aside className="rounded-2xl bg-[#102b61] p-5 text-white sm:p-6">
-            <h2 className="text-lg font-extrabold">Thao tác nhanh</h2>
-            <div className="mt-5 space-y-3">
-              <QuickAction
+          {/* Quick Actions Sidebar Card */}
+          <aside className="rounded-xl border border-[#173a68] bg-[#102947] p-5 text-white sm:p-6">
+            <h2 className="text-base font-extrabold text-white">
+              {t('dashboard.quickActions')}
+            </h2>
+            <div className="mt-4 space-y-2.5">
+              <QuickActionCard
                 icon={CloudArrowUpIcon}
-                label="Upload dữ liệu mới"
-                path="/upload"
+                label={t('nav.upload')}
+                to="/upload"
               />
-              <QuickAction
+              <QuickActionCard
                 icon={TrendUpIcon}
-                label="Xem dự báo"
-                path="/forecast"
+                label={t('nav.forecast')}
+                to="/forecast"
               />
-              <QuickAction
+              <QuickActionCard
                 icon={FileTextIcon}
-                label="Mở báo cáo"
-                path="/report"
+                label={t('nav.report')}
+                to="/report"
               />
             </div>
           </aside>
@@ -269,25 +346,27 @@ export function DashboardPage() {
   )
 }
 
-function QuickAction({
-  icon: Icon,
+function QuickActionCard({
+  icon: IconComponent,
   label,
-  path,
+  to,
 }: {
   icon: typeof CloudArrowUpIcon
   label: string
-  path: string
+  to: string
 }) {
   return (
     <Link
-      className="flex items-center justify-between gap-4 rounded-xl bg-white/10 px-4 py-3.5 text-sm font-extrabold text-white transition hover:bg-white/16 active:scale-[0.99]"
-      to={path}
+      className="group flex items-center justify-between rounded-lg border border-white/10 bg-white/6 p-3 text-sm font-bold text-slate-100 transition-colors hover:bg-white/10"
+      to={to}
     >
-      <span className="flex items-center gap-3">
-        <Icon aria-hidden="true" size={20} weight="duotone" />
+      <div className="flex items-center gap-3">
+        <span className="grid size-8 place-items-center rounded-md bg-white/10 text-blue-200">
+          <IconComponent size={18} weight="bold" />
+        </span>
         {label}
-      </span>
-      <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
+      </div>
+      <ArrowRightIcon className="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-white" size={16} weight="bold" />
     </Link>
   )
 }

@@ -8,7 +8,6 @@
 **/.env.*
 !**/.env.example
 frontend
-Market_lens_plan
 docs
 sample_data
 supabase
