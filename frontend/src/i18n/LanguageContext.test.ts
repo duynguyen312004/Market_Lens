@@ -41,7 +41,7 @@ describe('MarketLens translations', () => {
       }),
     ).toContain('2 oversized orders')
     expect(translate('vi', 'rfm.segment.at_risk')).toBe(
-      'Có nguy cơ rời bỏ',
+      'Lâu chưa quay lại',
     )
     expect(translate('vi', 'dashboard.uniqueOrders')).toBe(
       'Mỗi đơn hàng chỉ được tính một lần',

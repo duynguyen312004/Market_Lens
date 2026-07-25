@@ -8,6 +8,7 @@ import { useState } from 'react'
 
 import type { AnalysisDetail, ProductMetric } from '../api/analysesApi'
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
+import { AnalyticsTabs } from '../components/analytics/AnalyticsTabs'
 import {
   AnalysisEmptyState,
   AnalysisErrorState,
@@ -62,35 +63,17 @@ export function SalesAnalyticsPage() {
           title={t('sales.title')}
         />
 
-        <div
-          aria-label={t('sales.sectionsAria')}
-          className="mt-6 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1"
-          role="tablist"
-        >
-          {(
-            [
-              ['revenue', t('sales.revenueTab')],
-              ['products', t('sales.productsTab')],
-              ['advanced', t('sales.advancedTab')],
-            ] as Array<[SalesSection, string]>
-          ).map(([section, label]) => (
-            <button
-              aria-selected={activeSection === section}
-              className={[
-                'shrink-0 rounded-lg px-4 py-2.5 text-xs font-extrabold transition',
-                activeSection === section
-                  ? 'bg-[var(--primary)] text-white'
-                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
-              ].join(' ')}
-              key={section}
-              onClick={() => setActiveSection(section)}
-              role="tab"
-              type="button"
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <AnalyticsTabs
+          activeId={activeSection}
+          ariaLabel={t('sales.sectionsAria')}
+          idPrefix="sales"
+          items={[
+            { id: 'revenue', label: t('sales.revenueTab') },
+            { id: 'products', label: t('sales.productsTab') },
+            { id: 'advanced', label: t('sales.advancedTab') },
+          ]}
+          onChange={setActiveSection}
+        />
 
         {activeSection === 'revenue' && (
           <RevenueSection analysis={analysis} key={analysis.id} />
@@ -99,7 +82,11 @@ export function SalesAnalyticsPage() {
           <ProductsSection analysis={analysis} />
         )}
         {activeSection === 'advanced' && (
-          <div role="tabpanel">
+          <div
+            aria-labelledby="sales-tab-advanced"
+            id="sales-panel-advanced"
+            role="tabpanel"
+          >
             <ProductIntelligenceSection
               discount={analysis.sales.discount_analysis}
               intelligence={analysis.sales.product_intelligence}
@@ -138,7 +125,11 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
           })
 
   return (
-    <div role="tabpanel">
+    <div
+      aria-labelledby="sales-tab-revenue"
+      id="sales-panel-revenue"
+      role="tabpanel"
+    >
       <section
         aria-label={t('dashboard.salesSummaryAria')}
         className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
@@ -340,7 +331,11 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
 function ProductsSection({ analysis }: { analysis: AnalysisDetail }) {
   const { language, t } = useLanguage()
   return (
-    <div role="tabpanel">
+    <div
+      aria-labelledby="sales-tab-products"
+      id="sales-panel-products"
+      role="tabpanel"
+    >
       <p className="mt-6 text-xs font-semibold text-slate-500">
         {t('sales.productsPeriodNote')}
       </p>

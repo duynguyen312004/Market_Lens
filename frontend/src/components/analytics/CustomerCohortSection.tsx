@@ -48,11 +48,8 @@ export function CustomerCohortSection({
     <section className="mt-6" aria-labelledby="cohort-heading">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">
-            {t('cohort.eyebrow')}
-          </p>
           <h2
-            className="mt-1 text-xl font-black tracking-tight text-slate-900"
+            className="text-xl font-black tracking-tight text-slate-900"
             id="cohort-heading"
           >
             {t('cohort.title')}
@@ -70,6 +67,15 @@ export function CustomerCohortSection({
       </div>
 
       <div className="data-panel mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+        <div className="flex items-start gap-2.5 border-b border-slate-100 bg-slate-50/70 px-5 py-4 text-[11px] leading-5 text-slate-600">
+          <InfoIcon
+            aria-hidden="true"
+            className="mt-0.5 shrink-0 text-indigo-600"
+            size={15}
+            weight="fill"
+          />
+          <p>{t('cohort.methodNote')}</p>
+        </div>
         <div className="overflow-x-auto p-5">
           <table className="w-full min-w-max border-separate border-spacing-1 text-xs">
             <thead>
@@ -139,10 +145,12 @@ export function CustomerCohortSection({
                               )}
                               %
                               <small className="mt-0.5 text-[9px] font-semibold opacity-75">
-                                {formatInteger(
-                                  period.active_customers,
-                                  language,
-                                )}
+                                {t('cohort.activeShort', {
+                                  count: formatInteger(
+                                    period.active_customers,
+                                    language,
+                                  ),
+                                })}
                               </small>
                             </span>
                           ) : (
@@ -161,15 +169,6 @@ export function CustomerCohortSection({
               })}
             </tbody>
           </table>
-        </div>
-        <div className="flex items-start gap-2.5 border-t border-slate-100 bg-slate-50/70 px-5 py-4 text-[11px] leading-5 text-slate-500">
-          <InfoIcon
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-indigo-600"
-            size={15}
-            weight="fill"
-          />
-          <p>{t('cohort.methodNote')}</p>
         </div>
       </div>
     </section>

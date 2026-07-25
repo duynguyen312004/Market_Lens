@@ -55,11 +55,8 @@ export function CustomerRfmSection({
     <section className="mt-6" aria-labelledby="rfm-heading">
       <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
         <div>
-          <p className="text-xs font-black uppercase tracking-[0.16em] text-indigo-600">
-            {t('rfm.eyebrow')}
-          </p>
           <h2
-            className="mt-1 text-xl font-black tracking-tight text-slate-900"
+            className="text-xl font-black tracking-tight text-slate-900"
             id="rfm-heading"
           >
             {t('rfm.title')}
