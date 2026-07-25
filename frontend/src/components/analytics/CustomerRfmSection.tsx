@@ -17,9 +17,9 @@ import {
 } from '../../utils/formatters'
 
 const RFM_SEGMENTS: RfmSegment[] = [
-  'new',
   'champion',
   'loyal',
+  'new',
   'at_risk',
   'regular',
 ]
@@ -53,20 +53,18 @@ export function CustomerRfmSection({
 
   return (
     <section className="mt-6" aria-labelledby="rfm-heading">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <h2
-            className="text-xl font-black tracking-tight text-slate-900"
-            id="rfm-heading"
-          >
-            {t('rfm.title')}
-          </h2>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
-            {t('rfm.desc')}
-          </p>
-        </div>
-        <p className="shrink-0 text-xs font-bold text-slate-500">
-          {t('rfm.snapshot', {
+      <div>
+        <h2
+          className="text-xl font-black tracking-tight text-slate-900"
+          id="rfm-heading"
+        >
+          {t('rfm.title')}
+        </h2>
+        <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
+          {t('rfm.desc')}
+        </p>
+        <p className="mt-2 max-w-3xl text-xs font-bold leading-5 text-slate-600">
+          {t('rfm.snapshotExplain', {
             date: formatDate(rfm.snapshot_date, language),
           })}
         </p>
@@ -78,22 +76,20 @@ export function CustomerRfmSection({
             className={`rounded-2xl border px-4 py-4 ${SEGMENT_STYLES[segment]}`}
             key={segment}
           >
-            <p className="text-xs font-black uppercase tracking-wider">
+            <p className="text-xs font-black">
               {t(`rfm.segment.${segment}`)}
             </p>
             <p className="mt-2 text-2xl font-black">
               {formatInteger(rfm.segments[segment], language)}
             </p>
-            <p className="mt-1 text-[11px] font-semibold opacity-80">
-              {t('customers.count', {
-                count: formatInteger(rfm.segments[segment], language),
-              })}
+            <p className="mt-2 text-[11px] font-semibold leading-4 opacity-80">
+              {t(`rfm.segmentDesc.${segment}`)}
             </p>
           </article>
         ))}
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
+      <div className="mt-6 space-y-6">
         <RfmCustomerTable
           customers={rfm.top_customers}
           description={t('rfm.topDesc')}

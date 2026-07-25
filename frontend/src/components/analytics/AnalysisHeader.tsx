@@ -59,10 +59,15 @@ export function AnalysisHeader({
         <span className="hidden h-4 w-px bg-[var(--border)] sm:block" />
         <span className="inline-flex items-center gap-2">
           <CalendarBlankIcon aria-hidden="true" size={16} />
-          {t('common.dateRange', {
-            from: formatDate(analysis.period.from, language),
-            to: formatDate(analysis.period.to, language),
-          })}
+          <span>
+            {t('common.dateRange', {
+              from: formatDate(analysis.period.from, language),
+              to: formatDate(analysis.period.to, language),
+            })}{' '}
+            <span className="font-medium text-slate-400">
+              {t('common.dateFormatHint')}
+            </span>
+          </span>
         </span>
         <span className="hidden h-4 w-px bg-[var(--border)] sm:block" />
         <span>

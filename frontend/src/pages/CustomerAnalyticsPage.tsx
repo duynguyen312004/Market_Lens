@@ -270,6 +270,85 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
       <section className="data-panel mt-3 min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
         <div className="flex items-start gap-3.5 border-b border-slate-100 p-5 sm:p-6">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+            <CrownIcon aria-hidden="true" size={22} weight="duotone" />
+          </span>
+          <div>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <h2 className="text-lg font-black tracking-tight text-slate-900">
+                {t('customers.ranking')}
+              </h2>
+              <span className="rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-black text-indigo-700">
+                {t('customers.count', {
+                  count: formatInteger(
+                    customers.top_customers.length,
+                    language,
+                  ),
+                })}
+              </span>
+            </div>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
+              {t('customers.rankingDesc')}
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto p-5 sm:p-6">
+          <table className="w-full min-w-[42rem] text-left text-xs">
+            <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
+              <tr>
+                <th className="pb-3 pr-4">{t('common.customer')}</th>
+                <th className="pb-3 pr-4">{t('common.segment')}</th>
+                <th className="pb-3 pr-4 text-right">
+                  {t('common.orders')}
+                </th>
+                <th className="pb-3 pr-4 text-right">
+                  {t('common.firstOrder')}
+                </th>
+                <th className="pb-3 pr-4 text-right">
+                  {t('common.lastOrder')}
+                </th>
+                <th className="pb-3 text-right">
+                  {t('common.revenue')}
+                </th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {customers.top_customers.map((customer) => (
+                <tr
+                  className="transition hover:bg-slate-50/70"
+                  key={customer.customer_id}
+                >
+                  <td className="py-3.5 pr-4 font-extrabold text-slate-900">
+                    {customer.customer_name}
+                  </td>
+                  <td className="py-3.5 pr-4">
+                    <CustomerSegmentBadge
+                      language={language}
+                      segment={customer.segment}
+                    />
+                  </td>
+                  <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
+                    {formatInteger(customer.order_count, language)}
+                  </td>
+                  <td className="py-3.5 pr-4 text-right font-medium text-slate-500">
+                    {formatDate(customer.first_order_date, language)}
+                  </td>
+                  <td className="py-3.5 pr-4 text-right font-medium text-slate-500">
+                    {formatDate(customer.last_order_date, language)}
+                  </td>
+                  <td className="py-3.5 text-right font-black text-slate-900">
+                    {formatVnd(customer.revenue, language)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section className="data-panel mt-6 min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
+        <div className="flex items-start gap-3.5 border-b border-slate-100 p-5 sm:p-6">
+          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
             <SparkleIcon aria-hidden="true" size={22} weight="duotone" />
           </span>
           <div>
@@ -347,67 +426,6 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             {t('customers.noPotential')}
           </p>
         )}
-      </section>
-
-      <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-        <h2 className="text-lg font-black tracking-tight text-slate-900">
-          {t('customers.ranking')}
-        </h2>
-        <p className="mt-1 text-xs leading-5 text-slate-500">
-          {t('customers.rankingDesc')}
-        </p>
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[42rem] text-left text-xs">
-            <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
-              <tr>
-                <th className="pb-3 pr-4">{t('common.customer')}</th>
-                <th className="pb-3 pr-4">{t('common.segment')}</th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.orders')}
-                </th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.firstOrder')}
-                </th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.lastOrder')}
-                </th>
-                <th className="pb-3 text-right">
-                  {t('common.revenue')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {customers.top_customers.map((customer) => (
-                <tr
-                  className="transition hover:bg-slate-50/70"
-                  key={customer.customer_id}
-                >
-                  <td className="py-3.5 pr-4 font-extrabold text-slate-900">
-                    {customer.customer_name}
-                  </td>
-                  <td className="py-3.5 pr-4">
-                    <CustomerSegmentBadge
-                      language={language}
-                      segment={customer.segment}
-                    />
-                  </td>
-                  <td className="py-3.5 pr-4 text-right font-semibold text-slate-600">
-                    {formatInteger(customer.order_count, language)}
-                  </td>
-                  <td className="py-3.5 pr-4 text-right font-medium text-slate-500">
-                    {formatDate(customer.first_order_date, language)}
-                  </td>
-                  <td className="py-3.5 pr-4 text-right font-medium text-slate-500">
-                    {formatDate(customer.last_order_date, language)}
-                  </td>
-                  <td className="py-3.5 text-right font-black text-slate-900">
-                    {formatVnd(customer.revenue, language)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
       </section>
     </div>
   )

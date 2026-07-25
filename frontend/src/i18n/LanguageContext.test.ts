@@ -47,6 +47,16 @@ describe('MarketLens translations', () => {
       'Mỗi đơn hàng chỉ được tính một lần',
     )
     expect(
+      translate('vi', 'rfm.snapshotExplain', {
+        date: '21/07/2026',
+      }),
+    ).toBe(
+      'Số ngày chưa mua được tính đến 21/07/2026, là ngày kế tiếp sau đơn hoàn tất mới nhất trong file.',
+    )
+    expect(translate('vi', 'common.dateFormatHint')).toBe(
+      '(ngày/tháng/năm)',
+    )
+    expect(
       translate('vi', 'sales.periodDescMonth', {
         month: 'tháng 7/2026',
       }),
