@@ -132,16 +132,31 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   }
 
   await page.goto('/report')
-  await expect(page.locator('#business-report')).toContainText('Report 2.0')
-  await page.getByRole('button', { name: 'Generate AI Report' }).click()
-  await expect(
-    page.getByText(
-      'AI reports are disabled. The rule-based report is shown.',
-    ),
-  ).toBeVisible({ timeout: 30_000 })
+  await expect(page.locator('#business-report')).toContainText('Version 2.0')
   await expect(page.locator('#business-report')).toContainText(
-    'Rule-based report',
+    'Automatic summary',
   )
+  await page.getByRole('button', { name: 'Rewrite with AI' }).click()
+  const aiSuccessNotice = page.getByText(
+    'The AI-assisted report was generated and saved for this language.',
+  )
+  const aiFallbackNotice = page.getByText(
+    /automatic business summary remains available|kept the automatic business summary/i,
+  )
+  await expect(aiSuccessNotice.or(aiFallbackNotice)).toBeVisible({
+    timeout: 30_000,
+  })
+  await expect(
+    page
+      .locator('#business-report')
+      .getByText(/Written with AI|Automatic summary/),
+  ).toBeVisible()
+  await page.evaluate(() => window.scrollTo(0, 0))
+  await page.mouse.move(900, 800)
+  await page.mouse.wheel(0, 700)
+  await expect
+    .poll(() => page.evaluate(() => window.scrollY))
+    .toBeGreaterThan(0)
   await expectNoHorizontalOverflow(page)
 
   await page.setViewportSize({ height: 844, width: 390 })

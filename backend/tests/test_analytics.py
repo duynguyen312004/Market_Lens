@@ -610,12 +610,12 @@ def test_rule_based_report_supports_natural_vietnamese(
 ) -> None:
     report = build_rule_based_report(demo_analytics, "vi")
 
-    assert report["title"] == "Báo cáo kinh doanh dựa trên bằng chứng"
+    assert report["title"] == "Báo cáo tình hình kinh doanh"
     assert report["language"] == "vi"
     assert "273 đơn hoàn tất" in report["executive_summary"]
     assert "113.010.000 VND" in report["executive_summary"]
     assert report["sections"][0]["title"] == "Hiệu quả doanh thu"
-    assert report["disclaimer"].startswith("Báo cáo chỉ")
+    assert report["disclaimer"].startswith("Báo cáo sử dụng")
 
 
 def _normalized_row(

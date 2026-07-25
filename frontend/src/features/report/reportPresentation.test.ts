@@ -2,14 +2,15 @@ import { describe, expect, it } from 'vitest'
 
 import {
   formatReportEvidence,
+  formatReportNarrative,
   getReportPageTitle,
   getReportSourceLabel,
 } from './reportPresentation'
 
 describe('report source presentation', () => {
   it('không gắn nhãn AI cho fallback theo quy tắc', () => {
-    expect(getReportPageTitle('rule_based')).toBe('Smart Report')
-    expect(getReportSourceLabel('rule_based')).toBe('Source: Automated rules')
+    expect(getReportPageTitle('rule_based')).toBe('Business Report')
+    expect(getReportSourceLabel('rule_based')).toBe('Type: Automatic summary')
     expect(getReportSourceLabel('rule_based')).not.toContain('AI')
   })
 
@@ -36,6 +37,20 @@ describe('report source presentation', () => {
         unit: 'percent',
         context: null,
       }),
-    ).toBe('-7.32%')
+    ).toBe('-7.3%')
+  })
+
+  it('làm tròn số trong nội dung AI cũ trước khi hiển thị', () => {
+    expect(
+      formatReportNarrative(
+        'Revenue was 113010000 VND and changed by 37.201646 percent.',
+      ),
+    ).toBe('Revenue was ₫113,010,000 and changed by 37.2%.')
+    expect(
+      formatReportNarrative(
+        'Doanh thu 413956.04 VND, thay đổi 8,626198%.',
+        'vi',
+      ),
+    ).toMatch(/^Doanh thu 413\.956\s₫, thay đổi 8,6%\.$/)
   })
 })

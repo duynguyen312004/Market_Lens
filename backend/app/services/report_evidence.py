@@ -207,24 +207,24 @@ def build_report_evidence_catalog(
         )
         add(
             "sales.association.top_rule_lift",
-            "Leading association lift",
-            "Lift của luật kết hợp dẫn đầu",
+            "Leading relationship strength",
+            "Mức liên quan của cặp sản phẩm nổi bật",
             top_rule.get("lift"),
             "ratio",
             context=association_context,
         )
         add(
             "sales.association.top_rule_confidence_percent",
-            "Leading association confidence",
-            "Confidence của luật kết hợp dẫn đầu",
+            "Add-on likelihood",
+            "Khả năng mua kèm",
             top_rule.get("confidence_percent"),
             "percent",
             context=association_context,
         )
         add(
             "sales.association.top_rule_support_percent",
-            "Leading association support",
-            "Support của luật kết hợp dẫn đầu",
+            "Orders containing both products",
+            "Tỷ lệ đơn có cả hai sản phẩm",
             top_rule.get("support_percent"),
             "percent",
             context=association_context,
@@ -250,15 +250,15 @@ def build_report_evidence_catalog(
     if rfm.get("available"):
         add(
             "customers.rfm.at_risk_count",
-            "At-risk RFM customers",
-            "Khách hàng RFM có nguy cơ rời bỏ",
+            "Customers needing attention",
+            "Khách hàng cần được quan tâm",
             rfm_segments.get("at_risk"),
             "count",
         )
         add(
             "customers.rfm.champion_count",
-            "Champion RFM customers",
-            "Khách hàng RFM nổi bật",
+            "Most engaged customers",
+            "Khách hàng nổi bật nhất",
             rfm_segments.get("champion"),
             "count",
         )
@@ -273,8 +273,8 @@ def build_report_evidence_catalog(
             cohort_month, period = cohort_metric
             add(
                 "customers.cohort.latest_m1_retention_percent",
-                "Latest observed month-1 retention",
-                "Retention tháng 1 gần nhất đã quan sát",
+                "Customers returning after one month",
+                "Tỷ lệ khách quay lại sau một tháng",
                 period.get("retention_percent"),
                 "percent",
                 context=cohort_month,
@@ -307,7 +307,7 @@ def build_report_evidence_catalog(
         "forecast.selected_method",
         "Selected forecast method",
         "Phương pháp dự báo được chọn",
-        forecast.get("method"),
+        _forecast_method_label(forecast.get("method"), language),
         "label",
     )
     evaluation = forecast.get("evaluation") or {}
@@ -315,45 +315,45 @@ def build_report_evidence_catalog(
         model_metrics = evaluation.get("model_metrics") or {}
         add(
             "forecast.evaluation.mae",
-            "Backtest MAE",
-            "MAE backtest",
+            "Average daily forecast difference",
+            "Sai lệch dự báo trung bình mỗi ngày",
             model_metrics.get("mae"),
             "vnd",
         )
         add(
             "forecast.evaluation.smape_percent",
-            "Backtest sMAPE",
-            "sMAPE backtest",
+            "Average percentage forecast difference",
+            "Sai lệch dự báo tương đối trung bình",
             model_metrics.get("smape_percent"),
             "percent",
         )
         add(
             "forecast.evaluation.mae_improvement_vs_baseline_percent",
-            "MAE improvement versus seasonal-naive baseline",
-            "Mức cải thiện MAE so với baseline seasonal naive",
+            "Improvement over a simple weekly estimate",
+            "Mức cải thiện so với cách tính tuần đơn giản",
             evaluation.get("mae_improvement_vs_baseline_percent"),
             "percent",
         )
         add(
             "forecast.evaluation.reliability",
-            "Forecast evidence reliability",
-            "Mức độ tin cậy của bằng chứng dự báo",
-            evaluation.get("reliability"),
+            "Forecast reliability",
+            "Độ tin cậy dự báo",
+            _reliability_label(evaluation.get("reliability"), language),
             "label",
         )
     uncertainty = forecast.get("uncertainty") or {}
     if uncertainty.get("available"):
         add(
             "forecast.uncertainty.observed_coverage_percent",
-            "Observed backtest interval coverage",
-            "Coverage interval quan sát trên backtest",
+            "Expected-range coverage in historical tests",
+            "Mức bao phủ của khoảng dự kiến trên dữ liệu cũ",
             uncertainty.get("observed_backtest_coverage_percent"),
             "percent",
         )
         add(
             "forecast.uncertainty.absolute_error_quantile",
-            "80% absolute-error quantile",
-            "Quantile sai số tuyệt đối 80%",
+            "Expected difference used for the revenue range",
+            "Mức sai lệch dùng để tạo khoảng doanh thu dự kiến",
             uncertainty.get("absolute_error_quantile"),
             "vnd",
         )
@@ -393,3 +393,45 @@ def _normalize_value(value: Any) -> int | float | str:
     if isinstance(value, Real):
         return float(value)
     return str(value)
+
+
+def _forecast_method_label(
+    method: Any,
+    language: ReportLanguage,
+) -> str | None:
+    labels = {
+        "moving_average_7_days": {
+            "en": "Average of the latest 7 days",
+            "vi": "Trung bình 7 ngày gần nhất",
+        },
+        "seasonal_naive_7_days": {
+            "en": "Same weekday as last week",
+            "vi": "Theo cùng ngày của tuần trước",
+        },
+        "weekday_average_4_weeks": {
+            "en": "Average by weekday over 4 weeks",
+            "vi": "Trung bình theo thứ trong 4 tuần",
+        },
+        "linear_trend_30_days": {
+            "en": "30-day revenue trend",
+            "vi": "Xu hướng doanh thu trong 30 ngày",
+        },
+    }
+    return labels.get(str(method), {}).get(language) if method else None
+
+
+def _reliability_label(
+    reliability: Any,
+    language: ReportLanguage,
+) -> str | None:
+    labels = {
+        "high": {"en": "High", "vi": "Cao"},
+        "medium": {"en": "Medium", "vi": "Trung bình"},
+        "low": {"en": "Low", "vi": "Thấp"},
+        "unavailable": {"en": "Not available", "vi": "Chưa có"},
+    }
+    return (
+        labels.get(str(reliability), {}).get(language)
+        if reliability
+        else None
+    )

@@ -82,7 +82,11 @@ export function CustomerCohortSection({
                     className="min-w-20 pb-2 text-center"
                     key={monthIndex}
                   >
-                    M{monthIndex}
+                    {monthIndex === 0
+                      ? t('cohort.startingMonth')
+                      : t('cohort.monthAfter', {
+                          count: monthIndex,
+                        })}
                   </th>
                 ))}
               </tr>
@@ -146,7 +150,7 @@ export function CustomerCohortSection({
                               aria-label={t('cohort.notObserved')}
                               className="flex min-h-12 min-w-20 items-center justify-center rounded-lg border border-dashed border-slate-200 text-slate-300"
                             >
-                              —
+                              ·
                             </span>
                           )}
                         </td>

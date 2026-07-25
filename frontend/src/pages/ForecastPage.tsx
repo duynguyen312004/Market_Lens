@@ -97,15 +97,15 @@ function UnavailableForecast({ historyDays }: { historyDays: number }) {
         <dl className="mt-4 space-y-4 text-xs">
           <ForecastRule
             description={t('forecast.ruleUnder14')}
-            label="< 14 history days"
+            label={t('forecast.ruleUnder14Label')}
           />
           <ForecastRule
             description={t('forecast.rule14To27')}
-            label="14 – 27 history days"
+            label={t('forecast.rule14To27Label')}
           />
           <ForecastRule
             description={t('forecast.rule28Plus')}
-            label="≥ 28 history days"
+            label={t('forecast.rule28PlusLabel')}
           />
         </dl>
         <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-slate-50 p-4 text-xs text-slate-500">
@@ -248,10 +248,16 @@ function AvailableForecast({
                   <td className="py-3.5 text-right font-semibold text-slate-600">
                     {point.lower_bound !== null &&
                     point.upper_bound !== null
-                      ? `${formatVnd(
-                          point.lower_bound,
-                          language,
-                        )} – ${formatVnd(point.upper_bound, language)}`
+                      ? t('common.dateRange', {
+                          from: formatVnd(
+                            point.lower_bound,
+                            language,
+                          ),
+                          to: formatVnd(
+                            point.upper_bound,
+                            language,
+                          ),
+                        })
                       : t('common.notAvailable')}
                   </td>
                 </tr>
@@ -301,12 +307,6 @@ function ForecastEvaluationSection({
               {t('forecast.evaluationUnavailableDesc', {
                 current: forecast.history_days,
                 minimum: evaluation.minimum_history_days,
-              })}
-            </p>
-            <p className="mt-3 text-xs font-bold text-slate-700">
-              {t('forecast.evaluationFolds', {
-                folds: evaluation.fold_count,
-                points: evaluation.evaluation_points,
               })}
             </p>
           </div>
@@ -386,21 +386,31 @@ function ForecastEvaluationSection({
         />
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-2">
-        <EvaluationComparison forecast={forecast} />
-        <FoldTable forecast={forecast} />
-      </div>
-
-      <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
-        <InfoIcon
-          className="mt-0.5 shrink-0 text-indigo-600"
-          size={16}
-          weight="fill"
-        />
-        <p>
-          {t('forecast.methodologyNote')} {t('forecast.reliabilityNote')}
-        </p>
-      </div>
+      <details className="mt-5 rounded-xl border border-slate-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-extrabold text-slate-800 marker:text-indigo-600">
+          {t('forecast.technicalDetails')}
+        </summary>
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+          <p className="text-xs leading-relaxed text-slate-600">
+            {t('forecast.technicalDetailsDesc')}
+          </p>
+          <div className="mt-5 grid gap-6 xl:grid-cols-2">
+            <EvaluationComparison forecast={forecast} />
+            <FoldTable forecast={forecast} />
+          </div>
+          <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-600">
+            <InfoIcon
+              className="mt-0.5 shrink-0 text-indigo-600"
+              size={16}
+              weight="fill"
+            />
+            <p>
+              {t('forecast.methodologyNote')}{' '}
+              {t('forecast.reliabilityNote')}
+            </p>
+          </div>
+        </div>
+      </details>
     </section>
   )
 }
@@ -529,8 +539,16 @@ function FoldTable({ forecast }: { forecast: ForecastResult }) {
                   {t('forecast.days', { count: fold.training_days })}
                 </td>
                 <td className="py-3 pr-3 text-slate-600">
-                  {formatDate(fold.validation_from, language)} –{' '}
-                  {formatDate(fold.validation_to, language)}
+                  {t('common.dateRange', {
+                    from: formatDate(
+                      fold.validation_from,
+                      language,
+                    ),
+                    to: formatDate(
+                      fold.validation_to,
+                      language,
+                    ),
+                  })}
                 </td>
                 <td className="py-3 text-right font-bold text-slate-900">
                   {formatVnd(fold.model_metrics.mae, language)}

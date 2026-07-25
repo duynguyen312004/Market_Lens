@@ -13,13 +13,13 @@ from backend.app.services.report_types import ReportLanguage
 
 REPORT_DISCLAIMERS: dict[ReportLanguage, str] = {
     "en": (
-        "This report is based only on aggregate metrics derived from the "
-        "uploaded data. Forecast intervals are empirical and the report does "
+        "This report uses summary figures from the uploaded data. Expected "
+        "forecast ranges are estimated from past sales, and the report does "
         "not replace professional financial or business advice."
     ),
     "vi": (
-        "Báo cáo chỉ dựa trên các chỉ số tổng hợp từ dữ liệu đã tải lên. "
-        "Khoảng dự báo mang tính thực nghiệm và báo cáo không thay thế tư vấn "
+        "Báo cáo sử dụng các số liệu tổng hợp từ dữ liệu đã tải lên. Khoảng "
+        "doanh thu dự kiến được ước tính từ lịch sử bán hàng và không thay thế tư vấn "
         "tài chính hoặc kinh doanh chuyên nghiệp."
     ),
 }
@@ -31,16 +31,16 @@ SECTION_TITLES = {
         "vi": "Hiệu quả doanh thu",
     },
     "products": {
-        "en": "Product intelligence",
+        "en": "Product performance",
         "vi": "Phân tích sản phẩm",
     },
     "customers": {
-        "en": "Customer health",
-        "vi": "Sức khỏe khách hàng",
+        "en": "Customer overview",
+        "vi": "Tổng quan khách hàng",
     },
     "forecast": {
-        "en": "Forecast evidence",
-        "vi": "Bằng chứng dự báo",
+        "en": "7-day outlook",
+        "vi": "Triển vọng 7 ngày tới",
     },
 }
 
@@ -151,8 +151,8 @@ def build_rule_based_report(
         },
         "title": _text(
             language,
-            "Evidence-based business report",
-            "Báo cáo kinh doanh dựa trên bằng chứng",
+            "Business performance report",
+            "Báo cáo tình hình kinh doanh",
         ),
         "executive_summary": executive_summary,
         "kpi_snapshot": _evidence(
@@ -303,20 +303,20 @@ def _product_narrative(
     has_association = "sales.association.top_rule_lift" in catalog
     if language == "vi":
         association_text = (
-            " Có luật kết hợp đủ support để xem xét thử nghiệm bán kèm; lift "
-            "không chứng minh quan hệ nhân quả."
+            " Dữ liệu cho thấy một cặp sản phẩm thường được mua cùng, phù hợp "
+            "để thử nghiệm gói bán kèm."
             if has_association
-            else " Chưa có luật kết hợp đủ ngưỡng support để diễn giải."
+            else " Chưa có cặp sản phẩm nào lặp lại đủ nhiều để đưa ra gợi ý bán kèm."
         )
         return (
             f"{product_name} là sản phẩm dẫn đầu theo doanh thu trong kỳ."
             f"{association_text}"
         )
     association_text = (
-        " A supported association rule is available for a bundling test; "
-        "lift does not establish causality."
+        " The data shows a recurring product combination that is suitable "
+        "for a limited bundle test."
         if has_association
-        else " No association rule met the documented support threshold."
+        else " No product combination repeats often enough for a reliable bundle suggestion yet."
     )
     return (
         f"{product_name} is the leading product by period revenue."
@@ -336,9 +336,9 @@ def _customer_narrative(
     )
     if language == "vi":
         cohort_text = (
-            " Cohort đã đủ lịch sử để theo dõi retention tháng 1."
+            " Dữ liệu đã đủ để theo dõi tỷ lệ khách quay lại sau tháng đầu tiên."
             if cohort_available
-            else " Cohort chưa đủ lịch sử quan sát cho một kết luận retention."
+            else " Chưa đủ số tháng để đánh giá xu hướng khách quay lại dài hạn."
         )
         return (
             "Tỷ lệ khách hàng quay lại trong kỳ là "
@@ -346,9 +346,9 @@ def _customer_narrative(
             f"{cohort_text}"
         )
     cohort_text = (
-        " Cohort history supports an observed month-1 retention metric."
+        " There is enough history to measure returns after the first month."
         if cohort_available
-        else " Cohort history is not yet sufficient for a retention conclusion."
+        else " There are not enough months to assess longer-term customer returns."
     )
     return f"The period repeat-customer rate is {repeat_rate:.1f}%.{cohort_text}"
 
@@ -369,28 +369,33 @@ def _forecast_narrative(
     if not evaluation.get("available"):
         return _text(
             language,
-            "A 7-day fallback forecast is available, but history is insufficient for model comparison.",
-            "Đã có dự báo fallback 7 ngày nhưng lịch sử chưa đủ để so sánh mô hình.",
+            "A basic 7-day forecast is available, but more history is needed to compare calculation methods.",
+            "Đã có dự báo cơ bản cho 7 ngày tới, nhưng cần thêm dữ liệu để so sánh nhiều cách tính.",
         )
     reliability = str(evaluation.get("reliability") or "unavailable")
+    reliability_label = {
+        "high": _text(language, "high", "cao"),
+        "medium": _text(language, "medium", "trung bình"),
+        "low": _text(language, "low", "thấp"),
+    }.get(reliability, _text(language, "not yet available", "chưa xác định"))
     interval_text = (
         _text(
             language,
-            " An empirical 80% interval is available.",
-            " Đã có khoảng bất định thực nghiệm mục tiêu 80%.",
+            " An expected revenue range is also available.",
+            " Báo cáo cũng đã có khoảng doanh thu dự kiến.",
         )
         if uncertainty.get("available")
         else _text(
             language,
-            " There are not yet enough residuals for an uncertainty interval.",
-            " Chưa đủ residual để tạo khoảng bất định.",
+            " More history is needed to show an expected revenue range.",
+            " Cần thêm dữ liệu để hiển thị khoảng doanh thu dự kiến.",
         )
     )
     return (
         _text(
             language,
-            f"The selected method has {reliability} backtest reliability.",
-            f"Phương pháp được chọn có mức reliability backtest là {reliability}.",
+            f"The selected forecast method currently has {reliability_label} reliability.",
+            f"Cách dự báo được chọn hiện có độ tin cậy {reliability_label}.",
         )
         + interval_text
     )
@@ -455,7 +460,7 @@ def _build_data_quality(
         (
             "Có điều kiện chất lượng dữ liệu hoặc trạng thái đơn cần lưu ý."
             if status == "attention"
-            else "Không phát hiện lỗi chất lượng dữ liệu cản trở sau validation."
+            else "Không phát hiện vấn đề dữ liệu nghiêm trọng sau khi kiểm tra."
         ),
     )
     return {
@@ -555,13 +560,13 @@ def _build_risk_signals(
                 "severity": "info",
                 "title": _text(
                     language,
-                    "Limited forecast evidence",
-                    "Bằng chứng dự báo còn hạn chế",
+                    "Forecast reliability is limited",
+                    "Dự báo có độ tin cậy thấp",
                 ),
                 "description": _text(
                     language,
-                    "Backtest reliability is low; use the forecast as a planning range, not a target.",
-                    "Reliability backtest ở mức thấp; chỉ nên dùng dự báo như một khoảng tham khảo.",
+                    "Historical tests show limited reliability; use the forecast as a planning reference, not a sales target.",
+                    "Kết quả thử trên dữ liệu cũ có độ tin cậy thấp; chỉ nên dùng dự báo để tham khảo khi lên kế hoạch.",
                 ),
                 "evidence": _evidence(
                     catalog,
@@ -630,13 +635,13 @@ def _build_recommendations(
                 ),
                 "action": _text(
                     language,
-                    "Run a time-boxed bundle test for the leading association and compare its pair-order share with the current baseline.",
-                    "Thử nghiệm gói bán kèm có thời hạn cho luật kết hợp dẫn đầu và so sánh tỷ trọng đơn chứa cặp với baseline hiện tại.",
+                    "Try a limited-time bundle for the leading product combination and compare how often both products appear in an order.",
+                    "Thử gói bán kèm có thời hạn cho cặp sản phẩm nổi bật và so sánh tỷ lệ đơn có cả hai sản phẩm trước và sau thử nghiệm.",
                 ),
                 "success_metric": _text(
                     language,
-                    "Pair-order support increases without reducing net revenue per completed order.",
-                    "Support của cặp tăng mà không làm giảm doanh thu thuần trên mỗi đơn hoàn tất.",
+                    "The share of orders containing both products increases without reducing average completed-order revenue.",
+                    "Tỷ lệ đơn có cả hai sản phẩm tăng mà không làm giảm doanh thu trung bình trên mỗi đơn hoàn tất.",
                 ),
             }
         )
@@ -646,8 +651,8 @@ def _build_recommendations(
             "priority": "high" if repeat_rate < 25 else "medium",
             "title": _text(
                 language,
-                "Track customer retention",
-                "Theo dõi khả năng giữ chân khách hàng",
+                "Track returning customers",
+                "Theo dõi khách hàng quay lại",
             ),
             "evidence": _evidence(
                 catalog,
@@ -658,13 +663,13 @@ def _build_recommendations(
             ),
             "action": _text(
                 language,
-                "Review repeat rate and month-1 cohort retention after each new monthly upload.",
-                "Theo dõi tỷ lệ quay lại và retention tháng 1 sau mỗi lần cập nhật dữ liệu tháng mới.",
+                "Review the repeat-customer rate and the share returning after one month whenever new monthly data is uploaded.",
+                "Theo dõi tỷ lệ khách mua lại và tỷ lệ quay lại sau một tháng mỗi khi cập nhật dữ liệu tháng mới.",
             ),
             "success_metric": _text(
                 language,
-                "Repeat rate and observed month-1 retention improve versus the current analysis.",
-                "Tỷ lệ quay lại và retention tháng 1 đã quan sát tăng so với analysis hiện tại.",
+                "Both measures improve compared with the current report.",
+                "Cả hai tỷ lệ đều cải thiện so với báo cáo hiện tại.",
             ),
         }
     )
@@ -686,7 +691,7 @@ def _build_recommendations(
             "action": _text(
                 language,
                 "Track the leading product's revenue share in the next analysis and avoid assuming the current rank will persist.",
-                "Theo dõi tỷ trọng doanh thu của sản phẩm dẫn đầu ở analysis tiếp theo và không giả định thứ hạng hiện tại sẽ kéo dài.",
+                "Theo dõi tỷ trọng doanh thu của sản phẩm dẫn đầu trong lần cập nhật tiếp theo; thứ hạng hiện tại có thể thay đổi.",
             ),
             "success_metric": _text(
                 language,

@@ -269,6 +269,11 @@ function ProductAssociationTable({
           })}
         </p>
       )}
+      {associations.available && (
+        <p className="mt-4 rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-600">
+          {t('pairs.metricsHelp')}
+        </p>
+      )}
     </section>
   )
 }

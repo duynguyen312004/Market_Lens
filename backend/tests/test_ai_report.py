@@ -103,8 +103,16 @@ def test_openai_success_returns_validated_ai_report(
     assert generation.report["recommendations"][0]["title"] == (
         "Duy trì sản phẩm dẫn đầu"
     )
-    assert generation.report["recommendations"][0]["evidence"][0] == (
-        build_safe_aggregate_payload(analysis_result)["evidence_catalog"][0]
+    expected_evidence = {
+        key: value
+        for key, value in build_safe_aggregate_payload(analysis_result)[
+            "evidence_catalog"
+        ][0].items()
+        if key != "display_value"
+    }
+    assert (
+        generation.report["recommendations"][0]["evidence"][0]
+        == expected_evidence
     )
     assert captured_request["model"] == "gpt-5.6-luna"
     assert captured_request["text"]["format"]["strict"] is True
@@ -220,7 +228,7 @@ def test_gemini_vietnamese_request_uses_vietnamese_prompt_and_disclaimer(
 
     assert "natural Vietnamese" in captured_request["system_instruction"]
     assert generation.report["source"] == "ai"
-    assert generation.report["disclaimer"].startswith("Báo cáo chỉ")
+    assert generation.report["disclaimer"].startswith("Báo cáo sử dụng")
 
 
 def test_invalid_json_uses_rule_based_fallback(
@@ -232,6 +240,42 @@ def test_invalid_json_uses_rule_based_fallback(
             json={
                 "status": "completed",
                 "output_text": "not-json",
+            },
+        )
+
+    fallback = build_rule_based_report(analysis_result)
+    generation = generate_ai_report(
+        analysis_result=analysis_result,
+        fallback_report=fallback,
+        config=_openai_config(),
+        safety_subject="verified-user-id",
+        transport=httpx.MockTransport(handler),
+    )
+
+    assert generation.warning_code == "AI_INVALID_RESPONSE"
+    assert generation.report == fallback
+
+
+@pytest.mark.parametrize(
+    "invalid_text",
+    [
+        "The forecast backtest reports a low sMAPE for this period.",
+        "Revenue changed by 37.201646 percent during the period.",
+    ],
+)
+def test_internal_or_over_precise_ai_copy_uses_fallback(
+    analysis_result: dict[str, Any],
+    invalid_text: str,
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["sections"][0]["narrative"] = invalid_text
+
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "status": "completed",
+                "output_text": json.dumps(invalid_draft),
             },
         )
 

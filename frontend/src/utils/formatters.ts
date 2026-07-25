@@ -20,7 +20,20 @@ export function formatVnd(value: number, language: Language = 'vi') {
 }
 
 export function formatInteger(value: number, language: Language = 'vi') {
-  return new Intl.NumberFormat(localeFor(language)).format(value)
+  return new Intl.NumberFormat(localeFor(language), {
+    maximumFractionDigits: 0,
+  }).format(value)
+}
+
+export function formatDecimal(
+  value: number,
+  maximumFractionDigits = 2,
+  language: Language = 'vi',
+) {
+  return new Intl.NumberFormat(localeFor(language), {
+    maximumFractionDigits,
+    minimumFractionDigits: 0,
+  }).format(value)
 }
 
 export function formatDate(value: string, language: Language = 'vi') {

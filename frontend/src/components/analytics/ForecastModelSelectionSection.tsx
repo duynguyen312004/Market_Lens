@@ -87,63 +87,6 @@ export function ForecastModelSelectionSection({
         />
       </div>
 
-      <div className="mt-5 overflow-x-auto">
-        <table className="w-full min-w-[48rem] text-left text-xs">
-          <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
-            <tr>
-              <th className="pb-3 pr-3">{t('forecast.rank')}</th>
-              <th className="pb-3 pr-3">{t('forecast.candidate')}</th>
-              <th className="pb-3 pr-3 text-right">MAE</th>
-              <th className="pb-3 pr-3 text-right">RMSE</th>
-              <th className="pb-3 text-right">sMAPE</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {selection.candidates.map((candidate) => {
-              const selected =
-                candidate.method === selection.selected_method
-              return (
-                <tr
-                  className={selected ? 'bg-indigo-50/60' : undefined}
-                  key={candidate.method}
-                >
-                  <td className="py-3 pr-3 font-black text-slate-500">
-                    #{candidate.rank}
-                  </td>
-                  <td className="py-3 pr-3">
-                    <p className="font-extrabold text-slate-900">
-                      {getForecastMethodLabel(candidate.method, language)}
-                    </p>
-                    <p className="mt-0.5 text-[11px] text-slate-500">
-                      {selected
-                        ? t('forecast.selectedCandidate')
-                        : t('forecast.minimumTraining', {
-                            count: candidate.minimum_training_days,
-                          })}
-                    </p>
-                  </td>
-                  <td className="py-3 pr-3 text-right font-black text-slate-900">
-                    {formatVnd(candidate.metrics.mae, language)}
-                  </td>
-                  <td className="py-3 pr-3 text-right font-semibold text-slate-600">
-                    {formatVnd(candidate.metrics.rmse, language)}
-                  </td>
-                  <td className="py-3 text-right font-semibold text-slate-600">
-                    {formatPercent(
-                      candidate.metrics.smape_percent,
-                      1,
-                      false,
-                      language,
-                    )}
-                    %
-                  </td>
-                </tr>
-              )
-            })}
-          </tbody>
-        </table>
-      </div>
-
       <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
         <InfoIcon
           aria-hidden="true"
@@ -168,6 +111,77 @@ export function ForecastModelSelectionSection({
             })}
         </p>
       </div>
+
+      <details className="mt-4 rounded-xl border border-slate-200 bg-white">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-extrabold text-slate-800 marker:text-indigo-600">
+          {t('forecast.technicalDetails')}
+        </summary>
+        <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+          <p className="text-xs leading-relaxed text-slate-600">
+            {t('forecast.technicalDetailsDesc')}
+          </p>
+          <div className="mt-4 overflow-x-auto">
+            <table className="w-full min-w-[48rem] text-left text-xs">
+              <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-500">
+                <tr>
+                  <th className="pb-3 pr-3">{t('forecast.rank')}</th>
+                  <th className="pb-3 pr-3">{t('forecast.candidate')}</th>
+                  <th className="pb-3 pr-3 text-right">MAE</th>
+                  <th className="pb-3 pr-3 text-right">RMSE</th>
+                  <th className="pb-3 text-right">sMAPE</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {selection.candidates.map((candidate) => {
+                  const selected =
+                    candidate.method === selection.selected_method
+                  return (
+                    <tr
+                      className={selected ? 'bg-indigo-50/60' : undefined}
+                      key={candidate.method}
+                    >
+                      <td className="py-3 pr-3 font-black text-slate-500">
+                        #{candidate.rank}
+                      </td>
+                      <td className="py-3 pr-3">
+                        <p className="font-extrabold text-slate-900">
+                          {getForecastMethodLabel(
+                            candidate.method,
+                            language,
+                          )}
+                        </p>
+                        <p className="mt-0.5 text-xs text-slate-600">
+                          {selected
+                            ? t('forecast.selectedCandidate')
+                            : t('forecast.minimumTraining', {
+                                count:
+                                  candidate.minimum_training_days,
+                              })}
+                        </p>
+                      </td>
+                      <td className="py-3 pr-3 text-right font-black text-slate-900">
+                        {formatVnd(candidate.metrics.mae, language)}
+                      </td>
+                      <td className="py-3 pr-3 text-right font-semibold text-slate-600">
+                        {formatVnd(candidate.metrics.rmse, language)}
+                      </td>
+                      <td className="py-3 text-right font-semibold text-slate-600">
+                        {formatPercent(
+                          candidate.metrics.smape_percent,
+                          1,
+                          false,
+                          language,
+                        )}
+                        %
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </details>
     </section>
   )
 }

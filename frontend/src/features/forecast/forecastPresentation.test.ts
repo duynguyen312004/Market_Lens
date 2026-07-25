@@ -96,19 +96,19 @@ describe('forecast presentation', () => {
 
   it('hiển thị tên phương pháp thay vì mã kỹ thuật', () => {
     expect(getForecastMethodLabel('moving_average_7_days')).toBe(
-      '7-day moving average',
+      'Average of the latest 7 days',
     )
     expect(getForecastMethodLabel('linear_trend_30_days')).toBe(
-      '30-day linear trend',
+      '30-day revenue trend',
     )
     expect(getForecastMethodLabel('seasonal_naive_7_days')).toBe(
-      '7-day seasonal naive',
+      'Same weekday as last week',
     )
     expect(getForecastMethodLabel('weekday_average_4_weeks', 'vi')).toBe(
-      'Trung bình cùng thứ trong 4 tuần',
+      'Trung bình theo thứ trong 4 tuần',
     )
     expect(getForecastMethodLabel('moving_average_7_days', 'vi')).toBe(
-      'Trung bình trượt 7 ngày',
+      'Trung bình 7 ngày gần nhất',
     )
   })
 

@@ -64,7 +64,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
         <h3 className="text-lg font-black tracking-tight text-slate-900">
           {t('report.chartsTitle')}
         </h3>
-        <p className="mt-1 text-xs text-slate-500">
+        <p className="mt-1 text-sm text-slate-600">
           {t('report.chartsDesc')}
         </p>
       </div>
@@ -74,7 +74,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
             <p className="text-sm font-black text-slate-900">
               {t('report.revenueChartTitle')}
             </p>
-            <p className="mt-0.5 text-[10px] text-slate-500">
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
               {t('report.revenueChartDesc')}
             </p>
           </figcaption>
@@ -92,7 +92,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
             <p className="text-sm font-black text-slate-900">
               {t('report.forecastChartTitle')}
             </p>
-            <p className="mt-0.5 text-[10px] text-slate-500">
+            <p className="mt-1 text-xs leading-relaxed text-slate-600">
               {analysis.forecast.available
                 ? t('report.forecastChartDesc')
                 : t('report.forecastChartUnavailable')}
@@ -127,7 +127,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
               </div>
             </>
           ) : (
-            <div className="mt-4 grid aspect-[13/6] place-items-center rounded-xl bg-slate-50 px-6 text-center text-xs font-semibold text-slate-500">
+            <div className="mt-4 grid aspect-[13/6] place-items-center rounded-xl bg-slate-50 px-6 text-center text-sm font-semibold text-slate-600">
               {t('report.forecastChartUnavailable')}
             </div>
           )}

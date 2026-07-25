@@ -31,6 +31,7 @@ import {
   getAnalysisSourceNames,
 } from '../features/analysis/presentation'
 import { useLanguage } from '../i18n/LanguageContext'
+import { formatInteger } from '../utils/formatters'
 import { AnalysisSelectorDialog } from './AnalysisSelectorDialog'
 import { LogoutConfirmDialog } from './LogoutConfirmDialog'
 
@@ -167,9 +168,7 @@ function AppShellContent() {
                 </p>
                 <p className="truncate text-[11px] text-slate-400">
                   {t('shell.fileRows', {
-                    count: analysis.row_count.toLocaleString(
-                      language === 'vi' ? 'vi-VN' : 'en-US',
-                    ),
+                    count: formatInteger(analysis.row_count, language),
                   })}
                 </p>
               </div>

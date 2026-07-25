@@ -4,6 +4,8 @@ import {
   formatCompactVnd,
   formatDate,
   formatDateTime,
+  formatDecimal,
+  formatInteger,
   formatMonth,
   formatPercent,
   formatShortDate,
@@ -38,6 +40,12 @@ describe('analytics formatters', () => {
     expect(formatPercent(12.34, 1, true)).toBe('+12,3')
     expect(formatPercent(-8.2, 1, true)).toBe('-8,2')
     expect(formatPercent(0)).toBe('0')
+  })
+
+  it('không hiển thị phần thập phân dài ngoài ý muốn', () => {
+    expect(formatInteger(11.666_666)).toBe('12')
+    expect(formatDecimal(1.234_567)).toBe('1,23')
+    expect(formatPercent(96.666_667)).toBe('96,7')
   })
 
   it('rút gọn doanh thu cho trục biểu đồ', () => {

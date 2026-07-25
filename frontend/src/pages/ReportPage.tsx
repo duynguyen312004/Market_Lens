@@ -36,6 +36,7 @@ import {
 } from '../features/analysis/presentation'
 import {
   formatReportEvidence,
+  formatReportNarrative,
   getReportPageTitle,
 } from '../features/report/reportPresentation'
 import {
@@ -129,8 +130,12 @@ export function ReportPage() {
               <h2 className="font-black text-slate-900">
                 {t('report.actionTitle')}
               </h2>
-              <p className="mt-0.5 text-xs text-slate-500">
-                {t('report.actionDesc')}
+              <p className="mt-1 text-sm leading-relaxed text-slate-600">
+                {t(
+                  report.source === 'ai'
+                    ? 'report.actionDescAi'
+                    : 'report.actionDescRules',
+                )}
               </p>
             </div>
             <div className="flex shrink-0 flex-wrap gap-3">
@@ -175,7 +180,7 @@ export function ReportPage() {
         </div>
 
         <article
-          className="mt-7 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-md"
+          className="mt-7 overflow-x-clip rounded-2xl border border-slate-200/80 bg-white shadow-md"
           id="business-report"
         >
           <header className="border-b border-[var(--border)] bg-[var(--primary-soft)] p-6 sm:p-9">
@@ -184,11 +189,11 @@ export function ReportPage() {
                 <p className="text-lg font-black tracking-tight text-indigo-700">
                   MarketLens
                 </p>
-                <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-slate-500">
+                <p className="text-xs font-bold uppercase tracking-[0.14em] text-slate-600">
                   {t('report.documentSubtitle')}
                 </p>
               </div>
-              <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-600">
                 {t('report.confidential')}
               </p>
             </div>
@@ -196,20 +201,30 @@ export function ReportPage() {
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <ReportSource source={report.source} />
-                  <span className="rounded-full border border-indigo-200 bg-white/80 px-2.5 py-1 text-[10px] font-black uppercase tracking-wider text-indigo-700">
-                    Report {report.report_version}
+                  <span className="rounded-full border border-indigo-200 bg-white/80 px-2.5 py-1 text-xs font-black text-indigo-700">
+                    {t('report.version', {
+                      version: report.report_version,
+                    })}
                   </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-                  {report.title}
+                  {report.source === 'ai'
+                    ? formatReportNarrative(
+                        report.title,
+                        language,
+                      )
+                    : t('report.documentTitleRules')}
                 </h2>
                 <p className="mt-3 text-sm font-medium leading-relaxed text-slate-700 sm:text-base">
-                  {report.executive_summary}
+                  {formatReportNarrative(
+                    report.executive_summary,
+                    language,
+                  )}
                 </p>
               </div>
-              <dl className="grid shrink-0 gap-3 text-xs sm:min-w-56">
+              <dl className="grid shrink-0 gap-3 text-sm sm:min-w-56">
                 <div>
-                  <dt className="font-semibold text-slate-400">
+                  <dt className="font-semibold text-slate-600">
                     {t('report.generatedFor')}
                   </dt>
                   <dd
@@ -223,16 +238,24 @@ export function ReportPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-400">
+                  <dt className="font-semibold text-slate-600">
                     {t('report.period')}
                   </dt>
                   <dd className="mt-0.5 font-bold text-slate-900">
-                    {formatDate(analysis.period.from, language)} –{' '}
-                    {formatDate(analysis.period.to, language)}
+                    {t('common.dateRange', {
+                      from: formatDate(
+                        analysis.period.from,
+                        language,
+                      ),
+                      to: formatDate(
+                        analysis.period.to,
+                        language,
+                      ),
+                    })}
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-400">
+                  <dt className="font-semibold text-slate-600">
                     {t('report.datasetSize')}
                   </dt>
                   <dd className="mt-0.5 font-bold text-slate-900">
@@ -246,7 +269,7 @@ export function ReportPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-400">
+                  <dt className="font-semibold text-slate-600">
                     {t('report.generatedAt')}
                   </dt>
                   <dd className="mt-0.5 font-bold text-slate-900">
@@ -254,12 +277,15 @@ export function ReportPage() {
                   </dd>
                 </div>
                 <div>
-                  <dt className="font-semibold text-slate-400">
+                  <dt className="font-semibold text-slate-600">
                     {t('report.generator')}
                   </dt>
                   <dd className="mt-0.5 font-bold text-slate-900">
-                    {report.generator.model ??
-                      t('report.generatorRules')}
+                    {t(
+                      report.source === 'ai'
+                        ? 'report.generatorAi'
+                        : 'report.generatorRules',
+                    )}
                   </dd>
                 </div>
               </dl>
@@ -271,14 +297,14 @@ export function ReportPage() {
                   className="report-print-break-avoid rounded-xl border border-[var(--border)] bg-white p-4"
                   key={evidence.metric_key}
                 >
-                  <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+                  <p className="text-xs font-black uppercase tracking-wider text-slate-600">
                     {evidence.label}
                   </p>
                   <p className="mt-1 text-lg font-black text-slate-900">
                     {formatReportEvidence(evidence, language)}
                   </p>
                   {evidence.context && (
-                    <p className="mt-1 truncate text-[10px] font-semibold text-slate-500">
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-slate-600">
                       {evidence.context}
                     </p>
                   )}
@@ -303,7 +329,7 @@ export function ReportPage() {
                 <h3 className="text-lg font-black tracking-tight text-slate-900">
                   {t('report.analysisSections')}
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm text-slate-600">
                   {t('report.analysisSectionsDesc')}
                 </p>
               </div>
@@ -315,10 +341,13 @@ export function ReportPage() {
                   key={section.key}
                 >
                   <h4 className="font-black text-slate-900">
-                    {section.title}
+                    {formatReportNarrative(section.title, language)}
                   </h4>
-                  <p className="mt-2 text-xs font-medium leading-relaxed text-slate-600">
-                    {section.narrative}
+                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
+                    {formatReportNarrative(
+                      section.narrative,
+                      language,
+                    )}
                   </p>
                   <EvidenceList
                     evidence={section.evidence}
@@ -343,7 +372,7 @@ export function ReportPage() {
                 <h3 className="text-lg font-black tracking-tight text-slate-900">
                   {t('report.recommendations')}
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-sm text-slate-600">
                   {t('report.recommendationsDesc')}
                 </p>
               </div>
@@ -360,34 +389,43 @@ export function ReportPage() {
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <span
                       className={[
-                        'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider',
+                        'rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-wider',
                         priorityClassName(recommendation.priority),
                       ].join(' ')}
                     >
                       {t(`report.priority.${recommendation.priority}`)}
                     </span>
-                    <span className="text-[10px] font-bold text-slate-400">
+                    <span className="text-xs font-bold text-slate-600">
                       #{index + 1}
                     </span>
                   </div>
                   <h4 className="mt-3 text-sm font-black text-slate-900">
-                    {recommendation.title}
+                    {formatReportNarrative(
+                      recommendation.title,
+                      language,
+                    )}
                   </h4>
-                  <div className="mt-3 space-y-3 text-xs leading-relaxed">
+                  <div className="mt-3 space-y-3 text-sm leading-relaxed">
                     <div>
-                      <p className="font-black uppercase tracking-wider text-slate-400">
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
                         {t('report.action')}
                       </p>
                       <p className="mt-1 text-slate-700">
-                        {recommendation.action}
+                        {formatReportNarrative(
+                          recommendation.action,
+                          language,
+                        )}
                       </p>
                     </div>
                     <div>
-                      <p className="font-black uppercase tracking-wider text-slate-400">
+                      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
                         {t('report.successMetric')}
                       </p>
                       <p className="mt-1 text-slate-700">
-                        {recommendation.success_metric}
+                        {formatReportNarrative(
+                          recommendation.success_metric,
+                          language,
+                        )}
                       </p>
                     </div>
                   </div>
@@ -400,14 +438,19 @@ export function ReportPage() {
             </div>
           </section>
 
-          <footer className="bg-slate-50 p-6 text-xs text-slate-500">
+          <footer className="bg-slate-50 p-6 text-sm text-slate-700">
             <div className="flex items-start gap-3">
               <InfoIcon
-                className="mt-0.5 shrink-0 text-slate-400"
+                className="mt-0.5 shrink-0 text-slate-600"
                 size={17}
                 weight="fill"
               />
-              <p className="leading-relaxed">{report.disclaimer}</p>
+              <p className="leading-relaxed">
+                {formatReportNarrative(
+                  report.disclaimer,
+                  language,
+                )}
+              </p>
             </div>
           </footer>
         </article>
@@ -449,7 +492,7 @@ function DataQualitySection({
           </div>
           <span
             className={[
-              'rounded-full px-2.5 py-1 text-[10px] font-black uppercase tracking-wider',
+              'rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-wider',
               needsAttention
                 ? 'bg-amber-100 text-amber-800'
                 : 'bg-emerald-100 text-emerald-800',
@@ -462,8 +505,8 @@ function DataQualitySection({
             )}
           </span>
         </div>
-        <p className="mt-2 text-xs leading-relaxed text-slate-600">
-          {dataQuality.summary}
+        <p className="mt-2 text-sm leading-relaxed text-slate-700">
+          {formatReportNarrative(dataQuality.summary, language)}
         </p>
         {dataQuality.signals.length > 0 && (
           <div className="report-print-two-column mt-4 grid gap-3 lg:grid-cols-2">
@@ -472,8 +515,11 @@ function DataQualitySection({
                 className="rounded-xl border border-slate-200 bg-white p-4"
                 key={signal.code}
               >
-                <p className="text-xs font-semibold leading-relaxed text-slate-700">
-                  {signal.message}
+                  <p className="text-sm font-semibold leading-relaxed text-slate-700">
+                  {formatReportNarrative(
+                    signal.message,
+                    language,
+                  )}
                 </p>
                 <EvidenceList
                   evidence={signal.evidence}
@@ -506,13 +552,13 @@ function RiskSection({
           <h3 className="text-lg font-black tracking-tight text-slate-900">
             {t('report.riskSignals')}
           </h3>
-          <p className="text-xs text-slate-500">
+          <p className="text-sm text-slate-600">
             {t('report.riskSignalsDesc')}
           </p>
         </div>
       </div>
       {risks.length === 0 ? (
-        <div className="report-print-break-avoid rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-xs font-semibold text-emerald-900">
+        <div className="report-print-break-avoid rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-900">
           {t('report.noRiskSignals')}
         </div>
       ) : (
@@ -524,14 +570,17 @@ function RiskSection({
             >
               <div className="flex items-center justify-between gap-3">
                 <h4 className="text-sm font-black text-slate-900">
-                  {risk.title}
+                  {formatReportNarrative(risk.title, language)}
                 </h4>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-black uppercase text-amber-700">
+                <span className="rounded-full bg-white px-2 py-0.5 text-xs font-black uppercase text-amber-700">
                   {t(`report.severity.${risk.severity}`)}
                 </span>
               </div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-700">
-                {risk.description}
+              <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                {formatReportNarrative(
+                  risk.description,
+                  language,
+                )}
               </p>
               <EvidenceList
                 evidence={risk.evidence}
@@ -555,17 +604,17 @@ function EvidenceList({
   const { t } = useLanguage()
   return (
     <div className="mt-4">
-      <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">
+      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
         {t('report.evidence')}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
         {evidence.map((item) => (
           <span
-            className="report-evidence-chip inline-flex max-w-full items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-[10px] font-bold text-indigo-900"
+            className="report-evidence-chip inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-bold text-indigo-900"
             key={item.metric_key}
             title={item.metric_key}
           >
-            <span className="report-evidence-label truncate">
+            <span className="report-evidence-label whitespace-normal">
               {item.context ? `${item.context} · ` : ''}
               {item.label}
             </span>

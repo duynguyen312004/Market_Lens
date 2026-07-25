@@ -154,7 +154,12 @@ function RfmCustomerTable({
               <tr>
                 <th className="pb-3 pr-3">{t('common.customer')}</th>
                 <th className="pb-3 pr-3">{t('common.segment')}</th>
-                <th className="pb-3 pr-3 text-right">R / F / M</th>
+                <th
+                  className="pb-3 pr-3 text-right"
+                  title={t('rfm.scoreHelp')}
+                >
+                  {t('rfm.scoreBreakdown')}
+                </th>
                 <th className="pb-3 pr-3 text-right">
                   {t('rfm.recency')}
                 </th>
@@ -182,7 +187,10 @@ function RfmCustomerTable({
                       {t(`rfm.segment.${customer.segment}`)}
                     </span>
                   </td>
-                  <td className="py-3 pr-3 text-right font-black text-indigo-700">
+                  <td
+                    className="py-3 pr-3 text-right font-black text-indigo-700"
+                    title={t('rfm.scoreHelp')}
+                  >
                     {customer.recency_score} / {customer.frequency_score} /{' '}
                     {customer.monetary_score}
                   </td>

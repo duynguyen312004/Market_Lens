@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Any, Literal
@@ -108,6 +109,9 @@ Mandatory rules:
 - {output_language}
 - Use only the aggregate evidence_catalog in the supplied JSON.
 - Never recalculate, modify, copy with a changed value, or invent a KPI.
+- When mentioning a figure, copy its display_value exactly. Do not copy the raw value.
+- Write for a non-technical shop owner. Do not expose internal method codes or terms such as backtest, baseline, residual, fold, candidate, RFM, cohort, MAE, RMSE, sMAPE, lift, confidence, support, schema, backend, or metric_key.
+- Explain technical findings in plain business language instead.
 - Cite evidence only by exact metric_key strings present in evidence_catalog.
 - Use the four section keys exactly once and in this order: revenue, products, customers, forecast.
 - Keep each section grounded in evidence relevant to that section.
@@ -297,7 +301,16 @@ def build_safe_aggregate_payload(
     return {
         "contract_version": analysis_result.get("contract_version"),
         "period": analysis_result.get("period") or {},
-        "evidence_catalog": list(catalog.values()),
+        "evidence_catalog": [
+            {
+                **evidence,
+                "display_value": _display_evidence_value(
+                    evidence,
+                    language,
+                ),
+            }
+            for evidence in catalog.values()
+        ],
         "allowed_evidence_keys_by_section": {
             section_key: [
                 metric_key
@@ -390,6 +403,7 @@ def generate_ai_report(
                 )
             )
         draft = AIReportDraft.model_validate(raw_draft)
+        _validate_public_copy(draft, language)
         report = _hydrate_ai_report(
             draft=draft,
             analysis_result=analysis_result,
@@ -517,6 +531,90 @@ def _availability(value: dict[str, Any]) -> dict[str, Any]:
         "available": bool(value.get("available")),
         "reason": value.get("reason"),
     }
+
+
+_INTERNAL_REPORT_TERMS = re.compile(
+    r"""
+    \bbacktests?\b
+    |\bbaselines?\b
+    |\bresiduals?\b
+    |\bfolds?\b
+    |\bcandidates?\b
+    |\bRFM\b
+    |\bcohorts?\b
+    |\bMAE\b
+    |\bRMSE\b
+    |\bsMAPE\b
+    |\bmetric[_ ]keys?\b
+    |\bschemas?\b
+    |\bbackends?\b
+    |\b(?:linear_trend|moving_average|seasonal_naive|weekday_average)_\w+\b
+    """,
+    re.IGNORECASE | re.VERBOSE,
+)
+
+
+def _validate_public_copy(
+    draft: AIReportDraft,
+    language: ReportLanguage,
+) -> None:
+    texts = [
+        draft.title,
+        draft.executive_summary,
+        *(section.narrative for section in draft.sections),
+        *(
+            text
+            for risk in draft.risk_signals
+            for text in (risk.title, risk.description)
+        ),
+        *(
+            text
+            for recommendation in draft.recommendations
+            for text in (
+                recommendation.title,
+                recommendation.action,
+                recommendation.success_metric,
+            )
+        ),
+    ]
+    decimal_separator = "," if language == "vi" else r"\."
+    excessive_precision = re.compile(
+        rf"(?<![\d.,])\d+{decimal_separator}\d{{3,}}(?![\d.,])"
+    )
+    for text in texts:
+        if _INTERNAL_REPORT_TERMS.search(text):
+            raise ValueError("AI report contains internal terminology.")
+        if excessive_precision.search(text):
+            raise ValueError("AI report contains excessive decimal precision.")
+
+
+def _display_evidence_value(
+    evidence: dict[str, Any],
+    language: ReportLanguage,
+) -> str:
+    value = evidence.get("value")
+    unit = evidence.get("unit")
+    if isinstance(value, str):
+        return value
+    if not isinstance(value, (int, float)):
+        return ""
+
+    if unit == "vnd":
+        rendered = f"{value:,.0f}"
+        if language == "vi":
+            rendered = rendered.replace(",", ".")
+        return f"{rendered} VND"
+    if unit == "percent":
+        rendered = f"{value:.1f}"
+        if language == "vi":
+            rendered = rendered.replace(".", ",")
+        return f"{rendered}%"
+    if unit in {"count", "days"}:
+        rendered = f"{value:,.0f}"
+        return rendered.replace(",", ".") if language == "vi" else rendered
+
+    rendered = f"{value:.2f}".rstrip("0").rstrip(".")
+    return rendered.replace(".", ",") if language == "vi" else rendered
 
 
 def _request_report(

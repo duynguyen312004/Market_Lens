@@ -781,12 +781,12 @@ def test_vietnamese_ai_report_fallback_is_localized_and_persisted(
     assert payload["language"] == "vi"
     assert payload["source"] == "rule_based"
     assert payload["report"]["title"] == (
-        "Báo cáo kinh doanh dựa trên bằng chứng"
+        "Báo cáo tình hình kinh doanh"
     )
     detail = client.get(f"/api/v1/analyses/{analysis_id}").json()
     assert detail["reports"]["vi"] == payload["report"]
     assert detail["reports"]["en"]["title"] == (
-        "Evidence-based business report"
+        "Business performance report"
     )
 
 

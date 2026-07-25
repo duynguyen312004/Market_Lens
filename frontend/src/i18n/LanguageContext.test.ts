@@ -25,14 +25,14 @@ describe('MarketLens translations', () => {
     )
   })
 
-  it('provides localized, interpolated E2 methodology copy', () => {
+  it('provides localized, plain-language analytics copy', () => {
     expect(
       translate('vi', 'rfm.insufficientDesc', {
         actual: 4,
         minimum: 5,
       }),
     ).toBe(
-      'Analysis này có 4 khách hàng; cần ít nhất 5 để chấm điểm phân vị có ý nghĩa.',
+      'Dữ liệu hiện có 4 khách hàng. Cần ít nhất 5 khách để so sánh hành vi mua sắm hợp lý.',
     )
     expect(
       translate('en', 'pairs.skipped', {
@@ -43,5 +43,34 @@ describe('MarketLens translations', () => {
     expect(translate('vi', 'rfm.segment.at_risk')).toBe(
       'Có nguy cơ rời bỏ',
     )
+  })
+
+  it('keeps internal engineering terms out of key Vietnamese guidance', () => {
+    const publicCopy = [
+      translate('vi', 'forecast.selectionUnavailableDesc', {
+        current: 20,
+        minimum: 28,
+      }),
+      translate('vi', 'forecast.evaluationUnavailableDesc', {
+        current: 20,
+        minimum: 28,
+      }),
+      translate('vi', 'report.actionDescRules'),
+      translate('vi', 'rfm.desc'),
+      translate('vi', 'pairs.desc'),
+    ]
+      .join(' ')
+      .toLowerCase()
+
+    for (const internalTerm of [
+      'backend',
+      'candidate',
+      'fallback',
+      'fold',
+      'metric key',
+      'residual',
+    ]) {
+      expect(publicCopy).not.toContain(internalTerm)
+    }
   })
 })
