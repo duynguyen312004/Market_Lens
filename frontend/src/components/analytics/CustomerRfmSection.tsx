@@ -3,18 +3,26 @@ import {
   UserSwitchIcon,
   UsersThreeIcon,
 } from '@phosphor-icons/react'
+import { useMemo, useState } from 'react'
 
 import type {
   RfmAnalysis,
   RfmCustomerMetric,
   RfmSegment,
 } from '../../api/analysesApi'
+import {
+  nextSortState,
+  sortRows,
+  type SortDirection,
+  type SortState,
+} from '../../features/analysis/tableSorting'
 import { useLanguage } from '../../i18n/LanguageContext'
 import {
   formatDate,
   formatInteger,
   formatVnd,
 } from '../../utils/formatters'
+import { SortableTableHeader } from './SortableTableHeader'
 
 const RFM_SEGMENTS: RfmSegment[] = [
   'champion',
@@ -31,6 +39,14 @@ const SEGMENT_STYLES: Record<RfmSegment, string> = {
   at_risk: 'border-amber-200 bg-amber-50 text-amber-800',
   regular: 'border-slate-200 bg-slate-50 text-slate-700',
 }
+
+type RfmSortKey =
+  | 'name'
+  | 'segment'
+  | 'score'
+  | 'recency'
+  | 'frequency'
+  | 'monetary'
 
 export function CustomerRfmSection({
   rfm,
@@ -80,7 +96,9 @@ export function CustomerRfmSection({
               {t(`rfm.segment.${segment}`)}
             </p>
             <p className="mt-2 text-2xl font-black">
-              {formatInteger(rfm.segments[segment], language)}
+              {t('customers.countShort', {
+                count: formatInteger(rfm.segments[segment], language),
+              })}
             </p>
             <p className="mt-2 text-[11px] font-semibold leading-4 opacity-80">
               {t(`rfm.segmentDesc.${segment}`)}
@@ -128,6 +146,46 @@ function RfmCustomerTable({
 }) {
   const { language, t } = useLanguage()
   const Icon = icon === 'top' ? SparkleIcon : UserSwitchIcon
+  const [sortState, setSortState] = useState<SortState<RfmSortKey>>(
+    icon === 'top'
+      ? { key: 'score', direction: 'desc' }
+      : { key: 'monetary', direction: 'desc' },
+  )
+  const sortedCustomers = useMemo(
+    () =>
+      sortRows(
+        customers,
+        sortState,
+        (customer, key) => {
+          switch (key) {
+            case 'name':
+              return customer.customer_name
+            case 'segment':
+              return t(`rfm.segment.${customer.segment}`)
+            case 'score':
+              return customer.total_score
+            case 'recency':
+              return customer.recency_days
+            case 'frequency':
+              return customer.frequency
+            case 'monetary':
+              return customer.monetary
+          }
+        },
+        language,
+      ),
+    [customers, language, sortState, t],
+  )
+  const handleSort = (
+    key: RfmSortKey,
+    defaultDirection: SortDirection,
+  ) => {
+    setSortState((current) =>
+      nextSortState(current, key, defaultDirection),
+    )
+  }
+  const sortLabel = (label: string) =>
+    t('common.sortBy', { label })
 
   return (
     <section className="data-panel min-w-0 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
@@ -138,6 +196,9 @@ function RfmCustomerTable({
         <div>
           <h3 className="font-black text-slate-900">{title}</h3>
           <p className="mt-0.5 text-xs text-slate-500">{description}</p>
+          <p className="mt-1 text-[11px] font-semibold text-slate-400">
+            {t('common.sortHint')}
+          </p>
         </div>
       </div>
       {customers.length > 0 ? (
@@ -145,25 +206,69 @@ function RfmCustomerTable({
           <table className="w-full min-w-[38rem] text-left text-xs">
             <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
               <tr>
-                <th className="pb-3 pr-3">{t('common.customer')}</th>
-                <th className="pb-3 pr-3">{t('common.segment')}</th>
-                <th
+                <SortableTableHeader
+                  className="pb-3 pr-3"
+                  defaultDirection="asc"
+                  label={t('common.customer')}
+                  onSort={handleSort}
+                  sortKey="name"
+                  sortLabel={sortLabel(t('common.customer'))}
+                  sortState={sortState}
+                />
+                <SortableTableHeader
+                  className="pb-3 pr-3"
+                  defaultDirection="asc"
+                  label={t('common.segment')}
+                  onSort={handleSort}
+                  sortKey="segment"
+                  sortLabel={sortLabel(t('common.segment'))}
+                  sortState={sortState}
+                />
+                <SortableTableHeader
+                  align="right"
                   className="pb-3 pr-3 text-right"
+                  defaultDirection="desc"
+                  label={t('rfm.scoreBreakdown')}
+                  onSort={handleSort}
+                  sortKey="score"
+                  sortLabel={sortLabel(t('rfm.scoreBreakdown'))}
+                  sortState={sortState}
                   title={t('rfm.scoreHelp')}
-                >
-                  {t('rfm.scoreBreakdown')}
-                </th>
-                <th className="pb-3 pr-3 text-right">
-                  {t('rfm.recency')}
-                </th>
-                <th className="pb-3 pr-3 text-right">
-                  {t('rfm.frequency')}
-                </th>
-                <th className="pb-3 text-right">{t('rfm.monetary')}</th>
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 pr-3 text-right"
+                  defaultDirection="asc"
+                  label={t('rfm.recency')}
+                  onSort={handleSort}
+                  sortKey="recency"
+                  sortLabel={sortLabel(t('rfm.recency'))}
+                  sortState={sortState}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 pr-3 text-right"
+                  defaultDirection="desc"
+                  label={t('rfm.frequency')}
+                  onSort={handleSort}
+                  sortKey="frequency"
+                  sortLabel={sortLabel(t('rfm.frequency'))}
+                  sortState={sortState}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 text-right"
+                  defaultDirection="desc"
+                  label={t('rfm.monetary')}
+                  onSort={handleSort}
+                  sortKey="monetary"
+                  sortLabel={sortLabel(t('rfm.monetary'))}
+                  sortState={sortState}
+                />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {customers.map((customer) => (
+              {sortedCustomers.map((customer) => (
                 <tr key={customer.customer_id}>
                   <td className="py-3 pr-3">
                     <p className="font-extrabold text-slate-900">

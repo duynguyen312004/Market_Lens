@@ -41,7 +41,7 @@ describe('MarketLens translations', () => {
       }),
     ).toContain('2 oversized orders')
     expect(translate('vi', 'rfm.segment.at_risk')).toBe(
-      'Lâu chưa quay lại',
+      'Khách lâu chưa quay lại',
     )
     expect(translate('vi', 'dashboard.uniqueOrders')).toBe(
       'Mỗi đơn hàng chỉ được tính một lần',
@@ -51,7 +51,7 @@ describe('MarketLens translations', () => {
         date: '21/07/2026',
       }),
     ).toBe(
-      'Số ngày chưa mua được tính đến 21/07/2026, là ngày kế tiếp sau đơn hoàn tất mới nhất trong file.',
+      'Mức độ gần đây được so với ngày 21/07/2026, là ngày kế tiếp sau đơn hoàn tất mới nhất trong file, không so với ngày hôm nay.',
     )
     expect(translate('vi', 'common.dateFormatHint')).toBe(
       '(ngày/tháng/năm)',
@@ -61,6 +61,17 @@ describe('MarketLens translations', () => {
         month: 'tháng 7/2026',
       }),
     ).toBe('Doanh thu theo từng ngày trong tháng 7/2026.')
+    expect(
+      translate('vi', 'cohort.example', {
+        active: 203,
+        cohort: 'T8/2025',
+        month: 1,
+        rate: '77,8%',
+        total: 261,
+      }),
+    ).toBe(
+      'Ví dụ ngay trong bảng: nhóm T8/2025 có 261 khách ban đầu. Sau 1 tháng, 203 khách mua lại, tương đương 77,8%.',
+    )
   })
 
   it('keeps internal engineering terms out of key Vietnamese guidance', () => {

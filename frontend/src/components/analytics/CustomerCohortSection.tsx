@@ -9,7 +9,6 @@ import {
   formatPercent,
 } from '../../utils/formatters'
 
-
 export function CustomerCohortSection({
   cohort,
 }: {
@@ -43,22 +42,29 @@ export function CustomerCohortSection({
     { length: cohort.maximum_observed_month_index + 1 },
     (_, index) => index,
   )
+  const exampleCohort = cohort.cohorts.find((row) =>
+    row.periods.some((period) => period.month_index === 1),
+  )
+  const examplePeriod = exampleCohort?.periods.find(
+    (period) => period.month_index === 1,
+  )
 
   return (
     <section className="mt-6" aria-labelledby="cohort-heading">
-      <div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
-        <div>
-          <h2
-            className="text-xl font-black tracking-tight text-slate-900"
-            id="cohort-heading"
-          >
-            {t('cohort.title')}
-          </h2>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
-            {t('cohort.desc')}
-          </p>
-        </div>
-        <p className="shrink-0 text-xs font-bold text-slate-500">
+      <div>
+        <h2
+          className="text-xl font-black tracking-tight text-slate-900"
+          id="cohort-heading"
+        >
+          {t('cohort.title')}
+        </h2>
+        <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
+          {t('cohort.desc')}
+        </p>
+        <p className="mt-2 max-w-3xl text-xs font-semibold leading-5 text-slate-600">
+          {t('cohort.purpose')}
+        </p>
+        <p className="mt-2 text-xs font-bold text-slate-500">
           {t('cohort.summary', {
             cohorts: formatInteger(cohort.cohort_count, language),
             months: formatInteger(cohort.observed_month_count, language),
@@ -67,25 +73,89 @@ export function CustomerCohortSection({
       </div>
 
       <div className="data-panel mt-4 overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-xs">
-        <div className="flex items-start gap-2.5 border-b border-slate-100 bg-slate-50/70 px-5 py-4 text-[11px] leading-5 text-slate-600">
-          <InfoIcon
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-indigo-600"
-            size={15}
-            weight="fill"
-          />
-          <p>{t('cohort.methodNote')}</p>
+        <div className="border-b border-slate-100 bg-slate-50/70 px-5 py-5">
+          <div className="flex items-center gap-2 text-sm font-black text-slate-900">
+            <InfoIcon
+              aria-hidden="true"
+              className="shrink-0 text-indigo-600"
+              size={16}
+              weight="fill"
+            />
+            <h3>{t('cohort.howToRead')}</h3>
+          </div>
+          <dl className="mt-4 grid gap-4 text-xs sm:grid-cols-2 xl:grid-cols-4">
+            <div>
+              <dt className="font-black text-slate-800">
+                {t('cohort.rowGuideTitle')}
+              </dt>
+              <dd className="mt-1 leading-5 text-slate-500">
+                {t('cohort.rowGuideDesc')}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-black text-slate-800">
+                {t('cohort.initialGuideTitle')}
+              </dt>
+              <dd className="mt-1 leading-5 text-slate-500">
+                {t('cohort.initialGuideDesc')}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-black text-slate-800">
+                {t('cohort.cellGuideTitle')}
+              </dt>
+              <dd className="mt-1 leading-5 text-slate-500">
+                {t('cohort.cellGuideDesc')}
+              </dd>
+            </div>
+            <div>
+              <dt className="font-black text-slate-800">
+                {t('cohort.emptyGuideTitle')}
+              </dt>
+              <dd className="mt-1 leading-5 text-slate-500">
+                {t('cohort.emptyGuideDesc')}
+              </dd>
+            </div>
+          </dl>
+          {exampleCohort && examplePeriod && (
+            <p className="mt-4 border-t border-slate-200 pt-4 text-xs font-bold leading-5 text-indigo-800">
+              {t('cohort.example', {
+                active: formatInteger(
+                  examplePeriod.active_customers,
+                  language,
+                ),
+                cohort: formatMonth(
+                  exampleCohort.cohort_month,
+                  language,
+                ),
+                month: formatInteger(
+                  examplePeriod.month_index,
+                  language,
+                ),
+                rate: `${formatPercent(
+                  examplePeriod.retention_percent,
+                  1,
+                  false,
+                  language,
+                )}%`,
+                total: formatInteger(
+                  exampleCohort.cohort_size,
+                  language,
+                ),
+              })}
+            </p>
+          )}
         </div>
-        <div className="overflow-x-auto p-5">
-          <table className="w-full min-w-max border-separate border-spacing-1 text-xs">
+        <div className="overflow-x-auto px-4 py-5 sm:px-5">
+          <table className="w-full min-w-max border-separate [border-spacing:0.5rem_0.375rem] text-xs">
             <thead>
               <tr className="font-bold uppercase tracking-wider text-slate-400">
-                <th className="sticky left-0 z-10 bg-white pb-2 pr-3 text-left">
+                <th className="sticky left-0 z-10 min-w-36 bg-white pb-3 pr-4 text-left">
                   {t('cohort.acquisitionMonth')}
                 </th>
                 {monthIndexes.map((monthIndex) => (
                   <th
-                    className="min-w-20 pb-2 text-center"
+                    className="min-w-28 whitespace-nowrap px-1 pb-3 text-center"
                     key={monthIndex}
                   >
                     {monthIndex === 0
@@ -107,7 +177,7 @@ export function CustomerCohortSection({
                 )
                 return (
                   <tr key={row.cohort_month}>
-                    <th className="sticky left-0 z-10 bg-white py-1 pr-3 text-left">
+                    <th className="sticky left-0 z-10 min-w-36 bg-white py-1 pr-4 text-left">
                       <p className="font-black text-slate-900">
                         {formatMonth(row.cohort_month, language)}
                       </p>
@@ -124,41 +194,71 @@ export function CustomerCohortSection({
                       const period = periods.get(monthIndex)
                       return (
                         <td
-                          className="p-0.5 text-center"
+                          className="text-center"
                           key={monthIndex}
                         >
                           {period ? (
                             <span
-                              className={`flex min-h-12 min-w-20 flex-col items-center justify-center rounded-lg px-2 py-1 font-black ${retentionCellClass(
+                              className={`flex min-h-14 min-w-28 flex-col items-center justify-center rounded-xl px-3 py-2 font-black ${retentionCellClass(
                                 period.retention_percent,
                               )}`}
-                              title={t('cohort.cellDetail', {
-                                active: period.active_customers,
-                                orders: period.order_count,
-                              })}
+                              title={
+                                monthIndex === 0
+                                  ? t('cohort.initialCellDetail', {
+                                      count: formatInteger(
+                                        period.active_customers,
+                                        language,
+                                      ),
+                                    })
+                                  : t('cohort.cellDetail', {
+                                      active: period.active_customers,
+                                      orders: period.order_count,
+                                    })
+                              }
                             >
-                              {formatPercent(
-                                period.retention_percent,
-                                1,
-                                false,
-                                language,
+                              {monthIndex === 0 ? (
+                                <>
+                                  <span className="text-sm">
+                                    {formatInteger(
+                                      period.active_customers,
+                                      language,
+                                    )}
+                                  </span>
+                                  <small className="mt-0.5 text-[10px] font-semibold opacity-80">
+                                    {t('cohort.initialLabel')}
+                                  </small>
+                                </>
+                              ) : (
+                                <>
+                                  <span>
+                                    {formatPercent(
+                                      period.retention_percent,
+                                      1,
+                                      false,
+                                      language,
+                                    )}
+                                    %
+                                  </span>
+                                  <small className="mt-0.5 text-[10px] font-semibold opacity-80">
+                                    {t('cohort.activeShort', {
+                                      count: formatInteger(
+                                        period.active_customers,
+                                        language,
+                                      ),
+                                    })}
+                                  </small>
+                                </>
                               )}
-                              %
-                              <small className="mt-0.5 text-[9px] font-semibold opacity-75">
-                                {t('cohort.activeShort', {
-                                  count: formatInteger(
-                                    period.active_customers,
-                                    language,
-                                  ),
-                                })}
-                              </small>
                             </span>
                           ) : (
                             <span
                               aria-label={t('cohort.notObserved')}
-                              className="flex min-h-12 min-w-20 items-center justify-center rounded-lg border border-dashed border-slate-200 text-slate-300"
+                              className="flex min-h-14 min-w-28 items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50/40"
+                              title={t('cohort.notObserved')}
                             >
-                              ·
+                              <span className="sr-only">
+                                {t('cohort.notObserved')}
+                              </span>
                             </span>
                           )}
                         </td>
@@ -174,7 +274,6 @@ export function CustomerCohortSection({
     </section>
   )
 }
-
 
 function retentionCellClass(retention: number) {
   const styles = {

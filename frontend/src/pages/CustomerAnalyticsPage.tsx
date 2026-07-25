@@ -6,9 +6,12 @@ import {
   UsersThreeIcon,
   UserSwitchIcon,
 } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 
-import type { AnalysisDetail } from '../api/analysesApi'
+import type {
+  AnalysisDetail,
+  CustomerMetric,
+} from '../api/analysesApi'
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
 import { AnalyticsTabs } from '../components/analytics/AnalyticsTabs'
 import { CustomerCohortSection } from '../components/analytics/CustomerCohortSection'
@@ -20,8 +23,15 @@ import {
 } from '../components/analytics/AnalysisStates'
 import { CustomerSegmentChart } from '../components/analytics/Charts'
 import { MetricCard } from '../components/analytics/MetricCard'
+import { SortableTableHeader } from '../components/analytics/SortableTableHeader'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
 import { getSegmentLabel } from '../features/analysis/presentation'
+import {
+  nextSortState,
+  sortRows,
+  type SortDirection,
+  type SortState,
+} from '../features/analysis/tableSorting'
 import { useLanguage } from '../i18n/LanguageContext'
 import {
   formatDate,
@@ -35,6 +45,35 @@ type CustomerSection =
   | 'customers'
   | 'behavior'
   | 'retention'
+
+type CustomerSortKey =
+  | 'name'
+  | 'segment'
+  | 'orders'
+  | 'firstOrder'
+  | 'lastOrder'
+  | 'revenue'
+
+function getCustomerSortValue(
+  customer: CustomerMetric,
+  key: CustomerSortKey,
+  language: 'en' | 'vi',
+) {
+  switch (key) {
+    case 'name':
+      return customer.customer_name
+    case 'segment':
+      return getSegmentLabel(customer.segment, language)
+    case 'orders':
+      return customer.order_count
+    case 'firstOrder':
+      return customer.first_order_date
+    case 'lastOrder':
+      return customer.last_order_date
+    case 'revenue':
+      return customer.revenue
+  }
+}
 
 export function CustomerAnalyticsPage() {
   const { t } = useLanguage()
@@ -256,6 +295,56 @@ function CustomerOverview({ analysis }: { analysis: AnalysisDetail }) {
 function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
   const { language, t } = useLanguage()
   const { customers } = analysis
+  const [topSort, setTopSort] = useState<SortState<CustomerSortKey>>({
+    key: 'revenue',
+    direction: 'desc',
+  })
+  const [potentialSort, setPotentialSort] = useState<
+    SortState<CustomerSortKey>
+  >({
+    key: 'revenue',
+    direction: 'desc',
+  })
+  const sortedTopCustomers = useMemo(
+    () =>
+      sortRows(
+        customers.top_customers,
+        topSort,
+        (customer, key) =>
+          getCustomerSortValue(customer, key, language),
+        language,
+      ),
+    [customers.top_customers, language, topSort],
+  )
+  const sortedPotentialCustomers = useMemo(
+    () =>
+      sortRows(
+        customers.potential_customers,
+        potentialSort,
+        (customer, key) =>
+          getCustomerSortValue(customer, key, language),
+        language,
+      ),
+    [customers.potential_customers, language, potentialSort],
+  )
+  const handleTopSort = (
+    key: CustomerSortKey,
+    defaultDirection: SortDirection,
+  ) => {
+    setTopSort((current) =>
+      nextSortState(current, key, defaultDirection),
+    )
+  }
+  const handlePotentialSort = (
+    key: CustomerSortKey,
+    defaultDirection: SortDirection,
+  ) => {
+    setPotentialSort((current) =>
+      nextSortState(current, key, defaultDirection),
+    )
+  }
+  const sortLabel = (label: string) =>
+    t('common.sortBy', { label })
 
   return (
     <div
@@ -289,6 +378,9 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
               {t('customers.rankingDesc')}
             </p>
+            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+              {t('common.sortHint')}
+            </p>
           </div>
         </div>
 
@@ -296,24 +388,68 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
           <table className="w-full min-w-[42rem] text-left text-xs">
             <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
               <tr>
-                <th className="pb-3 pr-4">{t('common.customer')}</th>
-                <th className="pb-3 pr-4">{t('common.segment')}</th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.orders')}
-                </th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.firstOrder')}
-                </th>
-                <th className="pb-3 pr-4 text-right">
-                  {t('common.lastOrder')}
-                </th>
-                <th className="pb-3 text-right">
-                  {t('common.revenue')}
-                </th>
+                <SortableTableHeader
+                  className="pb-3 pr-4"
+                  defaultDirection="asc"
+                  label={t('common.customer')}
+                  onSort={handleTopSort}
+                  sortKey="name"
+                  sortLabel={sortLabel(t('common.customer'))}
+                  sortState={topSort}
+                />
+                <SortableTableHeader
+                  className="pb-3 pr-4"
+                  defaultDirection="asc"
+                  label={t('common.segment')}
+                  onSort={handleTopSort}
+                  sortKey="segment"
+                  sortLabel={sortLabel(t('common.segment'))}
+                  sortState={topSort}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 pr-4 text-right"
+                  defaultDirection="desc"
+                  label={t('common.orders')}
+                  onSort={handleTopSort}
+                  sortKey="orders"
+                  sortLabel={sortLabel(t('common.orders'))}
+                  sortState={topSort}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 pr-4 text-right"
+                  defaultDirection="desc"
+                  label={t('common.firstOrder')}
+                  onSort={handleTopSort}
+                  sortKey="firstOrder"
+                  sortLabel={sortLabel(t('common.firstOrder'))}
+                  sortState={topSort}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 pr-4 text-right"
+                  defaultDirection="desc"
+                  label={t('common.lastOrder')}
+                  onSort={handleTopSort}
+                  sortKey="lastOrder"
+                  sortLabel={sortLabel(t('common.lastOrder'))}
+                  sortState={topSort}
+                />
+                <SortableTableHeader
+                  align="right"
+                  className="pb-3 text-right"
+                  defaultDirection="desc"
+                  label={t('common.revenue')}
+                  onSort={handleTopSort}
+                  sortKey="revenue"
+                  sortLabel={sortLabel(t('common.revenue'))}
+                  sortState={topSort}
+                />
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {customers.top_customers.map((customer) => (
+              {sortedTopCustomers.map((customer) => (
                 <tr
                   className="transition hover:bg-slate-50/70"
                   key={customer.customer_id}
@@ -368,6 +504,9 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
               {t('customers.potentialDesc')}
             </p>
+            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+              {t('common.sortHint')}
+            </p>
           </div>
         </div>
 
@@ -376,20 +515,49 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             <table className="w-full min-w-[36rem] text-left text-xs">
               <thead className="border-b border-slate-100 font-bold uppercase tracking-wider text-slate-400">
                 <tr>
-                  <th className="pb-3 pr-4">{t('common.customer')}</th>
-                  <th className="pb-3 pr-4 text-right">
-                    {t('common.orders')}
-                  </th>
-                  <th className="pb-3 pr-4 text-right">
-                    {t('common.lastPurchase')}
-                  </th>
-                  <th className="pb-3 text-right">
-                    {t('common.revenue')}
-                  </th>
+                  <SortableTableHeader
+                    className="pb-3 pr-4"
+                    defaultDirection="asc"
+                    label={t('common.customer')}
+                    onSort={handlePotentialSort}
+                    sortKey="name"
+                    sortLabel={sortLabel(t('common.customer'))}
+                    sortState={potentialSort}
+                  />
+                  <SortableTableHeader
+                    align="right"
+                    className="pb-3 pr-4 text-right"
+                    defaultDirection="desc"
+                    label={t('common.orders')}
+                    onSort={handlePotentialSort}
+                    sortKey="orders"
+                    sortLabel={sortLabel(t('common.orders'))}
+                    sortState={potentialSort}
+                  />
+                  <SortableTableHeader
+                    align="right"
+                    className="pb-3 pr-4 text-right"
+                    defaultDirection="desc"
+                    label={t('common.lastPurchase')}
+                    onSort={handlePotentialSort}
+                    sortKey="lastOrder"
+                    sortLabel={sortLabel(t('common.lastPurchase'))}
+                    sortState={potentialSort}
+                  />
+                  <SortableTableHeader
+                    align="right"
+                    className="pb-3 text-right"
+                    defaultDirection="desc"
+                    label={t('common.revenue')}
+                    onSort={handlePotentialSort}
+                    sortKey="revenue"
+                    sortLabel={sortLabel(t('common.revenue'))}
+                    sortState={potentialSort}
+                  />
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {customers.potential_customers.map((customer) => (
+                {sortedPotentialCustomers.map((customer) => (
                   <tr
                     className="transition hover:bg-slate-50/70"
                     key={customer.customer_id}
