@@ -174,7 +174,7 @@ export function HistoryPage() {
                             )}
                           </span>
                           <span className="min-w-0">
-                            <span className="block max-w-[200px] truncate font-extrabold text-slate-900">
+                            <span className="block max-w-[200px] break-all font-extrabold leading-5 text-slate-900">
                               {item.file_name}
                             </span>
                             {item.upload_mode === 'combined' && (
@@ -329,7 +329,7 @@ function HistoryCard({
             )}
           </span>
           <div className="min-w-0">
-            <h2 className="max-w-[180px] truncate font-extrabold text-slate-900">
+            <h2 className="max-w-[180px] break-all font-extrabold leading-5 text-slate-900">
               {item.file_name}
             </h2>
             {item.upload_mode === 'combined' && (

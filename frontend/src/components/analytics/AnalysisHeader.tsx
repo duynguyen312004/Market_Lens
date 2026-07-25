@@ -50,7 +50,7 @@ export function AnalysisHeader({
             />
           )}
           <span
-            className="max-w-64 truncate text-[var(--text-primary)]"
+            className="max-w-full break-all leading-5 text-[var(--text-primary)] sm:max-w-64"
             title={getAnalysisSourceNames(analysis)}
           >
             {getAnalysisFileLabel(analysis, language)}

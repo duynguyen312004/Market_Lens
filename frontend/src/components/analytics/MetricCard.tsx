@@ -32,7 +32,7 @@ export function MetricCard({
       ].join(' ')}
     >
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <p
             className={[
               'text-[12px] font-semibold',
@@ -94,7 +94,7 @@ export function MetricCard({
           {helper && (
             <span
               className={[
-                'max-w-[200px] truncate font-medium',
+                'min-w-0 break-words font-medium leading-5',
                 featured ? 'text-blue-100' : 'text-[var(--text-muted)]',
               ].join(' ')}
             >

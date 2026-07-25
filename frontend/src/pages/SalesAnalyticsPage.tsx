@@ -4,8 +4,9 @@ import {
   PackageIcon,
   ShoppingBagOpenIcon,
 } from '@phosphor-icons/react'
+import { useState } from 'react'
 
-import type { ProductMetric } from '../api/analysesApi'
+import type { AnalysisDetail, ProductMetric } from '../api/analysesApi'
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
 import {
   AnalysisEmptyState,
@@ -22,17 +23,29 @@ import {
 import { MetricCard } from '../components/analytics/MetricCard'
 import { ProductIntelligenceSection } from '../components/analytics/ProductIntelligenceSection'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
+import {
+  aggregateRevenueByMonth,
+  filterRevenueByPeriod,
+  getRevenueMonths,
+  getRevenueYears,
+  shouldShowDailyRevenue,
+} from '../features/analysis/revenuePeriod'
 import { useLanguage } from '../i18n/LanguageContext'
 import {
   formatDate,
   formatInteger,
+  formatMonth,
   formatPercent,
   formatVnd,
 } from '../utils/formatters'
 
+type SalesSection = 'revenue' | 'products' | 'advanced'
+
 export function SalesAnalyticsPage() {
-  const { language, t } = useLanguage()
+  const { t } = useLanguage()
   const { analysis, error, isEmpty, isLoading, retry } = useCurrentAnalysis()
+  const [activeSection, setActiveSection] =
+    useState<SalesSection>('revenue')
 
   if (isLoading) return <AnalysisLoadingState />
   if (error) return <AnalysisErrorState error={error} onRetry={retry} />
@@ -49,229 +62,354 @@ export function SalesAnalyticsPage() {
           title={t('sales.title')}
         />
 
-        {/* Sales Summary Metrics */}
-        <section
-          aria-label={t('dashboard.salesSummaryAria')}
-          className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+        <div
+          aria-label={t('sales.sectionsAria')}
+          className="mt-6 flex w-fit max-w-full gap-1 overflow-x-auto rounded-xl border border-slate-200 bg-white p-1"
+          role="tablist"
         >
-          <MetricCard
-            icon={CurrencyCircleDollarIcon}
-            label={t('dashboard.totalRevenue')}
-            value={formatVnd(analysis.summary.total_revenue, language)}
-          />
-          <MetricCard
-            icon={CurrencyCircleDollarIcon}
-            label={t('dashboard.averageOrderValue')}
-            value={formatVnd(
-              analysis.summary.average_order_value,
-              language,
-            )}
-          />
-          <MetricCard
-            icon={ShoppingBagOpenIcon}
-            label={t('sales.grossRevenue')}
-            value={formatVnd(analysis.sales.gross_revenue, language)}
-          />
-          <MetricCard
-            helper={`${formatPercent(
+          {(
+            [
+              ['revenue', t('sales.revenueTab')],
+              ['products', t('sales.productsTab')],
+              ['advanced', t('sales.advancedTab')],
+            ] as Array<[SalesSection, string]>
+          ).map(([section, label]) => (
+            <button
+              aria-selected={activeSection === section}
+              className={[
+                'shrink-0 rounded-lg px-4 py-2.5 text-xs font-extrabold transition',
+                activeSection === section
+                  ? 'bg-[var(--primary)] text-white'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+              ].join(' ')}
+              key={section}
+              onClick={() => setActiveSection(section)}
+              role="tab"
+              type="button"
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {activeSection === 'revenue' && (
+          <RevenueSection analysis={analysis} key={analysis.id} />
+        )}
+        {activeSection === 'products' && (
+          <ProductsSection analysis={analysis} />
+        )}
+        {activeSection === 'advanced' && (
+          <div role="tabpanel">
+            <ProductIntelligenceSection
+              discount={analysis.sales.discount_analysis}
+              intelligence={analysis.sales.product_intelligence}
+            />
+          </div>
+        )}
+      </div>
+    </main>
+  )
+}
+
+function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
+  const { language, t } = useLanguage()
+  const [selectedYear, setSelectedYear] = useState('all')
+  const [selectedMonth, setSelectedMonth] = useState('all')
+
+  const years = getRevenueYears(analysis.revenue_by_date)
+  const year = years.includes(selectedYear) ? selectedYear : 'all'
+  const months = getRevenueMonths(analysis.revenue_by_date, year)
+  const month = months.includes(selectedMonth) ? selectedMonth : 'all'
+  const dailyPoints = filterRevenueByPeriod(
+    analysis.revenue_by_date,
+    year,
+    month,
+  )
+  const monthlyPoints = aggregateRevenueByMonth(dailyPoints)
+  const showDaily = shouldShowDailyRevenue(month, monthlyPoints)
+
+  const chartDescription =
+    year === 'all'
+      ? t('sales.periodDescAll')
+      : month === 'all'
+        ? t('sales.periodDescYear', { year })
+        : t('sales.periodDescMonth', {
+            month: formatPeriodMonth(year, month, language),
+          })
+
+  return (
+    <div role="tabpanel">
+      <section
+        aria-label={t('dashboard.salesSummaryAria')}
+        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <MetricCard
+          icon={CurrencyCircleDollarIcon}
+          label={t('dashboard.totalRevenue')}
+          value={formatVnd(analysis.summary.total_revenue, language)}
+        />
+        <MetricCard
+          icon={CurrencyCircleDollarIcon}
+          label={t('dashboard.averageOrderValue')}
+          value={formatVnd(
+            analysis.summary.average_order_value,
+            language,
+          )}
+        />
+        <MetricCard
+          icon={ShoppingBagOpenIcon}
+          label={t('sales.grossRevenue')}
+          value={formatVnd(analysis.sales.gross_revenue, language)}
+        />
+        <MetricCard
+          helper={t('sales.discountRateHelper', {
+            value: `${formatPercent(
               analysis.sales.discount_rate_percent,
               1,
               false,
               language,
-            )}%`}
-            icon={PackageIcon}
-            label={t('sales.totalDiscount')}
-            value={formatVnd(analysis.sales.total_discount, language)}
-          />
-        </section>
+            )}%`,
+          })}
+          icon={PackageIcon}
+          label={t('sales.totalDiscount')}
+          value={formatVnd(analysis.sales.total_discount, language)}
+        />
+      </section>
 
-        {/* Daily Revenue Area Chart */}
-        <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+      <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
           <SectionHeading
-            description={t('sales.dailyDesc')}
-            title={t('sales.dailyRevenue')}
+            description={chartDescription}
+            title={t('sales.revenueOverTime')}
           />
-          <div className="mt-5">
-            <RevenueLineChart data={analysis.revenue_by_date} />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <label className="text-xs font-bold text-slate-600">
+              <span className="mb-1.5 block">{t('sales.yearFilter')}</span>
+              <select
+                aria-label={t('sales.yearFilter')}
+                className="min-w-36 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                onChange={(event) => {
+                  setSelectedYear(event.target.value)
+                  setSelectedMonth('all')
+                }}
+                value={year}
+              >
+                <option value="all">{t('sales.allYears')}</option>
+                {years.map((availableYear) => (
+                  <option key={availableYear} value={availableYear}>
+                    {availableYear}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-xs font-bold text-slate-600">
+              <span className="mb-1.5 block">{t('sales.monthFilter')}</span>
+              <select
+                aria-label={t('sales.monthFilter')}
+                className="min-w-36 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400"
+                disabled={year === 'all'}
+                onChange={(event) => setSelectedMonth(event.target.value)}
+                value={month}
+              >
+                <option value="all">{t('sales.allMonths')}</option>
+                {months.map((availableMonth) => (
+                  <option key={availableMonth} value={availableMonth}>
+                    {formatPeriodMonth(
+                      year,
+                      availableMonth,
+                      language,
+                      true,
+                    )}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+        </div>
+        <div className="mt-5">
+          {showDaily ? (
+            <RevenueLineChart data={dailyPoints} />
+          ) : (
+            <MonthlyRevenueChart data={monthlyPoints} />
+          )}
+        </div>
+      </section>
+
+      <p className="mt-6 text-xs font-semibold text-slate-500">
+        {t('sales.fullPeriodNote')}
+      </p>
+      <div className="mt-3 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
+        <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <SectionHeading
+            description={t('sales.weekdayRevenueDesc')}
+            title={t('sales.weekdayRevenue')}
+          />
+          <div className="mt-4">
+            <WeekdayRevenueChart
+              data={analysis.sales.revenue_by_weekday}
+            />
           </div>
         </section>
 
-        <div className="mt-6 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
-          <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-            <SectionHeading
-              description={t('sales.weekdayRevenueDesc')}
-              title={t('sales.weekdayRevenue')}
-            />
-            <div className="mt-4">
-              <WeekdayRevenueChart
-                data={analysis.sales.revenue_by_weekday}
-              />
-            </div>
-          </section>
-
-          <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-            <SectionHeading
-              description={t('sales.concentrationDesc')}
-              title={t('sales.concentration')}
-            />
-            <dl className="mt-5 divide-y divide-slate-100">
-              <InsightRow
-                label={t('sales.topProductShare')}
-                value={`${formatPercent(
-                  analysis.sales.concentration
-                    .top_product_revenue_share_percent,
-                  1,
-                  false,
-                  language,
-                )}%`}
-              />
-              <InsightRow
-                label={t('sales.topCategoryShare')}
-                value={`${formatPercent(
-                  analysis.sales.concentration
-                    .top_category_revenue_share_percent,
-                  1,
-                  false,
-                  language,
-                )}%`}
-              />
-              <InsightRow
-                helper={t('sales.paretoHelper', {
-                  count: analysis.sales.concentration
-                    .top_20_percent_product_count,
-                })}
-                label={t('sales.paretoShare')}
-                value={`${formatPercent(
-                  analysis.sales.concentration
-                    .top_20_percent_products_revenue_share_percent,
-                  1,
-                  false,
-                  language,
-                )}%`}
-              />
-              <InsightRow
-                helper={
-                  analysis.sales.peak_revenue_day
-                    ? formatVnd(
-                        analysis.sales.peak_revenue_day.revenue,
-                        language,
-                      )
-                    : undefined
-                }
-                label={t('sales.peakDay')}
-                value={
-                  analysis.sales.peak_revenue_day
-                    ? formatDate(
-                        analysis.sales.peak_revenue_day.date,
-                        language,
-                      )
-                    : t('common.notAvailable')
-                }
-              />
-              <InsightRow
-                helper={
-                  analysis.sales.lowest_nonzero_revenue_day
-                    ? formatVnd(
-                        analysis.sales.lowest_nonzero_revenue_day
-                          .revenue,
-                        language,
-                      )
-                    : undefined
-                }
-                label={t('sales.lowestActiveDay')}
-                value={
-                  analysis.sales.lowest_nonzero_revenue_day
-                    ? formatDate(
-                        analysis.sales.lowest_nonzero_revenue_day.date,
-                        language,
-                      )
-                    : t('common.notAvailable')
-                }
-              />
-            </dl>
-          </section>
-        </div>
-
-        {/* Category & Product Charts Grid */}
-        <div className="mt-6 grid gap-6 xl:grid-cols-2">
-          <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
-            <SectionHeading
-              description={t('sales.categoryDesc')}
-              title={t('sales.byCategory')}
-            />
-            <div className="mt-4">
-              <CategoryRevenueChart data={analysis.sales.revenue_by_category} />
-            </div>
-          </section>
-
-          <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
-            <SectionHeading
-              description={t('sales.productDesc')}
-              title={t('sales.byProduct')}
-            />
-            <div className="mt-4">
-              <ProductRevenueChart data={analysis.sales.top_products_by_revenue} />
-            </div>
-          </section>
-        </div>
-
-        {/* Monthly Revenue Chart */}
-        <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 sm:p-6 shadow-xs">
+        <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
           <SectionHeading
-            description={t('sales.monthlyDesc')}
-            title={t('sales.monthlyRevenue')}
+            description={t('sales.concentrationDesc')}
+            title={t('sales.concentration')}
           />
-          {analysis.sales.revenue_by_month.length >= 2 ? (
-            <div className="mt-5">
-              <MonthlyRevenueChart data={analysis.sales.revenue_by_month} />
-            </div>
-          ) : (
-            <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 px-5 py-8 text-center">
-              <p className="font-black text-slate-900">
-                {t('sales.singleMonth')}
-              </p>
-              <p className="mt-1.5 text-xs text-slate-500 max-w-md mx-auto">
-                {t('sales.singleMonthDesc')}
-              </p>
-            </div>
-          )}
+          <dl className="mt-5 divide-y divide-slate-100">
+            <InsightRow
+              label={t('sales.topProductShare')}
+              value={`${formatPercent(
+                analysis.sales.concentration
+                  .top_product_revenue_share_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <InsightRow
+              label={t('sales.topCategoryShare')}
+              value={`${formatPercent(
+                analysis.sales.concentration
+                  .top_category_revenue_share_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <InsightRow
+              helper={t('sales.paretoHelper', {
+                count: analysis.sales.concentration
+                  .top_20_percent_product_count,
+              })}
+              label={t('sales.paretoShare')}
+              value={`${formatPercent(
+                analysis.sales.concentration
+                  .top_20_percent_products_revenue_share_percent,
+                1,
+                false,
+                language,
+              )}%`}
+            />
+            <InsightRow
+              helper={
+                analysis.sales.peak_revenue_day
+                  ? formatVnd(
+                      analysis.sales.peak_revenue_day.revenue,
+                      language,
+                    )
+                  : undefined
+              }
+              label={t('sales.peakDay')}
+              value={
+                analysis.sales.peak_revenue_day
+                  ? formatDate(
+                      analysis.sales.peak_revenue_day.date,
+                      language,
+                    )
+                  : t('common.notAvailable')
+              }
+            />
+            <InsightRow
+              helper={
+                analysis.sales.lowest_nonzero_revenue_day
+                  ? formatVnd(
+                      analysis.sales.lowest_nonzero_revenue_day
+                        .revenue,
+                      language,
+                    )
+                  : undefined
+              }
+              label={t('sales.lowestActiveDay')}
+              value={
+                analysis.sales.lowest_nonzero_revenue_day
+                  ? formatDate(
+                      analysis.sales.lowest_nonzero_revenue_day.date,
+                      language,
+                    )
+                  : t('common.notAvailable')
+              }
+            />
+          </dl>
+        </section>
+      </div>
+    </div>
+  )
+}
+
+function ProductsSection({ analysis }: { analysis: AnalysisDetail }) {
+  const { language, t } = useLanguage()
+  return (
+    <div role="tabpanel">
+      <p className="mt-6 text-xs font-semibold text-slate-500">
+        {t('sales.productsPeriodNote')}
+      </p>
+      <div className="mt-3 grid gap-6 xl:grid-cols-2">
+        <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <SectionHeading
+            description={t('sales.categoryDesc')}
+            title={t('sales.byCategory')}
+          />
+          <div className="mt-4">
+            <CategoryRevenueChart
+              data={analysis.sales.revenue_by_category}
+            />
+          </div>
         </section>
 
-        {/* Product Tables Grid */}
-        <div className="mt-6 grid gap-6 xl:grid-cols-3">
-          <ProductTable
-            description={t('sales.rankedRevenue')}
-            language={language}
-            products={analysis.sales.top_products_by_revenue}
-            title={t('sales.topByRevenue')}
-            valueLabel={t('dashboard.totalRevenue')}
-            valueType="revenue"
+        <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+          <SectionHeading
+            description={t('sales.productDesc')}
+            title={t('sales.byProduct')}
           />
-          <ProductTable
-            description={t('sales.rankedUnits')}
-            language={language}
-            products={analysis.sales.top_products_by_quantity}
-            title={t('sales.topByQuantity')}
-            valueLabel={t('common.units')}
-            valueType="quantity"
-          />
-          <ProductTable
-            description={t('sales.lowVolumeDesc')}
-            language={language}
-            products={analysis.sales.lowest_quantity_products}
-            title={t('sales.lowestQuantity')}
-            valueLabel={t('common.units')}
-            valueType="quantity"
-          />
-        </div>
+          <div className="mt-4">
+            <ProductRevenueChart
+              data={analysis.sales.top_products_by_revenue}
+            />
+          </div>
+        </section>
+      </div>
 
-        <ProductIntelligenceSection
-          discount={analysis.sales.discount_analysis}
-          intelligence={analysis.sales.product_intelligence}
+      <div className="mt-6 grid gap-6 xl:grid-cols-3">
+        <ProductTable
+          description={t('sales.rankedRevenue')}
+          language={language}
+          products={analysis.sales.top_products_by_revenue}
+          title={t('sales.topByRevenue')}
+          valueLabel={t('dashboard.totalRevenue')}
+          valueType="revenue"
+        />
+        <ProductTable
+          description={t('sales.rankedUnits')}
+          language={language}
+          products={analysis.sales.top_products_by_quantity}
+          title={t('sales.topByQuantity')}
+          valueLabel={t('common.units')}
+          valueType="quantity"
+        />
+        <ProductTable
+          description={t('sales.lowVolumeDesc')}
+          language={language}
+          products={analysis.sales.lowest_quantity_products}
+          title={t('sales.lowestQuantity')}
+          valueLabel={t('common.units')}
+          valueType="quantity"
         />
       </div>
-    </main>
+    </div>
   )
+}
+
+function formatPeriodMonth(
+  year: string,
+  month: string,
+  language: 'en' | 'vi',
+  capitalize = false,
+) {
+  if (language === 'vi') {
+    return `${capitalize ? 'Tháng' : 'tháng'} ${Number(month)}/${year}`
+  }
+  return formatMonth(`${year}-${month}`, language)
 }
 
 function InsightRow({
@@ -356,7 +494,7 @@ function ProductTable({
             {products.map((product) => (
               <tr className="hover:bg-slate-50/70 transition" key={product.product_id}>
                 <td className="py-3 pr-3">
-                  <p className="font-extrabold text-slate-900 truncate max-w-[180px]">
+                  <p className="max-w-[180px] break-words font-extrabold leading-5 text-slate-900">
                     {product.product_name}
                   </p>
                   <p className="mt-0.5 text-[11px] text-slate-500">

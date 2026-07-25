@@ -1,5 +1,6 @@
 import {
   ArrowRightIcon,
+  CaretDownIcon,
   ChartLineUpIcon,
   CloudArrowUpIcon,
   CurrencyCircleDollarIcon,
@@ -104,16 +105,27 @@ export function DashboardPage() {
           />
         </section>
 
-        <section className="mt-6">
-          <div>
-            <h2 className="text-base font-extrabold text-[var(--text-primary)]">
-              {t('dashboard.businessHealth')}
-            </h2>
-            <p className="mt-1 text-xs text-[var(--text-muted)]">
-              {t('dashboard.businessHealthDesc')}
-            </p>
-          </div>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <details className="group mt-6 rounded-xl border border-[var(--border)] bg-white shadow-[0_1px_2px_rgba(19,33,54,0.04)]">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-xl px-5 py-4 transition hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+            <div>
+              <h2 className="text-sm font-extrabold text-[var(--text-primary)]">
+                {t('dashboard.businessHealth')}
+              </h2>
+              <p className="mt-1 text-xs leading-5 text-[var(--text-muted)]">
+                {t('dashboard.businessHealthDesc')}
+              </p>
+            </div>
+            <span className="inline-flex shrink-0 items-center gap-2 text-xs font-bold text-[var(--primary)]">
+              {t('dashboard.viewMoreMetrics')}
+              <CaretDownIcon
+                aria-hidden="true"
+                className="transition-transform group-open:rotate-180"
+                size={16}
+                weight="bold"
+              />
+            </span>
+          </summary>
+          <div className="grid gap-4 border-t border-[var(--border)] p-4 sm:grid-cols-2 xl:grid-cols-4">
             <MetricCard
               helper={t('dashboard.completedOrdersHelper', {
                 count: formatInteger(
@@ -172,7 +184,7 @@ export function DashboardPage() {
               )}%`}
             />
           </div>
-        </section>
+        </details>
 
         {/* Revenue Over Time Area Chart */}
         <section className="mt-5 rounded-xl border border-[var(--border)] bg-white p-5 shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-6">

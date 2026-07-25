@@ -323,7 +323,7 @@ export function UploadPage() {
                         )}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-xs font-extrabold text-slate-900">
+                        <span className="block break-all text-xs font-extrabold leading-5 text-slate-900">
                           {file.name}
                         </span>
                         <span className="mt-0.5 block text-[11px] font-medium text-slate-500">

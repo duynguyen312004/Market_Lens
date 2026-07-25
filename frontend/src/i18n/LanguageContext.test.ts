@@ -43,6 +43,14 @@ describe('MarketLens translations', () => {
     expect(translate('vi', 'rfm.segment.at_risk')).toBe(
       'Có nguy cơ rời bỏ',
     )
+    expect(translate('vi', 'dashboard.uniqueOrders')).toBe(
+      'Mỗi đơn hàng chỉ được tính một lần',
+    )
+    expect(
+      translate('vi', 'sales.periodDescMonth', {
+        month: 'tháng 7/2026',
+      }),
+    ).toBe('Doanh thu theo từng ngày trong tháng 7/2026.')
   })
 
   it('keeps internal engineering terms out of key Vietnamese guidance', () => {

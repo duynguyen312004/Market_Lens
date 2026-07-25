@@ -137,6 +137,7 @@ export function MonthlyRevenueChart({
           <XAxis
             axisLine={false}
             dataKey="month"
+            minTickGap={28}
             tick={axisTick}
             tickFormatter={(value) => formatMonth(value, language)}
             tickLine={false}
@@ -512,7 +513,7 @@ export function CustomerSegmentChart({
               className="size-3 rounded-full shadow-xs"
               style={{ background: item.color }}
             />
-            <span className="text-sm font-semibold text-slate-700 truncate">
+            <span className="break-words text-sm font-semibold text-slate-700">
               {item.name}
             </span>
             <span className="text-right">

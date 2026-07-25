@@ -161,12 +161,12 @@ function AppShellContent() {
               <span className="size-1.5 shrink-0 rounded-full bg-emerald-400" />
               <div className="min-w-0 flex-1">
                 <p
-                  className="truncate font-semibold"
+                  className="break-all font-semibold leading-5"
                   title={getAnalysisSourceNames(analysis)}
                 >
                   {getAnalysisFileLabel(analysis, language)}
                 </p>
-                <p className="truncate text-[11px] text-slate-400">
+                <p className="break-words text-[11px] leading-4 text-slate-400">
                   {t('shell.fileRows', {
                     count: formatInteger(analysis.row_count, language),
                   })}
@@ -215,10 +215,10 @@ function AppShellContent() {
           {/* Profile & Signout */}
           <div className="flex items-center justify-between pt-1">
             <div className="min-w-0 pr-2">
-              <p className="truncate text-sm font-bold text-white">{displayName}</p>
-              <p className="truncate text-xs text-slate-400">{user?.email}</p>
+              <p className="break-words text-sm font-bold leading-5 text-white">{displayName}</p>
+              <p className="break-all text-xs leading-4 text-slate-400">{user?.email}</p>
               {logoutError && (
-                <p className="truncate text-xs font-semibold text-rose-600">{logoutError}</p>
+                <p className="break-words text-xs font-semibold leading-4 text-rose-600">{logoutError}</p>
               )}
             </div>
             <button

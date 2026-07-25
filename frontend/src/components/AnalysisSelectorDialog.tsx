@@ -207,7 +207,7 @@ export function AnalysisSelectorDialog({
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-2">
-                          <span className="truncate text-sm font-extrabold text-slate-900">
+                          <span className="break-all text-sm font-extrabold leading-5 text-slate-900">
                             {item.file_name}
                           </span>
                           {item.upload_mode === 'combined' && (
