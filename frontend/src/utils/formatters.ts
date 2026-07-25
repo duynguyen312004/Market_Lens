@@ -46,6 +46,14 @@ export function formatDate(value: string, language: Language = 'vi') {
   }).format(date)
 }
 
+export function formatWeekday(value: string, language: Language = 'vi') {
+  const date = parseDateValue(value)
+  if (!date) return value
+  return new Intl.DateTimeFormat(localeFor(language), {
+    weekday: 'long',
+  }).format(date)
+}
+
 export function formatDateTime(value: string, language: Language = 'vi') {
   const date = parseDateValue(value)
   if (!date) return value

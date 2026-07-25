@@ -9,12 +9,14 @@ import {
   formatMonth,
   formatPercent,
   formatShortDate,
+  formatWeekday,
 } from './formatters'
 
 describe('analytics formatters', () => {
   it('format date-only mà không làm lệch ngày', () => {
     expect(formatDate('2026-07-24')).toBe('24/07/2026')
     expect(formatShortDate('2026-07-24')).toBe('24/07')
+    expect(formatWeekday('2026-07-24')).toBe('Thứ Sáu')
   })
 
   it('handles API timestamps and invalid values without crashing', () => {
@@ -32,6 +34,7 @@ describe('analytics formatters', () => {
   it('uses English date and number conventions for English', () => {
     expect(formatDate('2026-07-24', 'en')).toBe('07/24/2026')
     expect(formatShortDate('2026-07-24', 'en')).toBe('07/24')
+    expect(formatWeekday('2026-07-24', 'en')).toBe('Friday')
     expect(formatMonth('2026-07', 'en')).toBe('Jul 2026')
     expect(formatPercent(12.34, 1, true, 'en')).toBe('+12.3')
   })

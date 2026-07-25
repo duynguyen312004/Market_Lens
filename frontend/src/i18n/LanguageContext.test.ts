@@ -72,6 +72,16 @@ describe('MarketLens translations', () => {
     ).toBe(
       'Ví dụ ngay trong bảng: nhóm T8/2025 có 261 khách ban đầu. Sau 1 tháng, 203 khách mua lại, tương đương 77,8%.',
     )
+    expect(
+      translate('vi', 'forecast.vsLast7', {
+        value: '+8,4',
+      }),
+    ).toBe(
+      '+8,4% so với doanh thu thực tế của 7 ngày trước',
+    )
+    expect(translate('vi', 'forecast.reliabilityImpact.low')).toContain(
+      'ưu tiên khoảng dự kiến',
+    )
   })
 
   it('keeps internal engineering terms out of key Vietnamese guidance', () => {
@@ -84,6 +94,11 @@ describe('MarketLens translations', () => {
         current: 20,
         minimum: 28,
       }),
+      translate('vi', 'forecast.evaluationScope', {
+        folds: 4,
+        points: 28,
+      }),
+      translate('vi', 'forecast.reliabilityImpact.low'),
       translate('vi', 'report.actionDescRules'),
       translate('vi', 'rfm.desc'),
       translate('vi', 'pairs.desc'),

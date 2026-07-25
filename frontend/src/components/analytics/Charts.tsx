@@ -9,6 +9,7 @@ import {
   Line,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -334,13 +335,21 @@ export function ProductRevenueChart({ data }: { data: ProductMetric[] }) {
 
 export function ForecastRevenueChart({ data }: { data: ForecastChartPoint[] }) {
   const { language, t } = useLanguage()
+  const forecastStartDate = data.find(
+    (point) => point.predicted !== undefined,
+  )?.date
+
   return (
-    <div aria-label={t('analysis.forecastChart')} className="h-96 w-full" role="img">
+    <div
+      aria-label={t('analysis.forecastChart')}
+      className="h-80 w-full sm:h-96"
+      role="img"
+    >
       <ResponsiveContainer height="100%" width="100%">
         <ComposedChart
           accessibilityLayer
           data={data}
-          margin={{ bottom: 4, left: 0, right: 12, top: 12 }}
+          margin={{ bottom: 4, left: 0, right: 12, top: 24 }}
         >
           <CartesianGrid stroke="#f1f5f9" strokeDasharray="3 4" vertical={false} />
           <XAxis
@@ -364,10 +373,10 @@ export function ForecastRevenueChart({ data }: { data: ForecastChartPoint[] }) {
             formatter={(value, name) => {
               if (name === 'interval' && Array.isArray(value)) {
                 return [
-                  `${formatVnd(Number(value[0]), language)} – ${formatVnd(
-                    Number(value[1]),
-                    language,
-                  )}`,
+                  t('common.dateRange', {
+                    from: formatVnd(Number(value[0]), language),
+                    to: formatVnd(Number(value[1]), language),
+                  }),
                   t('forecast.empiricalInterval'),
                 ]
               }
@@ -380,6 +389,20 @@ export function ForecastRevenueChart({ data }: { data: ForecastChartPoint[] }) {
             }}
             labelFormatter={(label) => `${t('common.date')}: ${formatShortDate(String(label), language)}`}
           />
+          {forecastStartDate && (
+            <ReferenceLine
+              label={{
+                fill: '#92400e',
+                fontSize: 11,
+                fontWeight: 700,
+                position: 'insideTopRight',
+                value: t('forecast.startMarker'),
+              }}
+              stroke="#f59e0b"
+              strokeDasharray="3 4"
+              x={forecastStartDate}
+            />
+          )}
           <Area
             connectNulls={false}
             dataKey="interval"
