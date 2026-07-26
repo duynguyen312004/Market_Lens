@@ -35,7 +35,7 @@ export function MetricCard({
         <div className="min-w-0">
           <p
             className={[
-              'text-[12px] font-semibold',
+              'text-xs font-semibold',
               featured ? 'text-blue-100' : 'text-[var(--text-muted)]',
             ].join(' ')}
           >

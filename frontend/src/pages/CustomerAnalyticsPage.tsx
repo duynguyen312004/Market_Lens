@@ -417,7 +417,7 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
               {t('customers.rankingDesc')}
             </p>
-            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+            <p className="mt-1 text-xs font-semibold text-slate-400">
               {t('common.sortHint')}
             </p>
           </div>
@@ -543,7 +543,7 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
             <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
               {t('customers.potentialDesc')}
             </p>
-            <p className="mt-1 text-[11px] font-semibold text-slate-400">
+            <p className="mt-1 text-xs font-semibold text-slate-400">
               {t('common.sortHint')}
             </p>
           </div>
@@ -605,7 +605,7 @@ function CustomerLists({ analysis }: { analysis: AnalysisDetail }) {
                       <p className="font-extrabold text-slate-900">
                         {customer.customer_name}
                       </p>
-                      <p className="mt-0.5 text-[11px] text-slate-500">
+                      <p className="mt-0.5 text-xs text-slate-500">
                         {t('customers.unitsPurchased', {
                           count: formatInteger(
                             customer.quantity,
@@ -648,7 +648,7 @@ function CustomerSegmentBadge({
   return (
     <span
       className={[
-        'inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] font-bold',
+        'inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-bold',
         segment === 'vip' && 'border-indigo-200/60 bg-indigo-50 text-indigo-700',
         segment === 'returning' && 'border-cyan-200/60 bg-cyan-50 text-cyan-700',
         segment === 'new' && 'border-emerald-200/60 bg-emerald-50 text-emerald-700',

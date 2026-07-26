@@ -284,7 +284,7 @@ function DriverList({
         <h3 className="text-sm font-black text-slate-900">{title}</h3>
         <span
           className={[
-            'rounded-full px-2.5 py-1 text-[11px] font-extrabold',
+            'rounded-full px-2.5 py-1 text-xs font-extrabold',
             positive
               ? 'bg-emerald-50 text-emerald-700'
               : 'bg-rose-50 text-rose-700',
@@ -314,7 +314,7 @@ function DriverList({
                     <p className="break-words text-sm font-extrabold text-slate-900">
                       {name}
                     </p>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">
                       {t(`sales.changeType.${row.change_type}`)}
                     </span>
                   </div>

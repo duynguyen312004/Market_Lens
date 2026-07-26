@@ -179,7 +179,7 @@ export function HistoryPage() {
                               {item.file_name}
                             </span>
                             {item.upload_mode === 'combined' && (
-                              <span className="mt-0.5 block text-[10px] font-bold text-slate-500">
+                              <span className="mt-0.5 block text-xs font-bold text-slate-500">
                                 {t('selector.fileCount', {
                                   count: item.source_file_count,
                                 })}
@@ -296,7 +296,7 @@ function StatusBadge({
   const { className, label } = getAnalysisStatusPresentation(status, language)
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ${className}`}
+      className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${className}`}
     >
       <span className="size-1.5 rounded-full bg-current" />
       {label}
@@ -334,7 +334,7 @@ function HistoryCard({
               {item.file_name}
             </h2>
             {item.upload_mode === 'combined' && (
-              <p className="mt-0.5 text-[10px] font-bold text-slate-500">
+              <p className="mt-0.5 text-xs font-bold text-slate-500">
                 {t('selector.fileCount', {
                   count: item.source_file_count,
                 })}
@@ -387,8 +387,11 @@ function HistoryCard({
 }
 
 function HistoryLoadingState() {
+  const { t } = useLanguage()
+
   return (
-    <div className="mt-8 space-y-3">
+    <div aria-busy="true" aria-live="polite" className="mt-8 space-y-3">
+      <p className="sr-only">{t('common.loading')}</p>
       {Array.from({ length: 4 }).map((_, i) => (
         <div className="h-16 rounded-2xl bg-slate-100 animate-pulse" key={i} />
       ))}

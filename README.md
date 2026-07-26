@@ -132,6 +132,12 @@ Không commit `backend/.env`.
 5. Trong Auth URL Configuration, đặt local Site URL là
    `http://localhost:5173` và thêm redirect URL
    `http://localhost:5173/reset-password`.
+6. Trước khi test đăng ký/quên mật khẩu nhiều lần hoặc mở production, cấu hình
+   custom SMTP trong **Authentication → Emails → SMTP Settings**. Email sender
+   mặc định của Supabase chỉ dành cho thử nghiệm, có quota rất thấp dùng chung
+   giữa đăng ký, khôi phục mật khẩu và đổi email; vì vậy một người có thể gặp
+   rate limit ngay ở lần bấm đầu nếu các lần gửi trước đó đã dùng hết quota của
+   project.
 
 `supabase/schema.sql` có thể chạy lại khi cập nhật ứng dụng. Function
 `set_analysis_report` cập nhật riêng report `en`/`vi` bằng JSONB atomic để hai
@@ -293,7 +299,8 @@ Kiểm tra provider thật:
 
 ```bash
 source .venv/bin/activate
-.venv/bin/python scripts/smoke_ai_provider.py
+.venv/bin/python scripts/smoke_ai_provider.py --language en
+.venv/bin/python scripts/smoke_ai_provider.py --language vi
 ```
 
 ## API
@@ -381,8 +388,8 @@ git diff --check
 
 Baseline local gần nhất:
 
-- 220 backend tests passed
-- 88 frontend tests passed
+- 225 backend tests passed
+- 92 frontend tests passed
 - lint, TypeScript production build và dependency checks passed
 - benchmark 50.000 dòng khoảng 3,8 giây, peak RSS khoảng 163 MB
 - browser journey và report/PDF A4 3 trang passed

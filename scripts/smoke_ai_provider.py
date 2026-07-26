@@ -1,4 +1,10 @@
+import argparse
 from pathlib import Path
+import sys
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 from backend.app.core.config import Settings
 from backend.app.services.ai_report import (
@@ -12,10 +18,18 @@ from backend.app.services.report import build_rule_based_report
 from backend.app.services.validator import validate_sales_data
 
 
-SAMPLE_PATH = Path("sample_data/sample_sales_demo_60_days.csv")
+SAMPLE_PATH = PROJECT_ROOT / "sample_data/sample_sales_demo_60_days.csv"
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--language",
+        choices=("en", "vi"),
+        default="en",
+        help="Report output language to validate.",
+    )
+    args = parser.parse_args()
     settings = Settings()
     if not settings.ai_report_enabled:
         raise SystemExit(
@@ -53,7 +67,10 @@ def main() -> None:
     }
     generation = generate_ai_report(
         analysis_result=analysis_result,
-        fallback_report=build_rule_based_report(analysis_result),
+        fallback_report=build_rule_based_report(
+            analysis_result,
+            args.language,
+        ),
         config=AIReportConfig(
             enabled=settings.ai_report_enabled,
             provider=settings.ai_provider,
@@ -64,6 +81,7 @@ def main() -> None:
             max_output_tokens=settings.ai_max_output_tokens,
         ),
         safety_subject="local-provider-smoke",
+        language=args.language,
     )
 
     if generation.warning_code:
@@ -95,7 +113,8 @@ def main() -> None:
 
     print(
         "AI provider smoke: PASS (report_version=2.0, evidence=validated) "
-        f"(provider={settings.ai_provider}, model={settings.ai_model})."
+        f"(provider={settings.ai_provider}, model={settings.ai_model}, "
+        f"language={args.language})."
     )
 
 

@@ -67,7 +67,7 @@ export function ProductIntelligenceSection({
                 )}
                 %
               </p>
-              <p className="mt-1 text-[11px] font-semibold opacity-80">
+              <p className="mt-1 text-xs font-semibold opacity-80">
                 {t('abc.products', {
                   count: formatInteger(item.product_count, language),
                 })}
@@ -86,7 +86,7 @@ export function ProductIntelligenceSection({
 
       <DiscountSection discount={discount} />
 
-      <p className="mt-3 text-[11px] leading-5 text-slate-500">
+      <p className="mt-3 text-xs leading-5 text-slate-500">
         {t('productIntelligence.methodNote')}
       </p>
     </section>
@@ -127,7 +127,7 @@ function AbcProductTable({
                   <p className="font-extrabold text-slate-900">
                     {product.product_name}
                   </p>
-                  <p className="text-[11px] text-slate-500">
+                  <p className="text-xs text-slate-500">
                     {product.product_id}
                   </p>
                 </td>
@@ -207,7 +207,7 @@ function ProductAssociationTable({
                       <span className="mx-1.5 text-indigo-400">→</span>
                       {rule.target_product_name}
                     </p>
-                    <p className="mt-0.5 text-[10px] font-semibold text-slate-400">
+                    <p className="mt-0.5 text-xs font-semibold text-slate-400">
                       {t('pairs.ordersTogether', {
                         count: formatInteger(
                           rule.pair_order_count,
@@ -266,7 +266,7 @@ function ProductAssociationTable({
         </p>
       )}
       {associations.skipped_oversized_order_count > 0 && (
-        <p className="mt-3 text-[11px] leading-5 text-amber-700">
+        <p className="mt-3 text-xs leading-5 text-amber-700">
           {t('pairs.skipped', {
             count: formatInteger(
               associations.skipped_oversized_order_count,

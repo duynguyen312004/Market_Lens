@@ -528,7 +528,7 @@ function InsightRow({
       <dt>
         <p className="text-xs font-bold text-slate-700">{label}</p>
         {helper && (
-          <p className="mt-0.5 text-[11px] text-slate-500">{helper}</p>
+          <p className="mt-0.5 text-xs text-slate-500">{helper}</p>
         )}
       </dt>
       <dd className="shrink-0 text-sm font-black text-slate-900">
@@ -599,7 +599,7 @@ function ProductTable({
                   <p className="max-w-[180px] break-words font-extrabold leading-5 text-slate-900">
                     {product.product_name}
                   </p>
-                  <p className="mt-0.5 text-[11px] text-slate-500">
+                  <p className="mt-0.5 text-xs text-slate-500">
                     {t('sales.orderCount', {
                       count: formatInteger(product.order_count, language),
                     })}

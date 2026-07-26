@@ -12,6 +12,14 @@ export function getAuthErrorMessage(
   }
 
   const message = error.message.toLowerCase()
+  const code =
+    'code' in error && typeof error.code === 'string'
+      ? error.code.toLowerCase()
+      : ''
+  const status =
+    'status' in error && typeof error.status === 'number'
+      ? error.status
+      : null
 
   if (message.includes('supabase is not configured')) {
     return translate(language, 'auth.configMissing')
@@ -33,7 +41,22 @@ export function getAuthErrorMessage(
     return translate(language, 'auth.errorWeakPassword')
   }
 
-  if (message.includes('rate limit')) {
+  if (
+    code === 'over_email_send_rate_limit' ||
+    message.includes('email rate limit')
+  ) {
+    return translate(language, 'auth.errorEmailRateLimit')
+  }
+
+  if (code === 'email_address_not_authorized') {
+    return translate(language, 'auth.errorEmailNotAuthorized')
+  }
+
+  if (
+    code === 'over_request_rate_limit' ||
+    status === 429 ||
+    message.includes('rate limit')
+  ) {
     return translate(language, 'auth.errorRateLimit')
   }
 

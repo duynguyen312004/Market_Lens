@@ -122,7 +122,7 @@ function AppShellContent() {
                 <NavLink
                   className={({ isActive }) =>
                     [
-                      'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-[13px] font-semibold transition-colors',
+                      'group relative flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors',
                       isActive
                         ? 'bg-[#2368d7] text-white'
                         : 'text-slate-300 hover:bg-white/7 hover:text-white',
@@ -168,7 +168,7 @@ function AppShellContent() {
                 >
                   {getAnalysisFileLabel(analysis, language)}
                 </p>
-                <p className="break-words text-[11px] leading-4 text-slate-400">
+                <p className="break-words text-xs leading-4 text-slate-400">
                   {t('shell.fileRows', {
                     count: formatInteger(analysis.row_count, language),
                   })}

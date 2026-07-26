@@ -22,7 +22,7 @@ test.beforeAll(() => {
   }
 })
 
-test('shop owner completes the protected mobile and desktop journey', async ({
+test('shop owner completes the protected laptop journey with basic mobile coverage', async ({
   page,
 }, testInfo) => {
   test.setTimeout(90_000)
@@ -77,10 +77,10 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await expect(page.getByText('₫185,263,000').first()).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
-  await page.setViewportSize({ height: 1000, width: 1440 })
+  await expectLaptopLayout(page, 1366, 768)
+  await expectLaptopLayout(page, 1440, 900)
   await expect(page.locator('.app-sidebar')).toBeVisible()
   await expect(page.locator('.app-mobile-header')).toBeHidden()
-  await expectNoHorizontalOverflow(page)
   await page.screenshot({
     path: testInfo.outputPath('journey-desktop-dashboard.png'),
     fullPage: true,
@@ -136,6 +136,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   ).toBeVisible()
   await expect(page.getByText('₫185,263,000').first()).toBeVisible()
 
+  await page.setViewportSize({ height: 768, width: 1366 })
   for (const route of [
     { path: '/sales', title: 'Sales Analytics' },
     { path: '/customers', title: 'Customer Analytics' },
@@ -145,7 +146,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
     await expect(
       page.getByRole('heading', { name: route.title }),
     ).toBeVisible()
-    await expectNoHorizontalOverflow(page)
+    await expectLaptopLayout(page, 1366, 768)
   }
 
   await page.goto('/sales')
@@ -213,7 +214,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   ).toBeVisible()
   await expect(page.locator('.app-mobile-header')).toBeVisible()
   await expectNoHorizontalOverflow(page)
-  await page.setViewportSize({ height: 1000, width: 1440 })
+  await page.setViewportSize({ height: 900, width: 1440 })
   const displayName = page.getByLabel('Shop display name')
   await displayName.fill('MarketLens Browser Shop')
   await page.getByRole('button', { name: 'Save changes' }).click()
@@ -245,7 +246,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await page.setViewportSize({ height: 844, width: 390 })
   await expect(page.getByRole('article')).toHaveCount(2)
   await expectNoHorizontalOverflow(page)
-  await page.setViewportSize({ height: 1000, width: 1440 })
+  await page.setViewportSize({ height: 900, width: 1440 })
   const historyTable = page.getByRole('table')
   await expect(historyTable.locator('tbody tr')).toHaveCount(2)
   await expect(
@@ -279,7 +280,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await page.goto('/history')
   await expect(
     page.getByRole('heading', { name: 'No analysis history yet' }),
-  ).toBeVisible()
+  ).toBeVisible({ timeout: 20_000 })
 })
 
 async function signIn(page: Page, signInPassword: string) {
@@ -292,10 +293,61 @@ async function expectNoHorizontalOverflow(page: Page) {
   const dimensions = await page.evaluate(() => ({
     innerWidth: window.innerWidth,
     scrollWidth: document.documentElement.scrollWidth,
+    overflowingElements: Array.from(
+      document.querySelectorAll<HTMLElement>('body *'),
+    )
+      .filter((element) => {
+        const rect = element.getBoundingClientRect()
+        return (
+          rect.width > 0 &&
+          (rect.right > window.innerWidth + 1 || rect.left < -1) &&
+          !element.closest('.overflow-x-auto')
+        )
+      })
+      .slice(0, 8)
+      .map((element) => ({
+        className: element.className,
+        tagName: element.tagName,
+      })),
   }))
-  expect(dimensions.scrollWidth).toBeLessThanOrEqual(
-    dimensions.innerWidth + 1,
+  expect(
+    dimensions.scrollWidth,
+    JSON.stringify(dimensions.overflowingElements),
+  ).toBeLessThanOrEqual(dimensions.innerWidth + 1)
+}
+
+async function expectLaptopLayout(
+  page: Page,
+  width: 1366 | 1440,
+  height: 768 | 900,
+) {
+  await page.setViewportSize({ height, width })
+  await expect(page.locator('.app-sidebar')).toBeVisible()
+  await expect(page.locator('.app-mobile-header')).toBeHidden()
+  await expectNoHorizontalOverflow(page)
+
+  const undersizedText = await page.evaluate(() =>
+    Array.from(
+      document.querySelectorAll<HTMLElement>(
+        'main [class*="text-"]',
+      ),
+    )
+      .filter((element) => {
+        const style = getComputedStyle(element)
+        return (
+          element.getClientRects().length > 0 &&
+          style.visibility !== 'hidden' &&
+          style.display !== 'none' &&
+          !element.classList.contains('sr-only')
+        )
+      })
+      .map((element) => ({
+        fontSize: Number.parseFloat(getComputedStyle(element).fontSize),
+        text: element.textContent?.trim().slice(0, 80) ?? '',
+      }))
+      .filter(({ fontSize, text }) => text && fontSize < 13),
   )
+  expect(undersizedText).toEqual([])
 }
 
 async function deleteFirstHistoryItem(

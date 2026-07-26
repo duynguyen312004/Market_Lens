@@ -417,7 +417,7 @@ export function UploadPage() {
         </header>
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
-          <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+          <section className="data-panel min-w-0 rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
             <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <label className="block">
@@ -587,7 +587,7 @@ export function UploadPage() {
             {selectedFiles.length > 0 && !analysis && (
               <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
                 <div className="flex items-center justify-between gap-3 border-b border-slate-200 pb-3">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-black text-slate-900">
                       {t('upload.selectedFiles', {
                         count: selectedFiles.length,
@@ -632,7 +632,7 @@ export function UploadPage() {
                         <span className="block break-all text-xs font-extrabold leading-5 text-slate-900">
                           {file.name}
                         </span>
-                        <span className="mt-0.5 block text-[11px] font-medium text-slate-500">
+                        <span className="mt-0.5 block text-xs font-medium text-slate-500">
                           {formatFileSize(file.size, language)}
                         </span>
                       </span>
@@ -844,7 +844,7 @@ export function UploadPage() {
                   <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-emerald-100 text-emerald-600">
                     <CheckCircleIcon size={28} weight="fill" />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-lg font-black text-emerald-950">
                       {t('upload.successTitle')}
                     </h3>
@@ -882,7 +882,7 @@ export function UploadPage() {
                           })}
                     </p>
                     {analysis.upload.duplicate_order_count > 0 && (
-                      <p className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] font-bold text-amber-900">
+                      <p className="mt-2 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-900">
                         <FilesIcon
                           aria-hidden="true"
                           className="shrink-0"
@@ -917,7 +917,7 @@ export function UploadPage() {
           </section>
 
           {/* Template Info & Calculation Rules */}
-          <aside className="space-y-5">
+          <aside className="min-w-0 space-y-5">
             <div className="data-panel rounded-2xl border border-slate-200/80 bg-white p-6 shadow-xs">
               <h2 className="font-black text-slate-900">{t('upload.requiredTemplate')}</h2>
               <p className="mt-2 text-xs leading-relaxed text-slate-500">
@@ -967,7 +967,7 @@ export function UploadPage() {
               </div>
               {uploadMode === 'combined' && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
-                  <p className="text-[11px] font-bold text-slate-500">
+                  <p className="text-xs font-bold text-slate-500">
                     {t('upload.combinedDemoLabel')}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2">
@@ -1304,11 +1304,11 @@ function UploadError({
       <WarningCircleIcon className="shrink-0 text-rose-600" size={18} weight="bold" />
       <div>
         <p className="font-extrabold">{error.message}</p>
-        <p className="mt-1 text-[11px] text-rose-700">
+        <p className="mt-1 text-xs text-rose-700">
           {t('common.errorCode')}: {error.code}
         </p>
         {typeof error.details?.file_name === 'string' && (
-          <p className="mt-1 text-[11px] font-bold text-rose-800">
+          <p className="mt-1 text-xs font-bold text-rose-800">
             {t('upload.errorFile', {
               name: error.details.file_name,
             })}
@@ -1318,7 +1318,7 @@ function UploadError({
           const values = error.details?.[field]
           if (!Array.isArray(values) || values.length === 0) return null
           return (
-            <p className="mt-1 text-[11px] text-rose-800" key={field}>
+            <p className="mt-1 text-xs text-rose-800" key={field}>
               {t(key, {
                 columns: values
                   .map((value) =>
@@ -1330,7 +1330,7 @@ function UploadError({
           )
         })}
         {error.details?.errors && error.details.errors.length > 0 && (
-          <ul className="mt-3 list-disc space-y-1 pl-4 text-[11px] text-rose-800">
+          <ul className="mt-3 list-disc space-y-1 pl-4 text-xs text-rose-800">
             {error.details.errors.slice(0, 8).map((item, index) => {
               const fieldLocation =
                 item.row !== undefined
@@ -1359,7 +1359,7 @@ function UploadError({
         )}
         {typeof error.details?.total_error_count === 'number' &&
           error.details.total_error_count > 8 && (
-            <p className="mt-2 text-[11px] font-bold text-rose-800">
+            <p className="mt-2 text-xs font-bold text-rose-800">
               {t('upload.moreErrors', {
                 count: error.details.total_error_count - 8,
               })}

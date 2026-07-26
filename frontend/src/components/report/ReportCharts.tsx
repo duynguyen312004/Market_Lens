@@ -111,7 +111,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
           </figcaption>
           {forecast?.available ? (
             <>
-              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-bold text-slate-500">
+              <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs font-bold text-slate-500">
                 <ChartLegend
                   color="#0f172a"
                   label={t('report.actualRevenue')}

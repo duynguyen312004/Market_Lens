@@ -181,7 +181,7 @@ export function CustomerCohortSection({
                       <p className="font-black text-slate-900">
                         {formatMonth(row.cohort_month, language)}
                       </p>
-                      <p className="text-[10px] font-semibold text-slate-400">
+                      <p className="text-xs font-semibold text-slate-400">
                         {t('cohort.customers', {
                           count: formatInteger(
                             row.cohort_size,
@@ -224,7 +224,7 @@ export function CustomerCohortSection({
                                       language,
                                     )}
                                   </span>
-                                  <small className="mt-0.5 text-[10px] font-semibold opacity-80">
+                                  <small className="mt-0.5 text-xs font-semibold opacity-80">
                                     {t('cohort.initialLabel')}
                                   </small>
                                 </>
@@ -239,7 +239,7 @@ export function CustomerCohortSection({
                                     )}
                                     %
                                   </span>
-                                  <small className="mt-0.5 text-[10px] font-semibold opacity-80">
+                                  <small className="mt-0.5 text-xs font-semibold opacity-80">
                                     {t('cohort.activeShort', {
                                       count: formatInteger(
                                         period.active_customers,

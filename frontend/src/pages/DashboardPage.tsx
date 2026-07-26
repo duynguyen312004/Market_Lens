@@ -268,7 +268,7 @@ export function DashboardPage() {
                       >
                         <td className="py-3.5 pr-4">
                           <div className="flex items-center gap-3">
-                            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-[var(--surface-subtle)] text-[11px] font-bold text-[var(--text-muted)]">
+                            <span className="grid size-6 shrink-0 place-items-center rounded-md bg-[var(--surface-subtle)] text-xs font-bold text-[var(--text-muted)]">
                               {index + 1}
                             </span>
                             <div>

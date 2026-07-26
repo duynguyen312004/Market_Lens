@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -29,6 +30,8 @@ from backend.app.services.report_evidence import (
 from backend.app.services.report_types import ReportLanguage
 
 
+logger = logging.getLogger(__name__)
+
 SECTION_KEYS = ("revenue", "products", "customers", "forecast")
 SECTION_EVIDENCE_PREFIXES = {
     "revenue": (
@@ -52,6 +55,12 @@ SECTION_EVIDENCE_PREFIXES = {
 
 class StrictDraftModel(BaseModel):
     model_config = ConfigDict(extra="forbid")
+
+
+class AIReportValidationError(ValueError):
+    def __init__(self, code: str) -> None:
+        self.code = code
+        super().__init__(code)
 
 
 class AIReportSectionDraft(StrictDraftModel):
@@ -112,12 +121,13 @@ Mandatory rules:
 - Use only the aggregate evidence_catalog in the supplied JSON.
 - Never recalculate, modify, copy with a changed value, or invent a KPI.
 - When mentioning a figure, copy its display_value exactly. Do not copy the raw value.
-- Every figure in a section narrative must belong to one of that section's evidence_keys. If five evidence keys are not enough, mention fewer figures rather than using uncited figures.
-- Use at most three business figures in each section narrative. Explain the most important meaning instead of listing every KPI again.
+- Every figure in a section narrative, risk, action, or success metric must belong to its cited evidence_keys. If the available evidence keys are not enough, mention fewer figures rather than using uncited figures.
+- Use at most eight verified business figures in the executive summary, at most four in each section narrative, and at most three in each risk or recommendation. Do not put figures in the title. Explain the most important meaning instead of listing every KPI again.
 - Express negative changes naturally: write "decreased by 29.2%" or "giảm 29,2%", never "decreased by -29.2%" or "giảm -29,2%". Do not call a negative rate an increase.
 - In Vietnamese, preserve display_value formatting: dots group thousands and commas mark decimals.
 - Avoid subjective intensifiers such as "very high" or "rất cao" unless that exact assessment is supplied as an evidence label.
 - Write for a non-technical shop owner. Do not expose internal method codes or terms such as backtest, baseline, residual, fold, candidate, RFM, cohort, MAE, RMSE, sMAPE, lift, confidence, support, schema, backend, or metric_key.
+- The word "baseline" is forbidden in every field, including success_metric. Say "current period", "previous period", or "comparison period" when that meaning is supported by the cited evidence.
 - Explain technical findings in plain business language instead.
 - Cite evidence only by exact metric_key strings present in evidence_catalog.
 - Use the four section keys exactly once and in this order: revenue, products, customers, forecast.
@@ -132,6 +142,7 @@ Mandatory rules:
 - Return at most 5 risk signals and 5 recommendations.
 - Every risk and recommendation must cite 1-3 exact evidence keys.
 - Every recommendation must include a concrete action and a measurable success metric.
+- A success metric should say what to measure and what verified period or KPI to compare with. Never invent a target, deadline, count, percentage, money value, or time horizon. If it includes a figure, copy the exact display_value of cited evidence.
 - Return exactly the requested JSON schema with no additional content.
 """.strip()
 
@@ -430,6 +441,7 @@ def generate_ai_report(
                 )
             )
         draft = AIReportDraft.model_validate(raw_draft)
+        _normalize_public_copy(draft, language)
         _validate_public_copy(draft, language)
         report = _hydrate_ai_report(
             draft=draft,
@@ -453,12 +465,49 @@ def generate_ai_report(
                 else "AI_PROVIDER_ERROR"
             ),
         )
-    except (
-        AIReportProviderError,
-        json.JSONDecodeError,
-        ValidationError,
-        ValueError,
-    ):
+    except AIReportProviderError as error:
+        logger.warning(
+            "AI report rejected provider=%s reason=%s",
+            provider,
+            str(error),
+        )
+        return AIReportGeneration(
+            report=fallback_report,
+            warning_code="AI_INVALID_RESPONSE",
+        )
+    except json.JSONDecodeError:
+        logger.warning(
+            "AI report rejected provider=%s reason=INVALID_JSON",
+            provider,
+        )
+        return AIReportGeneration(
+            report=fallback_report,
+            warning_code="AI_INVALID_RESPONSE",
+        )
+    except ValidationError:
+        logger.warning(
+            "AI report rejected provider=%s reason=INVALID_SCHEMA",
+            provider,
+        )
+        return AIReportGeneration(
+            report=fallback_report,
+            warning_code="AI_INVALID_RESPONSE",
+        )
+    except AIReportValidationError as error:
+        logger.warning(
+            "AI report rejected provider=%s reason=%s",
+            provider,
+            error.code,
+        )
+        return AIReportGeneration(
+            report=fallback_report,
+            warning_code="AI_INVALID_RESPONSE",
+        )
+    except ValueError:
+        logger.warning(
+            "AI report rejected provider=%s reason=INVALID_SCHEMA",
+            provider,
+        )
         return AIReportGeneration(
             report=fallback_report,
             warning_code="AI_INVALID_RESPONSE",
@@ -484,35 +533,97 @@ def _hydrate_ai_report(
         analysis_result,
         language,
     )
-    _validate_numeric_claims(
-        draft.executive_summary,
-        catalog.values(),
-        language,
-    )
-    _validate_numeric_claims(
-        draft.title,
-        catalog.values(),
-        language,
-    )
+    ai_content_used = False
+    title = draft.title
+    try:
+        _validate_numeric_claims(
+            title,
+            catalog.values(),
+            language,
+            maximum_business_claims=0,
+            validation_context="TITLE",
+        )
+        ai_content_used = True
+    except AIReportValidationError as error:
+        logger.warning(
+            "AI report field fallback provider=%s reason=%s",
+            provider,
+            error.code,
+        )
+        title = fallback_report["title"]
+
+    executive_summary = draft.executive_summary
+    try:
+        _validate_numeric_claims(
+            executive_summary,
+            catalog.values(),
+            language,
+            maximum_business_claims=8,
+            validation_context="EXECUTIVE_SUMMARY",
+        )
+        ai_content_used = True
+    except AIReportValidationError as error:
+        logger.warning(
+            "AI report field fallback provider=%s reason=%s",
+            provider,
+            error.code,
+        )
+        executive_summary = fallback_report["executive_summary"]
     sections = []
+    fallback_sections = {
+        section["key"]: section
+        for section in fallback_report["sections"]
+    }
     for section in draft.sections:
         allowed_prefixes = SECTION_EVIDENCE_PREFIXES[section.key]
-        if any(
-            not metric_key.startswith(allowed_prefixes)
+        selected_keys = [
+            metric_key
             for metric_key in section.evidence_keys
-        ):
-            raise ValueError(
-                "A report section references unrelated evidence."
+            if metric_key.startswith(allowed_prefixes)
+        ]
+        if len(selected_keys) != len(section.evidence_keys):
+            logger.warning(
+                "AI report citation repaired provider=%s reason=%s",
+                provider,
+                f"UNRELATED_SECTION_EVIDENCE_{section.key.upper()}",
             )
+        evidence_keys = _reconcile_numeric_evidence_keys(
+            text=section.narrative,
+            selected_keys=selected_keys,
+            catalog=catalog,
+            language=language,
+            maximum=5,
+            allowed_prefixes=allowed_prefixes,
+        )
+        if not evidence_keys:
+            logger.warning(
+                "AI report field fallback provider=%s reason=%s",
+                provider,
+                f"NO_SECTION_EVIDENCE_{section.key.upper()}",
+            )
+            sections.append(fallback_sections[section.key])
+            continue
         evidence = hydrate_evidence(
             catalog,
-            section.evidence_keys,
+            evidence_keys,
         )
-        _validate_numeric_claims(
-            section.narrative,
-            evidence,
-            language,
-        )
+        try:
+            _validate_numeric_claims(
+                section.narrative,
+                evidence,
+                language,
+                maximum_business_claims=4,
+                validation_context=f"SECTION_{section.key.upper()}",
+            )
+            ai_content_used = True
+        except AIReportValidationError as error:
+            logger.warning(
+                "AI report field fallback provider=%s reason=%s",
+                provider,
+                error.code,
+            )
+            sections.append(fallback_sections[section.key])
+            continue
         sections.append(
             {
                 "key": section.key,
@@ -524,16 +635,33 @@ def _hydrate_ai_report(
 
     risks = []
     for risk in draft.risk_signals:
-        evidence = hydrate_evidence(
-            catalog,
-            risk.evidence_keys,
+        evidence_keys = _reconcile_numeric_evidence_keys(
+            text=f"{risk.title} {risk.description}",
+            selected_keys=risk.evidence_keys,
+            catalog=catalog,
+            language=language,
             maximum=3,
         )
-        _validate_numeric_claims(
-            f"{risk.title} {risk.description}",
-            evidence,
-            language,
+        evidence = hydrate_evidence(
+            catalog,
+            evidence_keys,
+            maximum=3,
         )
+        try:
+            _validate_numeric_claims(
+                f"{risk.title} {risk.description}",
+                evidence,
+                language,
+                validation_context="RISK",
+            )
+        except AIReportValidationError as error:
+            logger.warning(
+                "AI report field omitted provider=%s reason=%s",
+                provider,
+                error.code,
+            )
+            continue
+        ai_content_used = True
         risks.append(
             {
                 "code": f"AI_{risk.code}",
@@ -546,22 +674,40 @@ def _hydrate_ai_report(
 
     recommendations = []
     for recommendation in draft.recommendations:
-        evidence = hydrate_evidence(
-            catalog,
-            recommendation.evidence_keys,
+        recommendation_text = " ".join(
+            (
+                recommendation.title,
+                recommendation.action,
+                recommendation.success_metric,
+            )
+        )
+        evidence_keys = _reconcile_numeric_evidence_keys(
+            text=recommendation_text,
+            selected_keys=recommendation.evidence_keys,
+            catalog=catalog,
+            language=language,
             maximum=3,
         )
-        _validate_numeric_claims(
-            " ".join(
-                (
-                    recommendation.title,
-                    recommendation.action,
-                    recommendation.success_metric,
-                )
-            ),
-            evidence,
-            language,
+        evidence = hydrate_evidence(
+            catalog,
+            evidence_keys,
+            maximum=3,
         )
+        try:
+            _validate_numeric_claims(
+                recommendation_text,
+                evidence,
+                language,
+                validation_context="RECOMMENDATION",
+            )
+        except AIReportValidationError as error:
+            logger.warning(
+                "AI report field omitted provider=%s reason=%s",
+                provider,
+                error.code,
+            )
+            continue
+        ai_content_used = True
         recommendations.append(
             {
                 "priority": recommendation.priority,
@@ -571,6 +717,10 @@ def _hydrate_ai_report(
                 "success_metric": recommendation.success_metric,
             }
         )
+    if not recommendations:
+        recommendations = fallback_report["recommendations"]
+    if not ai_content_used:
+        raise AIReportValidationError("NO_USABLE_AI_CONTENT")
 
     report = {
         "report_version": "2.0",
@@ -581,8 +731,8 @@ def _hydrate_ai_report(
             "provider": provider,
             "model": model,
         },
-        "title": draft.title,
-        "executive_summary": draft.executive_summary,
+        "title": title,
+        "executive_summary": executive_summary,
         "kpi_snapshot": fallback_report["kpi_snapshot"],
         "data_quality": fallback_report["data_quality"],
         "sections": sections,
@@ -670,8 +820,9 @@ _UNSUPPORTED_BUSINESS_DOMAIN = re.compile(
 _NUMERIC_CLAIM = re.compile(
     r"(?<![\w])[-+]?\d+(?:[.,]\d+)*(?![\w])"
 )
-_STRUCTURAL_REPORT_NUMBERS = frozenset(
-    {Decimal("7"), Decimal("30")}
+_REPORT_HORIZON_NUMBER = re.compile(
+    r"(?<!\w)(?:7|30)(?=\s*(?:-|–|—)?\s*(?:days?|ngày)\b)",
+    re.IGNORECASE,
 )
 
 
@@ -704,27 +855,190 @@ def _validate_public_copy(
     )
     for text in texts:
         if _INTERNAL_REPORT_TERMS.search(text):
-            raise ValueError("AI report contains internal terminology.")
+            raise AIReportValidationError("INTERNAL_TERMINOLOGY")
         if _UNNATURAL_SIGNED_DIRECTION.search(text):
-            raise ValueError("AI report contains an unnatural signed change.")
+            raise AIReportValidationError("UNNATURAL_SIGNED_CHANGE")
         if _UNSUPPORTED_BUSINESS_DOMAIN.search(text):
-            raise ValueError(
-                "AI report speculates outside the supported data."
-            )
+            raise AIReportValidationError("UNSUPPORTED_BUSINESS_DOMAIN")
         if excessive_precision.search(text):
-            raise ValueError("AI report contains excessive decimal precision.")
+            raise AIReportValidationError("EXCESSIVE_DECIMAL_PRECISION")
+
+
+def _normalize_public_copy(
+    draft: AIReportDraft,
+    language: ReportLanguage,
+) -> None:
+    replacements = (
+        (
+            (r"\bbacktests?\b", "kiểm tra trên dữ liệu cũ"),
+            (r"\bbaselines?\b", "kỳ so sánh"),
+            (r"\bresiduals?\b", "mức chênh lệch"),
+            (r"\bfolds?\b", "giai đoạn thử"),
+            (r"\bcandidates?\b", "cách tính được so sánh"),
+            (r"\bRFM\b", "cách chia nhóm khách theo hành vi"),
+            (r"\bcohorts?\b", "nhóm khách theo tháng bắt đầu mua"),
+            (r"\bMAE\b", "mức lệch trung bình mỗi ngày"),
+            (r"\bRMSE\b", "mức lệch có ưu tiên ngày sai nhiều"),
+            (r"\bsMAPE\b", "mức lệch trung bình theo phần trăm"),
+            (r"\blift\b", "mức phổ biến so với thông thường"),
+            (r"\bconfidence\b", "tỷ lệ mua kèm"),
+            (r"\bsupport\b", "tỷ lệ đơn có cả hai sản phẩm"),
+            (r"\balgorithms?\b", "cách tính"),
+            (r"\bdeterministic\b", "theo quy tắc cố định"),
+            (r"\bdataframes?\b", "bảng dữ liệu"),
+            (r"\bpipelines?\b", "quy trình xử lý"),
+            (r"\bJSON\b", "dữ liệu có cấu trúc"),
+            (r"\bAPIs?\b", "hệ thống"),
+            (r"\bmetric[_ ]keys?\b", "chỉ số tham chiếu"),
+            (r"\bschemas?\b", "cấu trúc dữ liệu"),
+            (r"\bbackends?\b", "MarketLens"),
+        )
+        if language == "vi"
+        else (
+            (r"\bbacktests?\b", "historical checks"),
+            (r"\bbaselines?\b", "comparison period"),
+            (r"\bresiduals?\b", "differences"),
+            (r"\bfolds?\b", "test periods"),
+            (r"\bcandidates?\b", "compared methods"),
+            (r"\bRFM\b", "customer behavior grouping"),
+            (r"\bcohorts?\b", "monthly customer groups"),
+            (r"\bMAE\b", "average daily difference"),
+            (
+                r"\bRMSE\b",
+                "difference with extra weight on large misses",
+            ),
+            (r"\bsMAPE\b", "average percentage difference"),
+            (r"\blift\b", "compared with usual"),
+            (r"\bconfidence\b", "bought-together rate"),
+            (r"\bsupport\b", "orders containing both products"),
+            (r"\balgorithms?\b", "calculation methods"),
+            (r"\bdeterministic\b", "rule-based"),
+            (r"\bdataframes?\b", "data table"),
+            (r"\bpipelines?\b", "processing flow"),
+            (r"\bJSON\b", "structured data"),
+            (r"\bAPIs?\b", "system"),
+            (r"\bmetric[_ ]keys?\b", "referenced figures"),
+            (r"\bschemas?\b", "data structure"),
+            (r"\bbackends?\b", "MarketLens"),
+        )
+    )
+
+    def normalize(value: str) -> str:
+        normalized = value
+        for pattern, replacement in replacements:
+            normalized = re.sub(
+                pattern,
+                replacement,
+                normalized,
+                flags=re.IGNORECASE,
+            )
+        return re.sub(
+            r"\b(?:linear_trend|moving_average|seasonal_naive|"
+            r"weekday_average)_\w+\b",
+            (
+                "cách dự báo được chọn"
+                if language == "vi"
+                else "selected forecast method"
+            ),
+            normalized,
+            flags=re.IGNORECASE,
+        )
+
+    draft.title = normalize(draft.title)
+    draft.executive_summary = normalize(draft.executive_summary)
+    for section in draft.sections:
+        section.narrative = normalize(section.narrative)
+    for risk in draft.risk_signals:
+        risk.title = normalize(risk.title)
+        risk.description = normalize(risk.description)
+    for recommendation in draft.recommendations:
+        recommendation.title = normalize(recommendation.title)
+        recommendation.action = normalize(recommendation.action)
+        recommendation.success_metric = normalize(
+            recommendation.success_metric
+        )
+
+
+def _reconcile_numeric_evidence_keys(
+    *,
+    text: str,
+    selected_keys: list[str],
+    catalog: dict[str, dict[str, Any]],
+    language: ReportLanguage,
+    maximum: int,
+    allowed_prefixes: tuple[str, ...] | None = None,
+) -> list[str]:
+    keys = list(dict.fromkeys(selected_keys))
+    claims = _numeric_claim_values(text, language)
+
+    def display_numbers(metric_key: str) -> set[Decimal]:
+        values = _numeric_values(
+            _display_evidence_value(catalog[metric_key], language),
+            language,
+        )
+        values.update(abs(value) for value in tuple(values))
+        return values
+
+    for claim in sorted(claims):
+        normalized_claim = abs(claim)
+        if any(
+            normalized_claim in display_numbers(metric_key)
+            for metric_key in keys
+            if metric_key in catalog
+        ):
+            continue
+
+        matching_key = next(
+            (
+                metric_key
+                for metric_key in catalog
+                if (
+                    allowed_prefixes is None
+                    or metric_key.startswith(allowed_prefixes)
+                )
+                and normalized_claim in display_numbers(metric_key)
+            ),
+            None,
+        )
+        if matching_key is None:
+            continue
+
+        if len(keys) >= maximum:
+            removable_index = next(
+                (
+                    index
+                    for index in range(len(keys) - 1, -1, -1)
+                    if keys[index] in catalog
+                    and not (
+                        display_numbers(keys[index])
+                        & {abs(value) for value in claims}
+                    )
+                ),
+                None,
+            )
+            if removable_index is not None:
+                keys.pop(removable_index)
+        if len(keys) < maximum:
+            keys.append(matching_key)
+
+    return keys
 
 
 def _validate_numeric_claims(
     text: str,
     evidence: Any,
     language: ReportLanguage,
+    *,
+    maximum_business_claims: int = 3,
+    validation_context: str = "CONTENT",
 ) -> None:
-    allowed_values = set(_STRUCTURAL_REPORT_NUMBERS)
+    allowed_values: set[Decimal] = set()
+    business_values: set[Decimal] = set()
     for item in evidence:
+        display_value = _display_evidence_value(item, language)
+        business_values.update(_numeric_values(display_value, language))
         source_texts = (
-            _display_evidence_value(item, language),
-            str(item.get("label") or ""),
+            display_value,
             str(item.get("context") or ""),
         )
         for source_text in source_texts:
@@ -732,15 +1046,20 @@ def _validate_numeric_claims(
                 _numeric_values(source_text, language)
             )
     allowed_values.update(abs(value) for value in tuple(allowed_values))
+    business_values.update(
+        abs(value) for value in tuple(business_values)
+    )
 
-    claims = _numeric_values(text, language)
+    claims = _numeric_claim_values(text, language)
     if any(claim not in allowed_values for claim in claims):
-        raise ValueError(
-            "AI report contains a figure without matching evidence."
+        raise AIReportValidationError(
+            f"UNGROUNDED_FIGURE_{validation_context}"
         )
-    business_claims = claims.difference(_STRUCTURAL_REPORT_NUMBERS)
-    if len(business_claims) > 3:
-        raise ValueError("AI report section contains too many figures.")
+    business_claims = claims.intersection(business_values)
+    if len(business_claims) > maximum_business_claims:
+        raise AIReportValidationError(
+            f"TOO_MANY_FIGURES_{validation_context}"
+        )
 
 
 def _numeric_values(
@@ -753,6 +1072,16 @@ def _numeric_values(
         if value is not None:
             values.add(value)
     return values
+
+
+def _numeric_claim_values(
+    text: str,
+    language: ReportLanguage,
+) -> set[Decimal]:
+    return _numeric_values(
+        _REPORT_HORIZON_NUMBER.sub("", text),
+        language,
+    )
 
 
 def _parse_localized_number(

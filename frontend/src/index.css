@@ -1,6 +1,13 @@
 @import "tailwindcss";
 @import "@fontsource-variable/manrope";
 
+@theme {
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: 1.25rem;
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: 1.5rem;
+}
+
 :root {
   color-scheme: light;
   font-family:
@@ -45,6 +52,7 @@ body {
   margin: 0;
   background: var(--page);
   color: var(--text-primary);
+  line-height: 1.5;
 }
 
 #root {
@@ -112,6 +120,14 @@ summary:focus-visible {
   }
 }
 
+@media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+}
+
 @media print {
   @page {
     size: A4;
@@ -171,6 +187,16 @@ summary:focus-visible {
     border-radius: 0 !important;
     box-shadow: none !important;
     font-size: 9pt;
+  }
+
+  #business-report .text-xs {
+    font-size: 0.75rem !important;
+    line-height: 1rem !important;
+  }
+
+  #business-report .text-sm {
+    font-size: 0.875rem !important;
+    line-height: 1.25rem !important;
   }
 
   #business-report header,
@@ -272,14 +298,14 @@ summary:focus-visible {
   #business-report .report-evidence-content {
     display: inline !important;
     margin-top: 0 !important;
-    font-size: 7pt !important;
-    line-height: 1.35 !important;
+    font-size: 7.5pt !important;
+    line-height: 1.4 !important;
   }
 
   #business-report .report-evidence-heading {
     display: inline !important;
     margin-right: 4px !important;
-    font-size: 7pt !important;
+    font-size: 7.5pt !important;
   }
 
   #business-report .report-evidence-heading::after {
@@ -298,7 +324,7 @@ summary:focus-visible {
     border-radius: 0 !important;
     background: transparent !important;
     color: #334155 !important;
-    font-size: 7pt !important;
+    font-size: 7.5pt !important;
     font-weight: 600 !important;
   }
 

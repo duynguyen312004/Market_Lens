@@ -9,6 +9,7 @@ import pytest
 from backend.app.services.ai_report import (
     AIReportConfig,
     build_safe_aggregate_payload,
+    build_system_prompt,
     generate_ai_report,
 )
 from backend.app.services.analytics import calculate_analytics
@@ -234,6 +235,7 @@ def test_gemini_vietnamese_request_uses_vietnamese_prompt_and_disclaimer(
 
 def test_invalid_json_uses_rule_based_fallback(
     analysis_result: dict[str, Any],
+    caplog: pytest.LogCaptureFixture,
 ) -> None:
     def handler(_: httpx.Request) -> httpx.Response:
         return httpx.Response(
@@ -255,13 +257,131 @@ def test_invalid_json_uses_rule_based_fallback(
 
     assert generation.warning_code == "AI_INVALID_RESPONSE"
     assert generation.report == fallback
+    assert "reason=INVALID_JSON" in caplog.text
+    assert "not-json" not in caplog.text
+
+
+def test_prompt_forbids_invented_recommendation_targets() -> None:
+    prompt = build_system_prompt("en")
+
+    assert "at most eight verified business figures" in prompt
+    assert "Never invent a target, deadline, count" in prompt
+
+
+def test_executive_summary_accepts_five_grounded_kpis(
+    analysis_result: dict[str, Any],
+) -> None:
+    valid_draft = _valid_report()
+    valid_draft["executive_summary"] = (
+        "Các chỉ số chính gồm 185.263.000 VND, 362 đơn, 719 sản phẩm, "
+        "giá trị đơn trung bình 511.776 VND và tăng 17,3%."
+    )
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        valid_draft,
+    )
+
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+
+
+def test_executive_summary_accepts_six_grounded_kpis(
+    analysis_result: dict[str, Any],
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["executive_summary"] = (
+        "Các chỉ số chính gồm 185.263.000 VND, 362 đơn, 719 sản phẩm, "
+        "giá trị đơn trung bình 511.776 VND, tăng 17,3% và hoàn tất 89,6%."
+    )
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+
+
+def test_horizon_number_does_not_ground_an_invented_customer_count(
+    analysis_result: dict[str, Any],
+) -> None:
+    changed_analysis = deepcopy(analysis_result)
+    changed_analysis["summary"]["total_customers"] = 25
+    invalid_draft = _valid_report()
+    invalid_draft["executive_summary"] = (
+        "Cửa hàng phục vụ 30 khách hàng trong kỳ dữ liệu."
+    )
+
+    generation = _generate_vietnamese_draft(
+        changed_analysis,
+        invalid_draft,
+    )
+    fallback = build_rule_based_report(changed_analysis, "vi")
+
+    assert generation.warning_code is None
+    assert generation.report["executive_summary"] == fallback[
+        "executive_summary"
+    ]
+
+
+def test_recommendation_omits_an_invented_success_target(
+    analysis_result: dict[str, Any],
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["recommendations"][0]["success_metric"] = (
+        "Tăng doanh thu thêm 10% trong vòng 30 ngày."
+    )
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+    serialized = json.dumps(
+        generation.report["recommendations"],
+        ensure_ascii=False,
+    )
+    assert "10%" not in serialized
+    assert "30 ngày" not in serialized
+
+
+def test_plain_language_normalization_keeps_a_grounded_report(
+    analysis_result: dict[str, Any],
+) -> None:
+    valid_draft = _valid_report()
+    valid_draft["recommendations"][0]["success_metric"] = (
+        "Revenue in the next period is compared with the current baseline."
+    )
+
+    generation = generate_ai_report(
+        analysis_result=analysis_result,
+        fallback_report=build_rule_based_report(analysis_result),
+        config=_openai_config(),
+        safety_subject="verified-user-id",
+        transport=httpx.MockTransport(
+            lambda _: httpx.Response(
+                200,
+                json={
+                    "status": "completed",
+                    "output_text": json.dumps(valid_draft),
+                },
+            )
+        ),
+    )
+
+    assert generation.warning_code is None
+    assert "baseline" not in generation.report["recommendations"][0][
+        "success_metric"
+    ].lower()
 
 
 @pytest.mark.parametrize(
     "invalid_text",
     [
-        "The forecast backtest reports a low sMAPE for this period.",
-        "Backend reports lift of 1.2 with confidence of 60 percent.",
         "Revenue changed by 37.201646 percent during the period.",
     ],
 )
@@ -327,9 +447,33 @@ def test_unknown_evidence_reference_uses_rule_based_fallback(
 def test_section_figure_must_belong_to_its_selected_evidence(
     analysis_result: dict[str, Any],
 ) -> None:
+    reconciled_draft = _valid_report()
+    reconciled_draft["sections"][0]["narrative"] = (
+        "Cửa hàng hoàn tất 362 đơn trong kỳ dữ liệu."
+    )
+    reconciled_draft["sections"][0]["evidence_keys"] = [
+        "summary.total_revenue"
+    ]
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        reconciled_draft,
+    )
+
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+    assert "summary.total_orders" in {
+        item["metric_key"]
+        for item in generation.report["sections"][0]["evidence"]
+    }
+
+
+def test_section_with_ungrounded_figure_uses_field_fallback(
+    analysis_result: dict[str, Any],
+) -> None:
     invalid_draft = _valid_report()
     invalid_draft["sections"][0]["narrative"] = (
-        "Cửa hàng hoàn tất 362 đơn trong kỳ dữ liệu."
+        "Cửa hàng hoàn tất 999 đơn trong kỳ dữ liệu."
     )
     invalid_draft["sections"][0]["evidence_keys"] = [
         "summary.total_revenue"
@@ -340,8 +484,13 @@ def test_section_figure_must_belong_to_its_selected_evidence(
         invalid_draft,
     )
 
-    assert generation.warning_code == "AI_INVALID_RESPONSE"
-    assert generation.report["source"] == "rule_based"
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+    assert generation.report["sections"][0]["narrative"] == (
+        build_rule_based_report(analysis_result, "vi")["sections"][0][
+            "narrative"
+        ]
+    )
 
 
 def test_grouped_count_is_valid_when_selected_as_evidence(
@@ -388,7 +537,7 @@ def test_unnatural_negative_direction_uses_rule_based_fallback(
     assert generation.report["source"] == "rule_based"
 
 
-def test_section_cannot_cite_unrelated_evidence(
+def test_section_repairs_unrelated_evidence_reference(
     analysis_result: dict[str, Any],
 ) -> None:
     invalid_draft = _valid_report()
@@ -414,8 +563,19 @@ def test_section_cannot_cite_unrelated_evidence(
         transport=httpx.MockTransport(handler),
     )
 
-    assert generation.warning_code == "AI_INVALID_RESPONSE"
-    assert generation.report == fallback
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+    assert all(
+        item["metric_key"].startswith(
+            (
+                "summary.",
+                "orders.",
+                "sales.gross_revenue",
+                "sales.discount_rate_percent",
+            )
+        )
+        for item in generation.report["sections"][0]["evidence"]
+    )
 
 
 @pytest.mark.parametrize(
@@ -460,8 +620,9 @@ def test_risk_figure_must_belong_to_selected_evidence(
         invalid_draft,
     )
 
-    assert generation.warning_code == "AI_INVALID_RESPONSE"
-    assert generation.report["source"] == "rule_based"
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+    assert generation.report["risk_signals"] == []
 
 
 def test_timeout_uses_rule_based_fallback(

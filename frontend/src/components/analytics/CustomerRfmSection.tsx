@@ -100,7 +100,7 @@ export function CustomerRfmSection({
                 count: formatInteger(rfm.segments[segment], language),
               })}
             </p>
-            <p className="mt-2 text-[11px] font-semibold leading-4 opacity-80">
+            <p className="mt-2 text-xs font-semibold leading-4 opacity-80">
               {t(`rfm.segmentDesc.${segment}`)}
             </p>
           </article>
@@ -124,7 +124,7 @@ export function CustomerRfmSection({
         />
       </div>
 
-      <p className="mt-3 text-[11px] leading-5 text-slate-500">
+      <p className="mt-3 text-xs leading-5 text-slate-500">
         {t('rfm.methodNote')}
       </p>
     </section>
@@ -196,7 +196,7 @@ function RfmCustomerTable({
         <div>
           <h3 className="font-black text-slate-900">{title}</h3>
           <p className="mt-0.5 text-xs text-slate-500">{description}</p>
-          <p className="mt-1 text-[11px] font-semibold text-slate-400">
+          <p className="mt-1 text-xs font-semibold text-slate-400">
             {t('common.sortHint')}
           </p>
         </div>
@@ -274,13 +274,13 @@ function RfmCustomerTable({
                     <p className="font-extrabold text-slate-900">
                       {customer.customer_name}
                     </p>
-                    <p className="text-[11px] text-slate-500">
+                    <p className="text-xs text-slate-500">
                       {customer.customer_id}
                     </p>
                   </td>
                   <td className="py-3 pr-3">
                     <span
-                      className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-black ${SEGMENT_STYLES[customer.segment]}`}
+                      className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-black ${SEGMENT_STYLES[customer.segment]}`}
                     >
                       {t(`rfm.segment.${customer.segment}`)}
                     </span>
