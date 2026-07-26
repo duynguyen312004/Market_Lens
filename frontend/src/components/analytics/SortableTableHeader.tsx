@@ -27,10 +27,10 @@ export function SortableTableHeader<Key extends string>({
   onSort: (key: Key, defaultDirection: SortDirection) => void
   sortKey: Key
   sortLabel: string
-  sortState: SortState<Key>
+  sortState: SortState<Key> | null
   title?: string
 }) {
-  const isActive = sortState.key === sortKey
+  const isActive = sortState?.key === sortKey
   const Icon = !isActive
     ? CaretUpDownIcon
     : sortState.direction === 'asc'
@@ -41,7 +41,7 @@ export function SortableTableHeader<Key extends string>({
     <th
       aria-sort={
         isActive
-          ? sortState.direction === 'asc'
+          ? sortState?.direction === 'asc'
             ? 'ascending'
             : 'descending'
           : 'none'

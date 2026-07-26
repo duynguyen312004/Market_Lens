@@ -24,8 +24,8 @@ afterEach(() => {
 })
 
 describe('active analysis storage', () => {
-  it('isolates the selected analysis by authenticated user', () => {
-    vi.stubGlobal('localStorage', createStorage())
+  it('isolates the session selection by authenticated user', () => {
+    vi.stubGlobal('sessionStorage', createStorage())
 
     storeSelectedAnalysisId('user-one', 'analysis-one')
     storeSelectedAnalysisId('user-two', 'analysis-two')
@@ -33,12 +33,12 @@ describe('active analysis storage', () => {
     expect(readStoredAnalysisId('user-one')).toBe('analysis-one')
     expect(readStoredAnalysisId('user-two')).toBe('analysis-two')
     expect(getAnalysisStorageKey('user-one')).toBe(
-      'marketlens:lastAnalysisId:user-one',
+      'marketlens:activeAnalysisId:user-one',
     )
   })
 
   it('removes only the current user selection', () => {
-    vi.stubGlobal('localStorage', createStorage())
+    vi.stubGlobal('sessionStorage', createStorage())
     storeSelectedAnalysisId('user-one', 'analysis-one')
     storeSelectedAnalysisId('user-two', 'analysis-two')
 
@@ -46,5 +46,15 @@ describe('active analysis storage', () => {
 
     expect(readStoredAnalysisId('user-one')).toBeNull()
     expect(readStoredAnalysisId('user-two')).toBe('analysis-two')
+  })
+
+  it('does not carry a selection into a new browser session', () => {
+    vi.stubGlobal('sessionStorage', createStorage())
+    storeSelectedAnalysisId('user-one', 'analysis-one')
+    expect(readStoredAnalysisId('user-one')).toBe('analysis-one')
+
+    vi.stubGlobal('sessionStorage', createStorage())
+
+    expect(readStoredAnalysisId('user-one')).toBeNull()
   })
 })

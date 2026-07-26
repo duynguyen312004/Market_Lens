@@ -1,0 +1,2 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+CP-B-O001,2026-06-02,CP-C002,Khach hang CP-C002,CP-P001,Ten san pham khong nhat quan,Danh muc synthetic,1,100000,0,completed

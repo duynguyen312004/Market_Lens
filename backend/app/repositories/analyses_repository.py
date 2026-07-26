@@ -93,6 +93,39 @@ class AnalysesRepository:
             return None
         return dict(response.data[0])
 
+    def _legacy_update_analysis_report_for_user(
+        self,
+        *,
+        analysis_id: str,
+        user_id: str,
+        report: dict[str, Any],
+        language: Literal["en", "vi"],
+    ) -> dict[str, Any] | None:
+        existing = self.get_analysis_for_user(
+            analysis_id=analysis_id,
+            user_id=user_id,
+        )
+        if existing is None:
+            return None
+        result_json = deepcopy(existing.get("result_json") or {})
+        result_json["report"] = report
+        reports = deepcopy(result_json.get("reports") or {})
+        reports[language] = report
+        result_json["reports"] = reports
+        try:
+            response = (
+                self.client.table("analyses")
+                .update({"result_json": result_json})
+                .eq("id", analysis_id)
+                .eq("user_id", user_id)
+                .execute()
+            )
+        except Exception as error:
+            raise _database_error() from error
+        if not response.data:
+            raise _database_error()
+        return dict(response.data[0])
+
     def delete_analysis_for_user(
         self,
         *,
@@ -127,32 +160,31 @@ class AnalysesRepository:
         report: dict[str, Any],
         language: Literal["en", "vi"] = "en",
     ) -> dict[str, Any] | None:
-        existing = self.get_analysis_for_user(
-            analysis_id=analysis_id,
-            user_id=user_id,
-        )
-        if existing is None:
-            return None
-
-        result_json = deepcopy(existing.get("result_json") or {})
-        result_json["report"] = report
-        reports = deepcopy(result_json.get("reports") or {})
-        reports[language] = report
-        result_json["reports"] = reports
-
         try:
             response = (
-                self.client.table("analyses")
-                .update({"result_json": result_json})
-                .eq("id", analysis_id)
-                .eq("user_id", user_id)
+                self.client.rpc(
+                    "set_analysis_report",
+                    {
+                        "p_analysis_id": analysis_id,
+                        "p_user_id": user_id,
+                        "p_language": language,
+                        "p_report": report,
+                    },
+                )
                 .execute()
             )
         except Exception as error:
+            if _is_missing_report_rpc(error):
+                return self._legacy_update_analysis_report_for_user(
+                    analysis_id=analysis_id,
+                    user_id=user_id,
+                    report=report,
+                    language=language,
+                )
             raise _database_error() from error
 
         if not response.data:
-            raise _database_error()
+            return None
         return dict(response.data[0])
 
 
@@ -168,3 +200,7 @@ def _database_error() -> AppError:
         message="Analysis data cannot be accessed right now.",
         status_code=503,
     )
+
+
+def _is_missing_report_rpc(error: Exception) -> bool:
+    return str(getattr(error, "code", "")) in {"PGRST202", "42883"}

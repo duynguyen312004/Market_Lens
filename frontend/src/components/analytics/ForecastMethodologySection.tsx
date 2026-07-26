@@ -22,10 +22,18 @@ export function ForecastMethodologySection({
 }) {
   const { language, t } = useLanguage()
   const evaluation = forecast.evaluation
+  const modelMetrics =
+    evaluation.primary_metric === 'daily_mae'
+      ? evaluation.model_daily_metrics
+      : evaluation.model_total_metrics
+  const baselineMetrics =
+    evaluation.primary_metric === 'daily_mae'
+      ? evaluation.baseline_daily_metrics
+      : evaluation.baseline_total_metrics
   const evaluationReady =
     evaluation.available &&
-    evaluation.model_metrics !== null &&
-    evaluation.baseline_metrics !== null
+    modelMetrics !== null &&
+    baselineMetrics !== null
   return (
     <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
       <div>
@@ -33,23 +41,34 @@ export function ForecastMethodologySection({
           {t('forecast.evaluationTitle')}
         </h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">
-          {t('forecast.evaluationDesc')}
+          {t('forecast.evaluationDesc', {
+            count: forecast.horizon_days,
+          })}
         </p>
       </div>
 
-      {evaluationReady && evaluation.model_metrics ? (
+      {evaluationReady && modelMetrics ? (
         <div className="mt-5 grid gap-4 border-t border-slate-100 pt-5 lg:grid-cols-[minmax(17rem,0.7fr)_minmax(0,1.3fr)] lg:items-center">
           <dl className="rounded-xl bg-slate-50 px-4 py-3.5">
             <dt className="text-xs font-bold text-slate-500">
-              {t('forecast.modelMae')}
+              {t(
+                evaluation.primary_metric === 'daily_mae'
+                  ? 'forecast.modelMae'
+                  : 'forecast.modelPeriodMae',
+              )}
             </dt>
             <dd className="mt-1 text-xl font-black tracking-tight text-slate-900">
-              {formatVnd(evaluation.model_metrics.mae, language)}
+              {formatVnd(modelMetrics.mae, language)}
             </dd>
             <dd className="mt-1 text-xs leading-relaxed text-slate-500">
-              {t('forecast.modelMaeHelp', {
-                points: evaluation.evaluation_points,
-              })}
+              {evaluation.primary_metric === 'daily_mae'
+                ? t('forecast.modelMaeHelp', {
+                    points: evaluation.evaluation_points,
+                  })
+                : t('forecast.evaluationScope', {
+                    points: evaluation.evaluation_points,
+                    folds: evaluation.fold_count,
+                  })}
             </dd>
           </dl>
           <p className="text-sm leading-relaxed text-slate-600">
@@ -112,7 +131,9 @@ export function ForecastMethodologySection({
               weight="fill"
             />
             <p>
-              {t('forecast.methodologyNote')}{' '}
+              {t('forecast.methodologyNote', {
+                count: forecast.horizon_days,
+              })}{' '}
               {t('forecast.reliabilityNote')}
             </p>
           </div>
@@ -177,7 +198,8 @@ function SelectionDetails({ forecast }: { forecast: ForecastResult }) {
               {t('forecast.empiricalInterval')}
             </dt>
             <dd className="mt-1 font-extrabold text-slate-900">
-              {uncertainty.available
+            {uncertainty.available
+                && uncertainty.total_interval_available
                 ? t('forecast.intervalAvailable', {
                     coverage: uncertainty.target_coverage_percent,
                   })
@@ -196,14 +218,28 @@ function SelectionDetails({ forecast }: { forecast: ForecastResult }) {
             <tr>
               <th className="pb-3 pr-3">{t('forecast.rank')}</th>
               <th className="pb-3 pr-3">{t('forecast.candidate')}</th>
-              <th className="pb-3 pr-3 text-right">MAE</th>
-              <th className="pb-3 pr-3 text-right">RMSE</th>
-              <th className="pb-3 text-right">sMAPE</th>
+              <th className="pb-3 pr-3 text-right">
+                {t(
+                  selection.primary_metric === 'daily_mae'
+                    ? 'forecast.errorAverage'
+                    : 'forecast.errorPeriod',
+                )}
+              </th>
+              <th className="pb-3 pr-3 text-right">
+                {t('forecast.errorLarge')}
+              </th>
+              <th className="pb-3 text-right">
+                {t('forecast.errorPercent')}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {selection.candidates.map((candidate) => {
               const selected = candidate.method === selection.selected_method
+              const metrics =
+                selection.primary_metric === 'daily_mae'
+                  ? candidate.daily_metrics
+                  : candidate.total_metrics
               return (
                 <tr
                   className={selected ? 'bg-indigo-50/60' : undefined}
@@ -225,14 +261,14 @@ function SelectionDetails({ forecast }: { forecast: ForecastResult }) {
                     </p>
                   </td>
                   <td className="py-3 pr-3 text-right font-black text-slate-900">
-                    {formatVnd(candidate.metrics.mae, language)}
+                    {formatVnd(metrics.mae, language)}
                   </td>
                   <td className="py-3 pr-3 text-right font-semibold text-slate-600">
-                    {formatVnd(candidate.metrics.rmse, language)}
+                    {formatVnd(metrics.rmse, language)}
                   </td>
                   <td className="py-3 text-right font-semibold text-slate-600">
                     {formatPercent(
-                      candidate.metrics.smape_percent,
+                      metrics.smape_percent,
                       1,
                       false,
                       language,
@@ -250,12 +286,17 @@ function SelectionDetails({ forecast }: { forecast: ForecastResult }) {
         <p className="mt-3 text-xs leading-relaxed text-slate-500">
           {t('forecast.uncertaintyDetail', {
             coverage: formatPercent(
-              uncertainty.observed_backtest_coverage_percent ?? 0,
+              (forecast.horizon_days === 30
+                ? uncertainty.observed_total_backtest_coverage_percent
+                : uncertainty.observed_backtest_coverage_percent) ?? 0,
               1,
               false,
               language,
             ),
-            residuals: uncertainty.residual_count,
+            residuals:
+              forecast.horizon_days === 30
+                ? uncertainty.total_residual_count
+                : uncertainty.residual_count,
           })}
         </p>
       )}
@@ -265,23 +306,33 @@ function SelectionDetails({ forecast }: { forecast: ForecastResult }) {
 
 function EvaluationDetails({ forecast }: { forecast: ForecastResult }) {
   const { language, t } = useLanguage()
-  const model = forecast.evaluation.model_metrics
-  const baseline = forecast.evaluation.baseline_metrics
+  const model =
+    forecast.evaluation.primary_metric === 'daily_mae'
+      ? forecast.evaluation.model_daily_metrics
+      : forecast.evaluation.model_total_metrics
+  const baseline =
+    forecast.evaluation.primary_metric === 'daily_mae'
+      ? forecast.evaluation.baseline_daily_metrics
+      : forecast.evaluation.baseline_total_metrics
   if (!model || !baseline) return null
 
   const comparisonRows = [
     {
-      label: 'MAE',
+      label: t(
+        forecast.evaluation.primary_metric === 'daily_mae'
+          ? 'forecast.errorAverage'
+          : 'forecast.errorPeriod',
+      ),
       model: formatVnd(model.mae, language),
       baseline: formatVnd(baseline.mae, language),
     },
     {
-      label: 'RMSE',
+      label: t('forecast.errorLarge'),
       model: formatVnd(model.rmse, language),
       baseline: formatVnd(baseline.rmse, language),
     },
     {
-      label: 'sMAPE',
+      label: t('forecast.errorPercent'),
       model: `${formatPercent(model.smape_percent, 1, false, language)}%`,
       baseline: `${formatPercent(
         baseline.smape_percent,
@@ -298,17 +349,24 @@ function EvaluationDetails({ forecast }: { forecast: ForecastResult }) {
         {t('forecast.comparisonTitle')}
       </h3>
       <p className="mt-1 text-xs leading-relaxed text-slate-500">
-        {t('forecast.comparisonHelp', {
+        {t(
+          forecast.evaluation.primary_metric === 'daily_mae'
+            ? 'forecast.comparisonHelp'
+            : 'forecast.comparisonHelpPeriod',
+          {
           improvement:
-            forecast.evaluation.mae_improvement_vs_baseline_percent === null
+            forecast.evaluation
+              .primary_mae_improvement_vs_baseline_percent === null
               ? t('common.notAvailable')
               : `${formatPercent(
-                  forecast.evaluation.mae_improvement_vs_baseline_percent,
+                  forecast.evaluation
+                    .primary_mae_improvement_vs_baseline_percent,
                   1,
                   true,
                   language,
                 )}%`,
-        })}
+          },
+        )}
       </p>
       <div className="mt-3 overflow-x-auto">
         <table className="w-full min-w-[34rem] text-left text-xs">
@@ -351,7 +409,13 @@ function EvaluationDetails({ forecast }: { forecast: ForecastResult }) {
               <th className="pb-3 pr-3">
                 {t('forecast.validationPeriod')}
               </th>
-              <th className="pb-3 text-right">MAE</th>
+              <th className="pb-3 text-right">
+                {t(
+                  forecast.evaluation.primary_metric === 'daily_mae'
+                    ? 'forecast.errorAverage'
+                    : 'forecast.errorPeriod',
+                )}
+              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -370,7 +434,15 @@ function EvaluationDetails({ forecast }: { forecast: ForecastResult }) {
                   })}
                 </td>
                 <td className="py-3 text-right font-bold text-slate-900">
-                  {formatVnd(fold.model_metrics.mae, language)}
+                  {formatVnd(
+                    forecast.evaluation.primary_metric === 'daily_mae'
+                      ? fold.model_daily_metrics.mae
+                      : Math.abs(
+                          fold.actual_total_revenue
+                            - fold.model_total_revenue,
+                        ),
+                    language,
+                  )}
                 </td>
               </tr>
             ))}

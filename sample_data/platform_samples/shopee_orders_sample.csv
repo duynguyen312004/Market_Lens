@@ -1,0 +1,6 @@
+Mã đơn hàng,Trạng Thái Đơn Hàng,Trạng thái Trả hàng/Hoàn tiền,Ngày đặt hàng,Người Mua,SKU phân loại hàng,Tên sản phẩm,Tên phân loại hàng,Số lượng,Giá gốc,Tổng giá bán (sản phẩm),Người bán trợ giá,Shopee trợ giá,Phí vận chuyển,Tổng số tiền được người mua thanh toán
+SP-DEMO-001,Hoàn thành,,01/07/2026 10:30,shopee_demo_001,SP-SKU-001,Áo sơ mi linen,Trắng - M,2,245000,450000,20000,20000,15000,465000
+SP-DEMO-002,Hoàn thành,,02/07/2026 12:10,shopee_demo_002,SP-SKU-002,Đèn bàn học,Màu trắng,1,380000,350000,30000,0,18000,368000
+SP-DEMO-003,Đã hủy,,03/07/2026 09:05,shopee_demo_003,SP-SKU-001,Áo sơ mi linen,Trắng - M,1,245000,245000,0,0,15000,260000
+SP-DEMO-004,Hoàn thành,Trả hàng thành công,04/07/2026 16:45,shopee_demo_004,SP-SKU-003,Kệ để bàn,Gỗ sáng,1,290000,260000,30000,0,22000,282000
+SP-DEMO-005,Chờ lấy hàng,,05/07/2026 08:00,shopee_demo_005,SP-SKU-002,Đèn bàn học,Màu trắng,1,380000,380000,0,0,18000,398000

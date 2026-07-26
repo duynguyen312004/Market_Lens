@@ -29,4 +29,26 @@ describe('SortableTableHeader', () => {
     expect(html).toContain('aria-label="Sắp xếp theo Doanh thu"')
     expect(html).toContain('Doanh thu')
   })
+
+  it('starts without claiming a sort direction when the default order is curated', () => {
+    const html = renderToStaticMarkup(
+      <table>
+        <thead>
+          <tr>
+            <SortableTableHeader
+              defaultDirection="desc"
+              label="Tỷ lệ hủy hoặc trả"
+              onSort={vi.fn()}
+              sortKey="issueRate"
+              sortLabel="Sắp xếp theo Tỷ lệ hủy hoặc trả"
+              sortState={null}
+            />
+          </tr>
+        </thead>
+      </table>,
+    )
+
+    expect(html).toContain('aria-sort="none"')
+    expect(html).toContain('Tỷ lệ hủy hoặc trả')
+  })
 })

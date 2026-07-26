@@ -3,7 +3,16 @@ from typing import Annotated, Any, Literal
 from uuid import UUID
 
 import pandas as pd
-from fastapi import APIRouter, Depends, File, Query, Response, UploadFile, status
+from fastapi import (
+    APIRouter,
+    Depends,
+    File,
+    Form,
+    Query,
+    Response,
+    UploadFile,
+    status,
+)
 
 from backend.app.core.auth import AuthenticatedUser, get_current_user
 from backend.app.core.config import Settings, get_settings
@@ -12,12 +21,18 @@ from backend.app.repositories.analyses_repository import (
     AnalysesRepository,
     get_analyses_repository,
 )
+from backend.app.repositories.import_profiles_repository import (
+    ImportProfilesRepository,
+    get_import_profiles_repository,
+)
+from backend.app.routers.imports import import_options_from_request
 from backend.app.schemas.analysis import (
     AIReportGenerationResponse,
     AIReportWarning,
     AnalysisDetailResponse,
     AnalysisListResponse,
 )
+from backend.app.schemas.imports import ImportSourceType
 from backend.app.services.ai_report import (
     AIReportConfig,
     generate_ai_report,
@@ -30,6 +45,9 @@ from backend.app.services.combined_analysis import (
 )
 from backend.app.services.file_reader import read_sales_file, sanitize_file_name
 from backend.app.services.forecast import calculate_forecast
+from backend.app.services.import_pipeline import (
+    normalize_sales_import,
+)
 from backend.app.services.report import build_rule_based_report
 from backend.app.services.validator import (
     validate_analysis_period,
@@ -78,6 +96,14 @@ def create_analysis(
         Depends(get_analyses_repository),
     ],
     settings: Annotated[Settings, Depends(get_settings)],
+    import_profiles_repository: Annotated[
+        ImportProfilesRepository,
+        Depends(get_import_profiles_repository),
+    ],
+    source_type: Annotated[ImportSourceType, Form()] = "auto",
+    import_profile_id: Annotated[UUID | None, Form()] = None,
+    column_mapping: Annotated[str | None, Form()] = None,
+    status_mapping: Annotated[str | None, Form()] = None,
 ) -> AnalysisDetailResponse:
     max_bytes = settings.max_upload_mb * 1024 * 1024
     content = file.file.read(max_bytes + 1)
@@ -92,9 +118,37 @@ def create_analysis(
     file_name = sanitize_file_name(file.filename)
 
     try:
+        profile = _get_import_profile(
+            repository=import_profiles_repository,
+            profile_id=import_profile_id,
+            user_id=current_user.id,
+        )
+        import_options = import_options_from_request(
+            source_type=source_type,
+            column_mapping=column_mapping,
+            status_mapping=status_mapping,
+            profile=profile,
+        )
         raw_frame = read_sales_file(file_name=file_name, content=content)
-        validated_frame = validate_sales_data(
+        if len(raw_frame.index) > settings.max_upload_rows:
+            raise AppError(
+                code="TOO_MANY_ROWS",
+                message=(
+                    f"The file exceeds the {settings.max_upload_rows:,}-row "
+                    "limit."
+                ),
+                status_code=400,
+                details={
+                    "max_rows": settings.max_upload_rows,
+                    "actual_rows": len(raw_frame.index),
+                },
+            )
+        imported = normalize_sales_import(
             raw_frame,
+            options=import_options,
+        )
+        validated_frame = validate_sales_data(
+            imported.frame,
             max_rows=settings.max_upload_rows,
             max_period_days=settings.max_analysis_period_days,
         )
@@ -110,13 +164,24 @@ def create_analysis(
                     {
                         "file_name": file_name,
                         "row_count": len(validated_frame),
+                        "source_type": imported.source_type,
+                        "source_row_count": imported.source_row_count,
+                        "skipped_row_count": imported.skipped_row_count,
                     }
                 ],
-                "source_row_count": len(validated_frame),
+                "source_row_count": imported.source_row_count,
                 "effective_row_count": len(validated_frame),
                 "duplicate_order_count": 0,
                 "duplicate_row_count": 0,
+                "source_type": imported.source_type,
+                "import_profile_id": (
+                    str(import_profile_id) if import_profile_id else None
+                ),
+                "header_fingerprint": imported.header_fingerprint,
+                "skipped_row_count": imported.skipped_row_count,
+                "capabilities": imported.capabilities.model_dump(),
             },
+            additional_warnings=imported.warnings,
         )
     except AppError:
         raise
@@ -142,6 +207,14 @@ def create_combined_analysis(
         Depends(get_analyses_repository),
     ],
     settings: Annotated[Settings, Depends(get_settings)],
+    import_profiles_repository: Annotated[
+        ImportProfilesRepository,
+        Depends(get_import_profiles_repository),
+    ],
+    source_type: Annotated[ImportSourceType, Form()] = "auto",
+    import_profile_id: Annotated[UUID | None, Form()] = None,
+    column_mapping: Annotated[str | None, Form()] = None,
+    status_mapping: Annotated[str | None, Form()] = None,
 ) -> AnalysisDetailResponse:
     if len(files) < 2:
         raise AppError(
@@ -184,8 +257,19 @@ def create_combined_analysis(
     max_bytes = settings.max_upload_mb * 1024 * 1024
     total_bytes = 0
     sources: list[ValidatedSource] = []
-    validated_row_count = 0
+    source_row_count = 0
     try:
+        profile = _get_import_profile(
+            repository=import_profiles_repository,
+            profile_id=import_profile_id,
+            user_id=current_user.id,
+        )
+        import_options = import_options_from_request(
+            source_type=source_type,
+            column_mapping=column_mapping,
+            status_mapping=status_mapping,
+            profile=profile,
+        )
         uploaded_contents: list[tuple[str, bytes]] = []
         for upload_file, file_name in zip(files, file_names, strict=True):
             remaining_bytes = max_bytes - total_bytes
@@ -206,41 +290,52 @@ def create_combined_analysis(
                 )
             uploaded_contents.append((file_name, content))
 
+        import_warnings: list[str] = []
         for file_name, content in uploaded_contents:
             try:
                 raw_frame = read_sales_file(
                     file_name=file_name,
                     content=content,
                 )
-                validated_frame = validate_sales_data(
+                source_row_count += len(raw_frame.index)
+                if source_row_count > settings.max_upload_rows:
+                    raise AppError(
+                        code="TOO_MANY_ROWS",
+                        message=(
+                            "The selected files exceed the combined "
+                            f"{settings.max_upload_rows:,}-row limit."
+                        ),
+                        status_code=400,
+                        details={
+                            "max_rows": settings.max_upload_rows,
+                            "actual_rows": source_row_count,
+                            "file_count": len(files),
+                            "file_name": file_name,
+                        },
+                    )
+                imported = normalize_sales_import(
                     raw_frame,
+                    options=import_options,
+                )
+                validated_frame = validate_sales_data(
+                    imported.frame,
                     max_rows=settings.max_upload_rows,
                     max_period_days=settings.max_analysis_period_days,
                 )
             except AppError as error:
                 raise _add_file_error_context(error, file_name) from error
-            validated_row_count += len(validated_frame)
-            if validated_row_count > settings.max_upload_rows:
-                raise AppError(
-                    code="TOO_MANY_ROWS",
-                    message=(
-                        "The selected files exceed the combined "
-                        f"{settings.max_upload_rows:,}-row limit."
-                    ),
-                    status_code=400,
-                    details={
-                        "max_rows": settings.max_upload_rows,
-                        "actual_rows": validated_row_count,
-                        "file_count": len(files),
-                        "file_name": file_name,
-                    },
-                )
             sources.append(
                 ValidatedSource(
                     file_name=file_name,
                     frame=validated_frame,
+                    source_type=imported.source_type,
+                    source_row_count=imported.source_row_count,
+                    skipped_row_count=imported.skipped_row_count,
+                    header_fingerprint=imported.header_fingerprint,
+                    capabilities=imported.capabilities,
                 )
             )
+            import_warnings.extend(imported.warnings)
 
         combined = combine_validated_sales_data(
             sources,
@@ -255,8 +350,14 @@ def create_combined_analysis(
             repository=repository,
             file_name=_combined_display_name(file_names),
             validated_frame=combined.frame,
-            upload_metadata=_combined_upload_metadata(combined),
-            additional_warnings=combined.warnings,
+            upload_metadata=_combined_upload_metadata(
+                combined,
+                import_profile_id=import_profile_id,
+            ),
+            additional_warnings=[
+                *combined.warnings,
+                *import_warnings,
+            ],
         )
     except AppError:
         raise
@@ -400,7 +501,13 @@ def _calculate_persist_and_respond(
     upload_metadata: dict[str, Any],
     additional_warnings: list[str] | None = None,
 ) -> AnalysisDetailResponse:
-    analytics = calculate_analytics(validated_frame)
+    capabilities = upload_metadata.get("capabilities") or {}
+    analytics = calculate_analytics(
+        validated_frame,
+        customer_data_available=bool(
+            capabilities.get("customer_analytics", True)
+        ),
+    )
     forecast, forecast_warnings = calculate_forecast(
         analytics["revenue_by_date"]
     )
@@ -474,6 +581,8 @@ def _combined_display_name(file_names: list[str]) -> str:
 
 def _combined_upload_metadata(
     combined: CombinedSalesData,
+    *,
+    import_profile_id: UUID | None = None,
 ) -> dict[str, Any]:
     return {
         "mode": "combined",
@@ -483,7 +592,35 @@ def _combined_upload_metadata(
         "effective_row_count": len(combined.frame),
         "duplicate_order_count": combined.duplicate_order_count,
         "duplicate_row_count": combined.duplicate_row_count,
+        "source_type": combined.source_type,
+        "import_profile_id": (
+            str(import_profile_id) if import_profile_id else None
+        ),
+        "header_fingerprint": combined.header_fingerprint,
+        "skipped_row_count": combined.skipped_row_count,
+        "capabilities": combined.capabilities.model_dump(),
     }
+
+
+def _get_import_profile(
+    *,
+    repository: ImportProfilesRepository,
+    profile_id: UUID | None,
+    user_id: str,
+) -> dict[str, Any] | None:
+    if profile_id is None:
+        return None
+    profile = repository.get_profile_for_user(
+        profile_id=str(profile_id),
+        user_id=user_id,
+    )
+    if profile is None:
+        raise AppError(
+            code="IMPORT_PROFILE_NOT_FOUND",
+            message="Import profile not found.",
+            status_code=404,
+        )
+    return profile
 
 
 def _detail_from_record(record: dict[str, Any]) -> AnalysisDetailResponse:

@@ -76,7 +76,10 @@ export type RfmCustomerMetric = {
 
 export type RfmAnalysis = {
   available: boolean
-  reason: 'INSUFFICIENT_CUSTOMERS' | null
+  reason:
+    | 'INSUFFICIENT_CUSTOMERS'
+    | 'MISSING_CUSTOMER_IDENTIFIERS'
+    | null
   snapshot_date: string
   customer_count: number
   minimum_customers: number
@@ -149,7 +152,10 @@ export type ProductIntelligence = {
 
 export type CustomerCohortAnalysis = {
   available: boolean
-  reason: 'INSUFFICIENT_COHORT_HISTORY' | null
+  reason:
+    | 'INSUFFICIENT_COHORT_HISTORY'
+    | 'MISSING_CUSTOMER_IDENTIFIERS'
+    | null
   method: 'acquisition_month_completed_orders'
   period_from: string
   period_to: string
@@ -201,6 +207,37 @@ export type DiscountAnalysis = {
   }>
 }
 
+export type ProductOrderIssueMetric = {
+  product_id: string
+  product_name: string
+  category: string
+  total_order_count: number
+  completed_order_count: number
+  cancelled_order_count: number
+  returned_order_count: number
+  issue_order_count: number
+  cancellation_rate_percent: number
+  return_rate_percent: number
+  issue_rate_percent: number
+  ranking_score_percent: number
+  affected_product_value: number
+}
+
+export type ProductOrderIssueAnalysis = {
+  available: boolean
+  reason:
+    | 'INSUFFICIENT_PRODUCT_ORDERS'
+    | 'NO_CANCELLED_OR_RETURNED_ORDERS'
+    | null
+  minimum_order_count: number
+  ranking_method: 'adjusted_issue_rate_lower_bound'
+  evaluated_product_count: number
+  qualified_product_count: number
+  affected_order_count: number
+  affected_product_value: number
+  products: ProductOrderIssueMetric[]
+}
+
 export type CustomerMetric = {
   customer_id: string
   customer_name: string
@@ -232,16 +269,19 @@ export type ForecastEvaluation = {
     | null
   strategy: 'rolling_origin_selected_method'
   evaluated_method: ForecastMethod | null
+  primary_metric: 'daily_mae' | 'total_mae'
   baseline_method: 'seasonal_naive_7_days'
-  horizon_days: 7
+  horizon_days: 7 | 30
   minimum_fold_count: 2
   maximum_fold_count: 8
   minimum_history_days: number
   fold_count: number
   evaluation_points: number
-  model_metrics: ForecastErrorMetrics | null
-  baseline_metrics: ForecastErrorMetrics | null
-  mae_improvement_vs_baseline_percent: number | null
+  model_daily_metrics: ForecastErrorMetrics | null
+  baseline_daily_metrics: ForecastErrorMetrics | null
+  model_total_metrics: ForecastErrorMetrics | null
+  baseline_total_metrics: ForecastErrorMetrics | null
+  primary_mae_improvement_vs_baseline_percent: number | null
   reliability: 'high' | 'medium' | 'low' | 'unavailable'
   folds: Array<{
     fold: number
@@ -249,8 +289,11 @@ export type ForecastEvaluation = {
     train_end_date: string
     validation_from: string
     validation_to: string
-    model_metrics: ForecastErrorMetrics
-    baseline_metrics: ForecastErrorMetrics
+    model_daily_metrics: ForecastErrorMetrics
+    baseline_daily_metrics: ForecastErrorMetrics
+    model_total_revenue: number
+    actual_total_revenue: number
+    baseline_total_revenue: number
   }>
 }
 
@@ -258,23 +301,24 @@ export type ForecastSelection = {
   available: boolean
   reason: 'INSUFFICIENT_SELECTION_HISTORY' | null
   strategy: 'rolling_origin_candidate_comparison'
-  primary_metric: 'mae'
+  primary_metric: 'daily_mae' | 'total_mae'
   simplicity_tolerance_percent: 5
   minimum_fold_count: 2
   maximum_fold_count: 8
-  minimum_history_days: 28
+  minimum_history_days: number
   fold_count: number
   evaluation_points: number
   selected_method: ForecastMethod | null
   selection_reason:
-    | 'LOWEST_MAE'
+    | 'LOWEST_PRIMARY_ERROR'
     | 'SIMPLER_WITHIN_FIVE_PERCENT'
     | null
   candidates: Array<{
     rank: number
     method: ForecastMethod
     minimum_training_days: number
-    metrics: ForecastErrorMetrics
+    daily_metrics: ForecastErrorMetrics
+    total_metrics: ForecastErrorMetrics
   }>
 }
 
@@ -286,15 +330,28 @@ export type ForecastUncertainty = {
   residual_count: number
   absolute_error_quantile: number | null
   observed_backtest_coverage_percent: number | null
+  total_interval_available: boolean
+  total_interval_reason:
+    | 'MODEL_SELECTION_UNAVAILABLE'
+    | 'INSUFFICIENT_RESIDUALS'
+    | null
+  total_residual_count: number
+  total_absolute_error_quantile: number | null
+  observed_total_backtest_coverage_percent: number | null
 }
 
 export type ForecastResult = {
   available: boolean
+  reason: 'INSUFFICIENT_HISTORY' | null
+  horizon_days: 7 | 30
+  minimum_history_days: number
   method: ForecastMethod | null
   history_days: number
-  forecast_days: number
   forecast_total: number | null
-  change_vs_last_7_days_percent: number | null
+  previous_period_total: number | null
+  change_vs_previous_period_percent: number | null
+  total_lower_bound: number | null
+  total_upper_bound: number | null
   points: Array<{
     date: string
     predicted_revenue: number
@@ -305,6 +362,92 @@ export type ForecastResult = {
   evaluation: ForecastEvaluation
   uncertainty: ForecastUncertainty
   disclaimer: string
+}
+
+export type ForecastBundle = {
+  default_horizon_days: 7
+  horizons: ForecastResult[]
+}
+
+export type GrowthChangeType =
+  | 'new'
+  | 'growing'
+  | 'stable'
+  | 'declining'
+  | 'inactive'
+
+export type GrowthMetricBase = {
+  comparison_type: 'month' | 'year'
+  current_revenue: number
+  previous_revenue: number
+  revenue_change: number
+  growth_rate_percent: number | null
+  current_order_count: number
+  previous_order_count: number
+  order_count_change: number
+  current_quantity: number
+  previous_quantity: number
+  quantity_change: number
+  change_type: GrowthChangeType
+  contribution_to_direction_percent: number
+}
+
+export type ProductGrowthMetric = GrowthMetricBase & {
+  product_id: string
+  product_name: string
+  category: string
+}
+
+export type CategoryGrowthMetric = GrowthMetricBase & {
+  category: string
+}
+
+export type GrowthDriverPeriod = {
+  available: boolean
+  reason: 'INSUFFICIENT_COMPARISON_HISTORY' | null
+  comparison_type: 'month' | 'year'
+  required_history_from: string
+  current_period: { from: string; to: string }
+  previous_period: { from: string; to: string }
+  current_revenue: number | null
+  previous_revenue: number | null
+  net_revenue_change: number | null
+  growth_rate_percent: number | null
+  positive_revenue_change: number | null
+  negative_revenue_change: number | null
+  evaluated_product_count: number
+  evaluated_category_count: number
+  product_growth_drivers: ProductGrowthMetric[]
+  product_decline_drivers: ProductGrowthMetric[]
+  category_growth_drivers: CategoryGrowthMetric[]
+  category_decline_drivers: CategoryGrowthMetric[]
+}
+
+export type GrowthDriverAnalysis = {
+  default_comparison_type: 'month' | 'year'
+  periods: GrowthDriverPeriod[]
+}
+
+export type SalesPeriodSummary = {
+  key: string
+  period_type: 'month' | 'year'
+  period: { from: string; to: string }
+  is_complete: boolean
+  total_revenue: number
+  total_orders: number
+  total_quantity_sold: number
+  average_order_value: number
+  gross_revenue: number
+  total_discount: number
+  discount_rate_percent: number
+  comparison: {
+    available: boolean
+    reason: 'INSUFFICIENT_COMPARISON_HISTORY' | null
+    previous_period: { from: string; to: string }
+    previous_revenue: number | null
+    revenue_change: number | null
+    growth_rate_percent: number | null
+  }
 }
 
 export type ReportEvidence = {
@@ -362,7 +505,7 @@ export type ReportContent = {
 }
 
 export type AnalysisDetail = {
-  contract_version: '3.0'
+  contract_version: '5.0'
   id: string
   file_name: string
   upload_mode: 'single' | 'combined'
@@ -394,6 +537,10 @@ export type AnalysisDetail = {
     gross_revenue: number
     total_discount: number
     discount_rate_percent: number
+    period_summaries: {
+      months: SalesPeriodSummary[]
+      years: SalesPeriodSummary[]
+    }
     revenue_by_month: Array<{ month: string; revenue: number }>
     revenue_by_weekday: WeekdayRevenueMetric[]
     revenue_by_category: CategoryMetric[]
@@ -413,8 +560,12 @@ export type AnalysisDetail = {
     }
     product_intelligence: ProductIntelligence
     discount_analysis: DiscountAnalysis
+    product_order_issues: ProductOrderIssueAnalysis
+    growth_drivers: GrowthDriverAnalysis
   }
   customers: {
+    available: boolean
+    reason: 'MISSING_CUSTOMER_IDENTIFIERS' | null
     segments: {
       new: number
       returning: number
@@ -429,7 +580,7 @@ export type AnalysisDetail = {
     rfm: RfmAnalysis
     cohort_analysis: CustomerCohortAnalysis
   }
-  forecast: ForecastResult
+  forecast: ForecastBundle
   report: ReportContent
   reports: Record<'en' | 'vi', ReportContent>
   upload: {
@@ -438,11 +589,19 @@ export type AnalysisDetail = {
     source_files: Array<{
       file_name: string
       row_count: number
+      source_type: StoredImportSourceType
+      source_row_count: number | null
+      skipped_row_count: number
     }>
     source_row_count: number
     effective_row_count: number
     duplicate_order_count: number
     duplicate_row_count: number
+    source_type: StoredImportSourceType | 'mixed'
+    import_profile_id: string | null
+    header_fingerprint: string | null
+    skipped_row_count: number
+    capabilities: ImportCapabilities
   }
   warnings: string[]
 }
@@ -478,20 +637,98 @@ export type AIReportGenerationResponse = {
 
 type CreateAnalysisOptions = {
   file: File
+  importConfig?: ImportRequestConfig
   onUploadProgress?: (percentage: number) => void
 }
 
 type CreateCombinedAnalysisOptions = {
   files: File[]
+  importConfig?: ImportRequestConfig
   onUploadProgress?: (percentage: number) => void
+}
+
+export type ImportSourceType =
+  | 'auto'
+  | 'marketlens'
+  | 'shopee'
+  | 'tiktok'
+  | 'custom'
+
+export type StoredImportSourceType = Exclude<ImportSourceType, 'auto'>
+
+export type CanonicalImportField =
+  | 'order_id'
+  | 'order_date'
+  | 'customer_id'
+  | 'customer_name'
+  | 'product_id'
+  | 'product_name'
+  | 'category'
+  | 'quantity'
+  | 'unit_price'
+  | 'discount'
+  | 'line_revenue'
+  | 'order_status'
+
+export type CanonicalStatus =
+  | 'completed'
+  | 'cancelled'
+  | 'returned'
+  | 'skip'
+
+export type ImportCapabilities = {
+  sales_analytics: boolean
+  product_analytics: boolean
+  customer_analytics: boolean
+  category_analytics: boolean
+  discount_analytics: boolean
+  cancellation_return_analysis: boolean
+}
+
+export type ImportRequestConfig = {
+  source_type: ImportSourceType
+  import_profile_id?: string | null
+  column_mapping?: Partial<Record<CanonicalImportField, string>>
+  status_mapping?: Record<string, CanonicalStatus>
+}
+
+export type ImportPreview = {
+  requested_source_type: ImportSourceType
+  detected_source_type: StoredImportSourceType | null
+  detection_confidence: 'exact' | 'suggested' | 'unknown'
+  header_fingerprint: string
+  headers: string[]
+  suggested_mapping: Record<CanonicalImportField, string | null>
+  missing_required_fields: string[]
+  status_values: string[]
+  unknown_status_values: string[]
+  row_count: number
+  capabilities: ImportCapabilities
+  warnings: string[]
+  ready_for_analysis: boolean
+}
+
+export type ImportProfile = {
+  id: string
+  name: string
+  source_type: StoredImportSourceType
+  column_mapping: Partial<Record<CanonicalImportField, string>>
+  status_mapping: Record<string, CanonicalStatus>
+  header_fingerprint: string
+  schema_version: 2
+  created_at: string
+  updated_at: string
 }
 
 export async function createAnalysis({
   file,
+  importConfig,
   onUploadProgress,
 }: CreateAnalysisOptions) {
-  const formData = new FormData()
-  formData.append('file', file)
+  const formData = buildImportRequestFormData(
+    [{ fieldName: 'file', file }],
+    importConfig,
+  )
 
   const response = await httpClient.post<AnalysisDetail>(
     '/analyses',
@@ -511,10 +748,13 @@ export async function createAnalysis({
 
 export async function createCombinedAnalysis({
   files,
+  importConfig,
   onUploadProgress,
 }: CreateCombinedAnalysisOptions) {
-  const formData = new FormData()
-  files.forEach((file) => formData.append('files', file))
+  const formData = buildImportRequestFormData(
+    files.map((file) => ({ fieldName: 'files', file })),
+    importConfig,
+  )
 
   const response = await httpClient.post<AnalysisDetail>(
     '/analyses/combined',
@@ -560,4 +800,95 @@ export async function generateAiReport(
 
 export async function deleteAnalysis(analysisId: string) {
   await httpClient.delete(`/analyses/${analysisId}`)
+}
+
+export async function previewImport(
+  file: File,
+  importConfig: ImportRequestConfig,
+) {
+  const formData = buildImportRequestFormData(
+    [{ fieldName: 'file', file }],
+    importConfig,
+  )
+  const response = await httpClient.post<ImportPreview>(
+    '/imports/preview',
+    formData,
+    { timeout: 60_000 },
+  )
+  return response.data
+}
+
+export async function listImportProfiles() {
+  const response = await httpClient.get<{ items: ImportProfile[] }>(
+    '/import-profiles',
+  )
+  return response.data.items
+}
+
+export async function createImportProfile(
+  profile: Omit<ImportProfile, 'id' | 'created_at' | 'updated_at'>,
+) {
+  const response = await httpClient.post<ImportProfile>(
+    '/import-profiles',
+    profile,
+  )
+  return response.data
+}
+
+export async function updateImportProfile(
+  profileId: string,
+  changes: Partial<
+    Omit<ImportProfile, 'id' | 'created_at' | 'updated_at'>
+  >,
+) {
+  const response = await httpClient.patch<ImportProfile>(
+    `/import-profiles/${profileId}`,
+    changes,
+  )
+  return response.data
+}
+
+export async function deleteImportProfile(profileId: string) {
+  await httpClient.delete(`/import-profiles/${profileId}`)
+}
+
+function appendImportConfig(
+  formData: FormData,
+  importConfig?: ImportRequestConfig,
+) {
+  if (!importConfig) return
+  formData.append('source_type', importConfig.source_type)
+  if (importConfig.import_profile_id) {
+    formData.append('import_profile_id', importConfig.import_profile_id)
+  }
+  if (
+    importConfig.column_mapping &&
+    Object.keys(importConfig.column_mapping).length > 0
+  ) {
+    formData.append(
+      'column_mapping',
+      JSON.stringify(importConfig.column_mapping),
+    )
+  }
+  if (
+    importConfig.status_mapping &&
+    Object.keys(importConfig.status_mapping).length > 0
+  ) {
+    formData.append(
+      'status_mapping',
+      JSON.stringify(importConfig.status_mapping),
+    )
+  }
+}
+
+export function buildImportRequestFormData(
+  files: Array<{ fieldName: 'file' | 'files'; file: File }>,
+  importConfig?: ImportRequestConfig,
+) {
+  const formData = new FormData()
+  files.forEach(({ fieldName, file }) => {
+    formData.append(fieldName, file)
+  })
+  appendImportConfig(formData, importConfig)
+  return formData
 }

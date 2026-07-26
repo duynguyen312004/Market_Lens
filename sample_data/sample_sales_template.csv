@@ -1,5 +1,5 @@
 order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
-DH0001,2026-07-01,C001,Nguyen Van A,P001,Ao thun basic,Thoi trang,2,150000,20000,completed
-DH0001,2026-07-01,C001,Nguyen Van A,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH0002,2026-07-02,C002,Tran Thi B,P003,Binh nuoc,Gia dung,1,120000,10000,completed
-DH0003,2026-07-03,C003,Le Van C,P001,Ao thun basic,Thoi trang,1,150000,0,cancelled
+TPL-O001,2026-06-01,TPL-C001,Khach hang mau 001,TPL-P001,Ao thun co ban,Thoi trang,2,159000,20000,completed
+TPL-O001,2026-06-01,TPL-C001,Khach hang mau 001,TPL-P002,Quan jean,Thoi trang,1,389000,0,completed
+TPL-O002,2026-06-02,TPL-C002,Khach hang mau 002,TPL-P003,Binh nuoc giu nhiet,Gia dung,1,249000,10000,completed
+TPL-O003,2026-06-03,TPL-C003,Khach hang mau 003,TPL-P001,Ao thun co ban,Thoi trang,1,159000,0,cancelled

@@ -22,3 +22,6 @@ frontend/test-results/
 
 # Logs
 *.log
+
+# Local planning and internal documentation
+/docs/

@@ -65,7 +65,7 @@ def predict_revenue(
             weekday_history = [
                 training_values[
                     training_days
-                    + offset
+                    + offset % FORECAST_HORIZON_DAYS
                     - FORECAST_HORIZON_DAYS * week
                 ]
                 for week in range(1, WEEKDAY_AVERAGE_WEEKS + 1)

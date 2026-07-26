@@ -15,6 +15,19 @@ function hasRealSupabaseConfiguration() {
 
 export const isSupabaseConfigured = hasRealSupabaseConfiguration()
 
+if (import.meta.env.PROD && !isSupabaseConfigured) {
+  throw new Error(
+    'VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY are required in production.',
+  )
+}
+if (
+  import.meta.env.PROD &&
+  supabaseUrl &&
+  !supabaseUrl.startsWith('https://')
+) {
+  throw new Error('VITE_SUPABASE_URL must use HTTPS in production.')
+}
+
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl!, supabasePublishableKey!)
   : null

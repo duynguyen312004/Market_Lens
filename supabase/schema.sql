@@ -60,7 +60,83 @@ create trigger analyses_set_updated_at
 before update on public.analyses
 for each row execute function public.set_updated_at();
 
+create or replace function public.set_analysis_report(
+    p_analysis_id uuid,
+    p_user_id uuid,
+    p_language text,
+    p_report jsonb
+)
+returns setof public.analyses
+language sql
+security invoker
+set search_path = ''
+as $$
+    update public.analyses
+    set result_json = jsonb_set(
+        jsonb_set(
+            jsonb_set(
+                coalesce(result_json, '{}'::jsonb),
+                '{reports}',
+                coalesce(result_json -> 'reports', '{}'::jsonb),
+                true
+            ),
+            array['reports', p_language],
+            p_report,
+            true
+        ),
+        '{report}',
+        p_report,
+        true
+    )
+    where id = p_analysis_id
+      and user_id = p_user_id
+      and p_language in ('en', 'vi')
+    returning *;
+$$;
+
+revoke all on function public.set_analysis_report(
+    uuid,
+    uuid,
+    text,
+    jsonb
+) from public, anon, authenticated;
+grant execute on function public.set_analysis_report(
+    uuid,
+    uuid,
+    text,
+    jsonb
+) to service_role;
+
+create table if not exists public.import_profiles (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    name text not null check (char_length(btrim(name)) between 1 and 100),
+    source_type text not null
+        check (source_type in ('marketlens', 'shopee', 'tiktok', 'custom')),
+    column_mapping jsonb not null default '{}'::jsonb
+        check (jsonb_typeof(column_mapping) = 'object'),
+    status_mapping jsonb not null default '{}'::jsonb
+        check (jsonb_typeof(status_mapping) = 'object'),
+    header_fingerprint text not null
+        check (header_fingerprint ~ '^[0-9a-f]{64}$'),
+    schema_version integer not null default 2
+        check (schema_version = 2),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now(),
+    constraint import_profiles_user_name_unique unique (user_id, name)
+);
+
+create index if not exists import_profiles_user_updated_idx
+    on public.import_profiles (user_id, updated_at desc);
+
+drop trigger if exists import_profiles_set_updated_at
+    on public.import_profiles;
+create trigger import_profiles_set_updated_at
+before update on public.import_profiles
+for each row execute function public.set_updated_at();
+
 alter table public.analyses enable row level security;
+alter table public.import_profiles enable row level security;
 
 -- Policies protect direct access with publishable key.
 -- The FastAPI backend uses a server-side secret key and must still enforce
@@ -91,6 +167,39 @@ with check ((select auth.uid()) = user_id);
 drop policy if exists "Users can delete own analyses" on public.analyses;
 create policy "Users can delete own analyses"
 on public.analyses
+for delete
+to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can read own import profiles"
+    on public.import_profiles;
+create policy "Users can read own import profiles"
+on public.import_profiles
+for select
+to authenticated
+using ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can insert own import profiles"
+    on public.import_profiles;
+create policy "Users can insert own import profiles"
+on public.import_profiles
+for insert
+to authenticated
+with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can update own import profiles"
+    on public.import_profiles;
+create policy "Users can update own import profiles"
+on public.import_profiles
+for update
+to authenticated
+using ((select auth.uid()) = user_id)
+with check ((select auth.uid()) = user_id);
+
+drop policy if exists "Users can delete own import profiles"
+    on public.import_profiles;
+create policy "Users can delete own import profiles"
+on public.import_profiles
 for delete
 to authenticated
 using ((select auth.uid()) = user_id);

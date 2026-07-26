@@ -25,4 +25,19 @@ describe('resolveApiBaseUrl', () => {
       'http://localhost:8000/api/v1',
     )
   })
+
+  it('dừng production build khi thiếu API URL', () => {
+    expect(() =>
+      resolveApiBaseUrl({}, { production: true }),
+    ).toThrow(/required in production/)
+  })
+
+  it('từ chối API URL production không dùng HTTPS', () => {
+    expect(() =>
+      resolveApiBaseUrl(
+        { VITE_API_BASE_URL: 'http://api.marketlens.vn/api/v1' },
+        { production: true },
+      ),
+    ).toThrow(/public HTTPS/)
+  })
 })

@@ -15,7 +15,7 @@ def get_supabase_client() -> Client:
     if not settings.supabase_url or not server_key:
         raise AppError(
             code="SUPABASE_NOT_CONFIGURED",
-            message="Supabase is not configured on the backend.",
+            message="MarketLens data storage is not configured.",
             status_code=503,
         )
 

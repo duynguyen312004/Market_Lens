@@ -1,0 +1,2 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+CO-O001,2026-06-01,CO-C001,Khach hang CO-C001,CO-P001,San pham xung dot don,Danh muc synthetic,2,100000,0,completed

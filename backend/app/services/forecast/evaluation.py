@@ -6,11 +6,6 @@ from typing import TYPE_CHECKING, Any, Literal
 
 import numpy as np
 
-from .methods import (
-    FORECAST_HORIZON_DAYS,
-    minimum_training_days,
-)
-
 if TYPE_CHECKING:
     from .selection import ModelSelection
 
@@ -19,7 +14,6 @@ BACKTEST_MAX_FOLDS = 8
 BACKTEST_MINIMUM_FOLDS = 2
 BASELINE_METHOD = "seasonal_naive_7_days"
 EVALUATION_STRATEGY = "rolling_origin_selected_method"
-MINIMUM_EVALUATION_HISTORY_DAYS = 28
 RELIABILITY_HIGH_MINIMUM_FOLDS = 6
 
 Reliability = Literal["high", "medium", "low", "unavailable"]
@@ -32,13 +26,16 @@ def build_selected_evaluation(
     forecast_available: bool,
 ) -> dict[str, Any]:
     if not forecast_available:
-        return _unavailable_evaluation("FORECAST_UNAVAILABLE")
+        return _unavailable_evaluation(
+            selection,
+            "FORECAST_UNAVAILABLE",
+        )
 
     selected = selection.selected_candidate
     if selected is None:
         return _unavailable_evaluation(
+            selection,
             "INSUFFICIENT_SELECTION_HISTORY",
-            fold_count=len(selection.fold_origins),
         )
     baseline = next(
         candidate
@@ -55,6 +52,7 @@ def build_selected_evaluation(
     ):
         baseline_fold = baseline_folds_by_origin[selected_fold.origin]
         origin = selected_fold.origin
+        validation_to_index = origin + selection.horizon_days - 1
         folds.append(
             {
                 "fold": fold_number,
@@ -66,44 +64,53 @@ def build_selected_evaluation(
                     revenue_by_date[origin]["date"]
                 ),
                 "validation_to": _date_value(
-                    revenue_by_date[
-                        origin + FORECAST_HORIZON_DAYS - 1
-                    ]["date"]
+                    revenue_by_date[validation_to_index]["date"]
                 ),
-                "model_metrics": calculate_error_metrics(
+                "model_daily_metrics": calculate_error_metrics(
                     np.array(selected_fold.actual, dtype=float),
                     np.array(selected_fold.predictions, dtype=float),
                 ),
-                "baseline_metrics": calculate_error_metrics(
+                "baseline_daily_metrics": calculate_error_metrics(
                     np.array(baseline_fold.actual, dtype=float),
                     np.array(baseline_fold.predictions, dtype=float),
+                ),
+                "model_total_revenue": int(
+                    round(sum(selected_fold.predictions))
+                ),
+                "actual_total_revenue": int(
+                    round(sum(selected_fold.actual))
+                ),
+                "baseline_total_revenue": int(
+                    round(sum(baseline_fold.predictions))
                 ),
             }
         )
 
-    model_metrics = selected.metrics
-    baseline_metrics = baseline.metrics
+    model_primary_metrics = _primary_metrics(selection, selected)
+    baseline_primary_metrics = _primary_metrics(selection, baseline)
     return {
-        **_evaluation_metadata(),
+        **_evaluation_metadata(selection),
         "available": True,
         "reason": None,
         "evaluated_method": selected.method,
         "fold_count": len(selection.fold_origins),
         "evaluation_points": (
-            len(selection.fold_origins) * FORECAST_HORIZON_DAYS
+            len(selection.fold_origins) * selection.horizon_days
         ),
-        "model_metrics": model_metrics,
-        "baseline_metrics": baseline_metrics,
-        "mae_improvement_vs_baseline_percent": (
+        "model_daily_metrics": selected.daily_metrics,
+        "baseline_daily_metrics": baseline.daily_metrics,
+        "model_total_metrics": selected.total_metrics,
+        "baseline_total_metrics": baseline.total_metrics,
+        "primary_mae_improvement_vs_baseline_percent": (
             calculate_mae_improvement(
-                model_mae=model_metrics["mae"],
-                baseline_mae=baseline_metrics["mae"],
+                model_mae=model_primary_metrics["mae"],
+                baseline_mae=baseline_primary_metrics["mae"],
             )
         ),
         "reliability": classify_reliability(
             fold_count=len(selection.fold_origins),
-            model_metrics=model_metrics,
-            baseline_metrics=baseline_metrics,
+            model_metrics=model_primary_metrics,
+            baseline_metrics=baseline_primary_metrics,
         ),
         "folds": folds,
     }
@@ -113,14 +120,15 @@ def recent_fold_origins(
     *,
     history_days: int,
     minimum_training: int,
+    horizon_days: int = 7,
     maximum_folds: int = BACKTEST_MAX_FOLDS,
 ) -> list[int]:
-    latest_origin = history_days - FORECAST_HORIZON_DAYS
+    latest_origin = history_days - horizon_days
     descending_origins = list(
         range(
             latest_origin,
             minimum_training - 1,
-            -FORECAST_HORIZON_DAYS,
+            -horizon_days,
         )
     )
     return list(reversed(descending_origins[:maximum_folds]))
@@ -183,37 +191,49 @@ def classify_reliability(
 
 
 def _unavailable_evaluation(
+    selection: ModelSelection,
     reason: Literal[
         "FORECAST_UNAVAILABLE",
         "INSUFFICIENT_SELECTION_HISTORY",
     ],
-    *,
-    fold_count: int = 0,
 ) -> dict[str, Any]:
+    fold_count = len(selection.fold_origins)
     return {
-        **_evaluation_metadata(),
+        **_evaluation_metadata(selection),
         "available": False,
         "reason": reason,
         "evaluated_method": None,
         "fold_count": fold_count,
-        "evaluation_points": fold_count * FORECAST_HORIZON_DAYS,
-        "model_metrics": None,
-        "baseline_metrics": None,
-        "mae_improvement_vs_baseline_percent": None,
+        "evaluation_points": fold_count * selection.horizon_days,
+        "model_daily_metrics": None,
+        "baseline_daily_metrics": None,
+        "model_total_metrics": None,
+        "baseline_total_metrics": None,
+        "primary_mae_improvement_vs_baseline_percent": None,
         "reliability": "unavailable",
         "folds": [],
     }
 
 
-def _evaluation_metadata() -> dict[str, Any]:
+def _evaluation_metadata(selection: ModelSelection) -> dict[str, Any]:
     return {
         "strategy": EVALUATION_STRATEGY,
+        "primary_metric": selection.primary_metric,
         "baseline_method": BASELINE_METHOD,
-        "horizon_days": FORECAST_HORIZON_DAYS,
+        "horizon_days": selection.horizon_days,
         "minimum_fold_count": BACKTEST_MINIMUM_FOLDS,
         "maximum_fold_count": BACKTEST_MAX_FOLDS,
-        "minimum_history_days": MINIMUM_EVALUATION_HISTORY_DAYS,
+        "minimum_history_days": selection.minimum_history_days,
     }
+
+
+def _primary_metrics(
+    selection: ModelSelection,
+    candidate: Any,
+) -> dict[str, float]:
+    if selection.primary_metric == "daily_mae":
+        return candidate.daily_metrics
+    return candidate.total_metrics
 
 
 def _date_value(value: object) -> str:

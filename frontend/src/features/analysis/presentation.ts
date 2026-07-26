@@ -1,6 +1,50 @@
 import { translate, type Language } from '../../i18n/LanguageContext'
 import type { AnalysisDetail } from '../../api/analysesApi'
 
+export type DatePeriod = {
+  from: string
+  to: string
+}
+
+export type TrailingPeriodComparison = {
+  current: DatePeriod
+  previous: DatePeriod
+}
+
+export function getDatePeriod(
+  points: Array<{ date: string }>,
+): DatePeriod | null {
+  if (points.length === 0) return null
+  return {
+    from: points[0].date,
+    to: points[points.length - 1].date,
+  }
+}
+
+export function getTrailingPeriodComparison(
+  points: Array<{ date: string }>,
+  periodDays: number,
+): TrailingPeriodComparison | null {
+  if (
+    !Number.isInteger(periodDays) ||
+    periodDays <= 0 ||
+    points.length < periodDays * 2
+  ) {
+    return null
+  }
+
+  const current = points.slice(-periodDays)
+  const previous = points.slice(-periodDays * 2, -periodDays)
+  const currentPeriod = getDatePeriod(current)
+  const previousPeriod = getDatePeriod(previous)
+  if (!currentPeriod || !previousPeriod) return null
+
+  return {
+    current: currentPeriod,
+    previous: previousPeriod,
+  }
+}
+
 export function getAnalysisFileLabel(
   analysis: AnalysisDetail,
   language: Language = 'en',
@@ -34,6 +78,26 @@ export function formatAnalysisWarning(
     DUPLICATE_ORDERS_REMOVED: translate(
       language,
       'analysis.warningDuplicateOrders',
+    ),
+    NON_FINAL_ORDERS_SKIPPED: translate(
+      language,
+      'analysis.warningNonFinalOrdersSkipped',
+    ),
+    CUSTOMER_ANALYTICS_UNAVAILABLE: translate(
+      language,
+      'upload.warningNoCustomerIdentifiers',
+    ),
+    CATEGORY_DEFAULTED: translate(
+      language,
+      'upload.warningNoCategory',
+    ),
+    DISCOUNT_BREAKDOWN_UNAVAILABLE: translate(
+      language,
+      'upload.warningNoDiscount',
+    ),
+    SOURCE_SELECTION_DIFFERS_FROM_DETECTION: translate(
+      language,
+      'upload.warningSourceMismatch',
     ),
   }
   return labels[warning] ?? warning

@@ -1,4 +1,5 @@
 import {
+  CaretDownIcon,
   ChartLineUpIcon,
   CheckCircleIcon,
   FilePdfIcon,
@@ -19,6 +20,7 @@ import {
 } from '../api/analysesApi'
 import { parseApiError } from '../api/apiErrors'
 import { queryClient } from '../app/queryClient'
+import { useAuth } from '../auth/useAuth'
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
 import {
   AnalysisEmptyState,
@@ -38,7 +40,9 @@ import {
   formatReportEvidence,
   formatReportNarrative,
   getReportPageTitle,
+  getReportPrintTitle,
 } from '../features/report/reportPresentation'
+import { printReport } from '../features/report/reportPrint'
 import {
   useLanguage,
   type Language,
@@ -51,6 +55,7 @@ import {
 
 export function ReportPage() {
   const { language, t } = useLanguage()
+  const { user } = useAuth()
   const { analysis, error, isEmpty, isLoading, retry } =
     useCurrentAnalysis()
   const [generationNotice, setGenerationNotice] = useState<{
@@ -63,8 +68,9 @@ export function ReportPage() {
       generateAiReport(analysisId, language),
     onMutate: () => setGenerationNotice(null),
     onSuccess: (result) => {
+      if (!user) return
       queryClient.setQueryData<AnalysisDetail>(
-        analysisKeys.detail(result.analysis_id),
+        analysisKeys.detail(user.id, result.analysis_id),
         (current) =>
           current
             ? {
@@ -114,6 +120,7 @@ export function ReportPage() {
   }
 
   const report = analysis.reports[language] ?? analysis.report
+  const printTitle = getReportPrintTitle(analysis, language)
 
   return (
     <main className="report-page px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
@@ -162,7 +169,7 @@ export function ReportPage() {
               </button>
               <button
                 className="inline-flex items-center gap-2 rounded-xl border border-slate-300 bg-white px-4 py-3 text-xs font-black text-slate-700 shadow-2xs transition hover:bg-slate-50 hover:text-indigo-600"
-                onClick={() => window.print()}
+                onClick={() => printReport(printTitle)}
                 type="button"
               >
                 <FilePdfIcon size={19} weight="duotone" />
@@ -201,11 +208,6 @@ export function ReportPage() {
               <div className="max-w-3xl">
                 <div className="flex flex-wrap items-center gap-2">
                   <ReportSource source={report.source} />
-                  <span className="rounded-full border border-indigo-200 bg-white/80 px-2.5 py-1 text-xs font-black text-indigo-700">
-                    {t('report.version', {
-                      version: report.report_version,
-                    })}
-                  </span>
                 </div>
                 <h2 className="mt-4 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
                   {report.source === 'ai'
@@ -222,7 +224,7 @@ export function ReportPage() {
                   )}
                 </p>
               </div>
-              <dl className="grid shrink-0 gap-3 text-sm sm:min-w-56">
+              <dl className="report-document-meta grid shrink-0 gap-3 text-sm sm:min-w-64">
                 <div>
                   <dt className="font-semibold text-slate-600">
                     {t('report.generatedFor')}
@@ -235,6 +237,15 @@ export function ReportPage() {
                       .map((source) => source.file_name)
                       .join(', ') ||
                       getAnalysisFileLabel(analysis, language)}
+                  </dd>
+                  <dd className="mt-1 text-xs font-medium text-slate-600">
+                    {t('report.datasetSizeValue', {
+                      rows: formatInteger(analysis.row_count, language),
+                      files: formatInteger(
+                        analysis.source_file_count,
+                        language,
+                      ),
+                    })}
                   </dd>
                 </div>
                 <div>
@@ -256,36 +267,10 @@ export function ReportPage() {
                 </div>
                 <div>
                   <dt className="font-semibold text-slate-600">
-                    {t('report.datasetSize')}
-                  </dt>
-                  <dd className="mt-0.5 font-bold text-slate-900">
-                    {t('report.datasetSizeValue', {
-                      rows: formatInteger(analysis.row_count, language),
-                      files: formatInteger(
-                        analysis.source_file_count,
-                        language,
-                      ),
-                    })}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-slate-600">
                     {t('report.generatedAt')}
                   </dt>
                   <dd className="mt-0.5 font-bold text-slate-900">
                     {formatDateTime(report.generated_at, language)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="font-semibold text-slate-600">
-                    {t('report.generator')}
-                  </dt>
-                  <dd className="mt-0.5 font-bold text-slate-900">
-                    {t(
-                      report.source === 'ai'
-                        ? 'report.generatorAi'
-                        : 'report.generatorRules',
-                    )}
                   </dd>
                 </div>
               </dl>
@@ -318,141 +303,28 @@ export function ReportPage() {
             language={language}
           />
 
-          <ReportCharts analysis={analysis} />
+          <div className="report-priority-page">
+            <RiskSection
+              language={language}
+              risks={report.risk_signals}
+            />
+            <RecommendationsSection
+              language={language}
+              recommendations={report.recommendations}
+            />
+          </div>
 
-          <section className="border-b border-slate-100 p-6 sm:p-9">
-            <div className="mb-6 flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
-                <ChartLineUpIcon size={21} weight="duotone" />
-              </span>
-              <div>
-                <h3 className="text-lg font-black tracking-tight text-slate-900">
-                  {t('report.analysisSections')}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {t('report.analysisSectionsDesc')}
-                </p>
-              </div>
-            </div>
-            <div className="report-print-two-column grid gap-5 xl:grid-cols-2">
-              {report.sections.map((section) => (
-                <section
-                  className="report-print-break-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs"
-                  key={section.key}
-                >
-                  <h4 className="font-black text-slate-900">
-                    {formatReportNarrative(section.title, language)}
-                  </h4>
-                  <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
-                    {formatReportNarrative(
-                      section.narrative,
-                      language,
-                    )}
-                  </p>
-                  <EvidenceList
-                    evidence={section.evidence}
-                    language={language}
-                  />
-                </section>
-              ))}
-            </div>
-          </section>
-
-          <RiskSection
-            language={language}
-            risks={report.risk_signals}
-          />
-
-          <section className="report-recommendations-section border-b border-slate-100 p-6 sm:p-9">
-            <div className="mb-6 flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-lg bg-[var(--primary-soft)] text-[var(--primary)]">
-                <TargetIcon size={21} weight="duotone" />
-              </span>
-              <div>
-                <h3 className="text-lg font-black tracking-tight text-slate-900">
-                  {t('report.recommendations')}
-                </h3>
-                <p className="text-sm text-slate-600">
-                  {t('report.recommendationsDesc')}
-                </p>
-              </div>
-            </div>
-            <div
-              className="report-print-two-column report-recommendations-grid grid gap-5 xl:grid-cols-2"
-              data-count={report.recommendations.length}
-            >
-              {report.recommendations.map((recommendation, index) => (
-                <article
-                  className="report-print-break-avoid rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs"
-                  key={`${recommendation.title}-${index}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <span
-                      className={[
-                        'rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-wider',
-                        priorityClassName(recommendation.priority),
-                      ].join(' ')}
-                    >
-                      {t(`report.priority.${recommendation.priority}`)}
-                    </span>
-                    <span className="text-xs font-bold text-slate-600">
-                      #{index + 1}
-                    </span>
-                  </div>
-                  <h4 className="mt-3 text-sm font-black text-slate-900">
-                    {formatReportNarrative(
-                      recommendation.title,
-                      language,
-                    )}
-                  </h4>
-                  <div className="mt-3 space-y-3 text-sm leading-relaxed">
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
-                        {t('report.action')}
-                      </p>
-                      <p className="mt-1 text-slate-700">
-                        {formatReportNarrative(
-                          recommendation.action,
-                          language,
-                        )}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
-                        {t('report.successMetric')}
-                      </p>
-                      <p className="mt-1 text-slate-700">
-                        {formatReportNarrative(
-                          recommendation.success_metric,
-                          language,
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                  <EvidenceList
-                    evidence={recommendation.evidence}
-                    language={language}
-                  />
-                </article>
-              ))}
-            </div>
-          </section>
-
-          <footer className="bg-slate-50 p-6 text-sm text-slate-700">
-            <div className="flex items-start gap-3">
-              <InfoIcon
-                className="mt-0.5 shrink-0 text-slate-600"
-                size={17}
-                weight="fill"
-              />
-              <p className="leading-relaxed">
-                {formatReportNarrative(
-                  report.disclaimer,
-                  language,
-                )}
-              </p>
-            </div>
-          </footer>
+          <div className="report-detail-page">
+            <ReportCharts analysis={analysis} />
+            <AnalysisSection
+              language={language}
+              sections={report.sections}
+            />
+            <ReportDisclaimer
+              disclaimer={report.disclaimer}
+              language={language}
+            />
+          </div>
         </article>
       </div>
     </main>
@@ -469,7 +341,7 @@ function DataQualitySection({
   const { t } = useLanguage()
   const needsAttention = dataQuality.status === 'attention'
   return (
-    <section className="border-b border-slate-100 p-6 sm:p-9">
+    <section className="report-data-quality-section border-b border-slate-100 p-6 sm:p-9">
       <div className="report-print-break-avoid rounded-2xl border border-slate-200 bg-slate-50/70 p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
@@ -515,7 +387,7 @@ function DataQualitySection({
                 className="rounded-xl border border-slate-200 bg-white p-4"
                 key={signal.code}
               >
-                  <p className="text-sm font-semibold leading-relaxed text-slate-700">
+                <p className="text-sm font-semibold leading-relaxed text-slate-700">
                   {formatReportNarrative(
                     signal.message,
                     language,
@@ -529,6 +401,136 @@ function DataQualitySection({
             ))}
           </div>
         )}
+      </div>
+    </section>
+  )
+}
+
+function RecommendationsSection({
+  language,
+  recommendations,
+}: {
+  language: Language
+  recommendations: ReportContent['recommendations']
+}) {
+  const { t } = useLanguage()
+  return (
+    <section className="report-recommendations-section border-b border-slate-100 p-6 sm:p-9">
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="grid size-9 place-items-center rounded-xl bg-[var(--primary-soft)] text-[var(--primary)]">
+          <TargetIcon size={21} weight="duotone" />
+        </span>
+        <div>
+          <h3 className="text-lg font-black tracking-tight text-slate-900">
+            {t('report.recommendations')}
+          </h3>
+          <p className="text-sm text-slate-600">
+            {t('report.recommendationsDesc')}
+          </p>
+        </div>
+      </div>
+      <div
+        className="report-print-two-column report-recommendations-grid grid gap-5 xl:grid-cols-2"
+        data-count={recommendations.length}
+      >
+        {recommendations.map((recommendation, index) => (
+          <article
+            className="report-recommendation-card report-print-break-avoid rounded-2xl border border-slate-200/80 bg-white p-5 shadow-2xs"
+            key={`${recommendation.title}-${index}`}
+          >
+            <span
+              className={[
+                'inline-flex rounded-full px-2.5 py-1 text-xs font-black uppercase tracking-wider',
+                priorityClassName(recommendation.priority),
+              ].join(' ')}
+            >
+              {t(`report.priority.${recommendation.priority}`)}
+            </span>
+            <h4 className="mt-3 text-sm font-black text-slate-900">
+              {formatReportNarrative(
+                recommendation.title,
+                language,
+              )}
+            </h4>
+            <div className="report-recommendation-body mt-3 space-y-3 text-sm leading-relaxed">
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+                  {t('report.action')}
+                </p>
+                <p className="mt-1 text-slate-700">
+                  {formatReportNarrative(
+                    recommendation.action,
+                    language,
+                  )}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+                  {t('report.successMetric')}
+                </p>
+                <p className="mt-1 text-slate-700">
+                  {formatReportNarrative(
+                    recommendation.success_metric,
+                    language,
+                  )}
+                </p>
+              </div>
+            </div>
+            <EvidenceList
+              evidence={recommendation.evidence}
+              language={language}
+            />
+          </article>
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function AnalysisSection({
+  language,
+  sections,
+}: {
+  language: Language
+  sections: ReportContent['sections']
+}) {
+  const { t } = useLanguage()
+  return (
+    <section className="report-analysis-section border-b border-slate-100 p-6 sm:p-9">
+      <div className="mb-6 flex items-center gap-2.5">
+        <span className="grid size-9 place-items-center rounded-xl bg-indigo-50 text-indigo-600">
+          <ChartLineUpIcon size={21} weight="duotone" />
+        </span>
+        <div>
+          <h3 className="text-lg font-black tracking-tight text-slate-900">
+            {t('report.analysisSections')}
+          </h3>
+          <p className="text-sm text-slate-600">
+            {t('report.analysisSectionsDesc')}
+          </p>
+        </div>
+      </div>
+      <div className="report-print-two-column grid gap-5 xl:grid-cols-2">
+        {sections.map((section) => (
+          <section
+            className="report-print-break-avoid rounded-2xl border border-slate-200 bg-white p-5 shadow-2xs"
+            key={section.key}
+          >
+            <h4 className="font-black text-slate-900">
+              {formatReportNarrative(section.title, language)}
+            </h4>
+            <p className="mt-2 text-sm font-medium leading-relaxed text-slate-700">
+              {formatReportNarrative(
+                section.narrative,
+                language,
+              )}
+            </p>
+            <EvidenceList
+              evidence={section.evidence}
+              language={language}
+            />
+          </section>
+        ))}
       </div>
     </section>
   )
@@ -603,8 +605,38 @@ function EvidenceList({
 }) {
   const { t } = useLanguage()
   return (
-    <div className="mt-4">
-      <p className="text-xs font-black uppercase tracking-wider text-slate-600">
+    <>
+      <details className="report-screen-evidence group mt-4">
+        <summary className="flex cursor-pointer list-none items-center gap-1.5 text-xs font-bold text-indigo-700 [&::-webkit-details-marker]:hidden">
+          <CaretDownIcon
+            className="transition-transform group-open:rotate-180"
+            size={14}
+            weight="bold"
+          />
+          {t('report.evidenceCount', {
+            count: formatInteger(evidence.length, language),
+          })}
+        </summary>
+        <EvidenceContent evidence={evidence} language={language} />
+      </details>
+      <div className="report-print-evidence hidden">
+        <EvidenceContent evidence={evidence} language={language} />
+      </div>
+    </>
+  )
+}
+
+function EvidenceContent({
+  evidence,
+  language,
+}: {
+  evidence: ReportEvidence[]
+  language: Language
+}) {
+  const { t } = useLanguage()
+  return (
+    <div className="report-evidence-content mt-3">
+      <p className="report-evidence-heading text-xs font-black uppercase tracking-wider text-slate-600">
         {t('report.evidence')}
       </p>
       <div className="mt-2 flex flex-wrap gap-2">
@@ -612,10 +644,9 @@ function EvidenceList({
           <span
             className="report-evidence-chip inline-flex max-w-full items-start gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 py-1.5 text-xs font-bold text-indigo-900"
             key={item.metric_key}
-            title={item.metric_key}
           >
             <span className="report-evidence-label whitespace-normal">
-              {item.context ? `${item.context} · ` : ''}
+              {item.context ? `${item.context}: ` : ''}
               {item.label}
             </span>
             <span className="shrink-0 text-indigo-600">
@@ -628,6 +659,29 @@ function EvidenceList({
   )
 }
 
+function ReportDisclaimer({
+  disclaimer,
+  language,
+}: {
+  disclaimer: string
+  language: Language
+}) {
+  return (
+    <footer className="bg-slate-50 p-6 text-sm text-slate-700">
+      <div className="flex items-start gap-3">
+        <InfoIcon
+          className="mt-0.5 shrink-0 text-slate-600"
+          size={17}
+          weight="fill"
+        />
+        <p className="leading-relaxed">
+          {formatReportNarrative(disclaimer, language)}
+        </p>
+      </div>
+    </footer>
+  )
+}
+
 function ReportSource({
   source,
 }: {
@@ -636,7 +690,7 @@ function ReportSource({
   const { t } = useLanguage()
   if (source === 'ai') {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-md bg-[var(--primary)] px-3.5 py-1 text-xs font-extrabold text-white">
+      <span className="inline-flex items-center gap-1.5 rounded-full bg-[var(--primary)] px-3.5 py-1 text-xs font-extrabold text-white">
         <SparkleIcon size={14} weight="fill" />
         {t('report.badgeAi')}
       </span>

@@ -43,11 +43,11 @@ def main() -> None:
                 "**/journey-*.png"
             )
         )
-        if len(screenshots) != 3:
+        if len(screenshots) != 4:
             raise RuntimeError(
-                "Playwright passed without all three journey screenshots."
+                "Playwright passed without all four journey screenshots."
             )
-        print("Browser journey E2E: PASS (3 visual artifacts).")
+        print("Browser journey E2E: PASS (4 visual artifacts).")
 
 
 if __name__ == "__main__":

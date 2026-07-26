@@ -6,7 +6,11 @@ import {
 } from '@phosphor-icons/react'
 import { useState } from 'react'
 
-import type { AnalysisDetail, ProductMetric } from '../api/analysesApi'
+import type {
+  AnalysisDetail,
+  ProductMetric,
+  SalesPeriodSummary,
+} from '../api/analysesApi'
 import { AnalysisHeader } from '../components/analytics/AnalysisHeader'
 import { AnalyticsTabs } from '../components/analytics/AnalyticsTabs'
 import {
@@ -22,7 +26,9 @@ import {
   WeekdayRevenueChart,
 } from '../components/analytics/Charts'
 import { MetricCard } from '../components/analytics/MetricCard'
+import { GrowthDriversSection } from '../components/analytics/GrowthDriversSection'
 import { ProductIntelligenceSection } from '../components/analytics/ProductIntelligenceSection'
+import { ProductOrderIssuesSection } from '../components/analytics/ProductOrderIssuesSection'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
 import {
   aggregateRevenueByMonth,
@@ -40,7 +46,12 @@ import {
   formatVnd,
 } from '../utils/formatters'
 
-type SalesSection = 'revenue' | 'products' | 'advanced'
+type SalesSection =
+  | 'revenue'
+  | 'products'
+  | 'growth'
+  | 'order-issues'
+  | 'advanced'
 
 export function SalesAnalyticsPage() {
   const { t } = useLanguage()
@@ -70,6 +81,11 @@ export function SalesAnalyticsPage() {
           items={[
             { id: 'revenue', label: t('sales.revenueTab') },
             { id: 'products', label: t('sales.productsTab') },
+            { id: 'growth', label: t('sales.growthTab') },
+            {
+              id: 'order-issues',
+              label: t('sales.orderIssuesTab'),
+            },
             { id: 'advanced', label: t('sales.advancedTab') },
           ]}
           onChange={setActiveSection}
@@ -80,6 +96,16 @@ export function SalesAnalyticsPage() {
         )}
         {activeSection === 'products' && (
           <ProductsSection analysis={analysis} />
+        )}
+        {activeSection === 'growth' && (
+          <GrowthDriversSection
+            analysis={analysis.sales.growth_drivers}
+          />
+        )}
+        {activeSection === 'order-issues' && (
+          <ProductOrderIssuesSection
+            analysis={analysis.sales.product_order_issues}
+          />
         )}
         {activeSection === 'advanced' && (
           <div
@@ -114,6 +140,26 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
   )
   const monthlyPoints = aggregateRevenueByMonth(dailyPoints)
   const showDaily = shouldShowDailyRevenue(month, monthlyPoints)
+  const periodSummary =
+    year === 'all'
+      ? null
+      : month === 'all'
+        ? analysis.sales.period_summaries.years.find(
+            (item) => item.key === year,
+          ) ?? null
+        : analysis.sales.period_summaries.months.find(
+            (item) => item.key === `${year}-${month}`,
+          ) ?? null
+  const selectedSummary = periodSummary ?? {
+    total_revenue: analysis.summary.total_revenue,
+    total_orders: analysis.summary.total_orders,
+    total_quantity_sold: analysis.summary.total_quantity_sold,
+    average_order_value: analysis.summary.average_order_value,
+  }
+  const selectedRange = periodSummary?.period ?? analysis.period
+  const revenueChange = periodSummary
+    ? comparisonBadge(periodSummary, language, t)
+    : undefined
 
   const chartDescription =
     year === 'all'
@@ -130,48 +176,11 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
       id="sales-panel-revenue"
       role="tabpanel"
     >
-      <section
-        aria-label={t('dashboard.salesSummaryAria')}
-        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-      >
-        <MetricCard
-          icon={CurrencyCircleDollarIcon}
-          label={t('dashboard.totalRevenue')}
-          value={formatVnd(analysis.summary.total_revenue, language)}
-        />
-        <MetricCard
-          icon={CurrencyCircleDollarIcon}
-          label={t('dashboard.averageOrderValue')}
-          value={formatVnd(
-            analysis.summary.average_order_value,
-            language,
-          )}
-        />
-        <MetricCard
-          icon={ShoppingBagOpenIcon}
-          label={t('sales.grossRevenue')}
-          value={formatVnd(analysis.sales.gross_revenue, language)}
-        />
-        <MetricCard
-          helper={t('sales.discountRateHelper', {
-            value: `${formatPercent(
-              analysis.sales.discount_rate_percent,
-              1,
-              false,
-              language,
-            )}%`,
-          })}
-          icon={PackageIcon}
-          label={t('sales.totalDiscount')}
-          value={formatVnd(analysis.sales.total_discount, language)}
-        />
-      </section>
-
       <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <SectionHeading
             description={chartDescription}
-            title={t('sales.revenueOverTime')}
+            title={t('sales.periodFilterTitle')}
           />
           <div className="grid gap-3 sm:grid-cols-2">
             <label className="text-xs font-bold text-slate-600">
@@ -217,6 +226,57 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
             </label>
           </div>
         </div>
+      </section>
+
+      <section
+        aria-label={t('dashboard.salesSummaryAria')}
+        className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <MetricCard
+          change={revenueChange}
+          featured
+          helper={t('sales.selectedPeriodRange', {
+            from: formatDate(selectedRange.from, language),
+            to: formatDate(selectedRange.to, language),
+          })}
+          icon={CurrencyCircleDollarIcon}
+          label={t('sales.periodRevenue')}
+          value={formatVnd(selectedSummary.total_revenue, language)}
+        />
+        <MetricCard
+          helper={t('sales.completedOrdersHelper')}
+          icon={ShoppingBagOpenIcon}
+          label={t('sales.completedOrders')}
+          value={formatInteger(
+            selectedSummary.total_orders,
+            language,
+          )}
+        />
+        <MetricCard
+          helper={t('sales.unitsSoldHelper')}
+          icon={PackageIcon}
+          label={t('sales.unitsSold')}
+          value={formatInteger(
+            selectedSummary.total_quantity_sold,
+            language,
+          )}
+        />
+        <MetricCard
+          helper={t('sales.averageOrderValueHelper')}
+          icon={CurrencyCircleDollarIcon}
+          label={t('dashboard.averageOrderValue')}
+          value={formatVnd(
+            selectedSummary.average_order_value,
+            language,
+          )}
+        />
+      </section>
+
+      <section className="data-panel mt-6 rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
+        <SectionHeading
+          description={chartDescription}
+          title={t('sales.revenueOverTime')}
+        />
         <div className="mt-5">
           {showDaily ? (
             <RevenueLineChart data={dailyPoints} />
@@ -326,6 +386,53 @@ function RevenueSection({ analysis }: { analysis: AnalysisDetail }) {
       </div>
     </div>
   )
+}
+
+function comparisonBadge(
+  summary: SalesPeriodSummary,
+  language: 'en' | 'vi',
+  t: (key: string, values?: Record<string, string | number>) => string,
+) {
+  const comparison = summary.comparison
+  if (!comparison.available || comparison.revenue_change === null) {
+    return undefined
+  }
+
+  const tone =
+    comparison.revenue_change > 0
+      ? 'positive'
+      : comparison.revenue_change < 0
+        ? 'negative'
+        : 'neutral'
+  const periodKey =
+    summary.period_type === 'month'
+      ? 'sales.previousMonth'
+      : 'sales.previousYear'
+  const value =
+    comparison.growth_rate_percent === null
+      ? formatSignedVnd(comparison.revenue_change, language)
+      : `${formatPercent(
+          comparison.growth_rate_percent,
+          1,
+          true,
+          language,
+        )}%`
+
+  return {
+    label: t('sales.changeVsPrevious', {
+      value,
+      period: t(periodKey),
+    }),
+    tone,
+  } as const
+}
+
+function formatSignedVnd(
+  value: number,
+  language: 'en' | 'vi',
+) {
+  if (value === 0) return formatVnd(0, language)
+  return `${value > 0 ? '+' : '−'}${formatVnd(Math.abs(value), language)}`
 }
 
 function ProductsSection({ analysis }: { analysis: AnalysisDetail }) {

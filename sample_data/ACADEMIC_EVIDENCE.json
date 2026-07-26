@@ -1,13 +1,17 @@
 {
-  "analysis_contract_version": "3.0",
+  "analysis_contract_version": "5.0",
+  "dataset_cutoff_date": "2026-06-30",
+  "dataset_suite_version": "2.1",
   "datasets": {
     "association_ground_truth": {
-      "confidence_p001_to_p002_percent": 60.0,
+      "confidence_percent": 60.0,
       "eligible_completed_orders": 100,
       "input_rows": 130,
       "lift": 1.5,
       "pair_order_count": 30,
-      "support_percent": 30.0
+      "source_product_id": "AS-P001",
+      "support_percent": 30.0,
+      "target_product_id": "AS-P002"
     },
     "cohort_ground_truth": {
       "input_rows": 57,
@@ -22,62 +26,165 @@
       ]
     },
     "integrated_365_days": {
-      "candidate_mae": {
-        "linear_trend_30_days": 7085566.71,
-        "moving_average_7_days": 5659224.61,
-        "seasonal_naive_7_days": 5981357.14,
-        "weekday_average_4_weeks": 6016406.25
-      },
       "cohort_count": 10,
-      "fold_count": 8,
+      "growth_drivers": {
+        "month": {
+          "available": true,
+          "net_revenue_change": -184270000,
+          "top_product_decrease": "P002",
+          "top_product_increase": null
+        },
+        "year": {
+          "available": false,
+          "net_revenue_change": null,
+          "top_product_decrease": null,
+          "top_product_increase": null
+        }
+      },
       "history_days": 365,
-      "input_rows": 21277,
-      "model_mae": 5659224.61,
-      "model_smape_percent": 28.501206,
-      "observed_backtest_coverage_percent": 80.357143,
-      "reliability": "medium",
-      "selected_method": "moving_average_7_days",
-      "selection_reason": "LOWEST_MAE",
-      "top_association_lift": 3.176403,
-      "total_revenue": 5177265000,
-      "uncertainty_absolute_error_quantile": 11533286
+      "horizons": {
+        "30": {
+          "available": true,
+          "candidate_primary_mae": {
+            "linear_trend_30_days": 184825250.62,
+            "moving_average_7_days": 76262657.5,
+            "seasonal_naive_7_days": 77350875.0,
+            "weekday_average_4_weeks": 88062968.75
+          },
+          "change_vs_previous_period_percent": -1.493245,
+          "daily_error_quantile": 6186000,
+          "fold_count": 8,
+          "forecast_total": 440206000,
+          "model_primary_mae": 77350875.0,
+          "model_primary_smape_percent": 16.930069,
+          "observed_daily_coverage_percent": 80.416667,
+          "observed_total_coverage_percent": 87.5,
+          "primary_metric": "total_mae",
+          "reliability": "high",
+          "selected_method": "seasonal_naive_7_days",
+          "selection_reason": "SIMPLER_WITHIN_FIVE_PERCENT",
+          "total_error_quantile": 115271000
+        },
+        "7": {
+          "available": true,
+          "candidate_primary_mae": {
+            "linear_trend_30_days": 8188594.32,
+            "moving_average_7_days": 6301885.21,
+            "seasonal_naive_7_days": 6222839.29,
+            "weekday_average_4_weeks": 6658513.39
+          },
+          "change_vs_previous_period_percent": 0.0,
+          "daily_error_quantile": 12625000,
+          "fold_count": 8,
+          "forecast_total": 104109000,
+          "model_primary_mae": 6222839.29,
+          "model_primary_smape_percent": 32.225245,
+          "observed_daily_coverage_percent": 80.357143,
+          "observed_total_coverage_percent": 87.5,
+          "primary_metric": "daily_mae",
+          "reliability": "medium",
+          "selected_method": "seasonal_naive_7_days",
+          "selection_reason": "LOWEST_PRIMARY_ERROR",
+          "total_error_quantile": 74374000
+        }
+      },
+      "input_rows": 21313,
+      "top_association_lift": 3.289346,
+      "total_revenue": 5223934000
     },
     "regression_60_days": {
-      "candidate_mae": {
-        "linear_trend_30_days": 856855.5,
-        "moving_average_7_days": 913316.32,
-        "seasonal_naive_7_days": 1223928.57,
-        "weekday_average_4_weeks": 993125.0
-      },
-      "fold_count": 4,
       "history_days": 60,
-      "input_rows": 393,
-      "model_mae": 856855.5,
-      "model_smape_percent": 42.263957,
-      "observed_backtest_coverage_percent": 82.142857,
-      "reliability": "low",
-      "selected_method": "linear_trend_30_days",
-      "selection_reason": "LOWEST_MAE",
-      "uncertainty_absolute_error_quantile": 1439007
+      "horizons": {
+        "30": {
+          "available": true,
+          "candidate_primary_mae": {},
+          "change_vs_previous_period_percent": 1.416802,
+          "daily_error_quantile": null,
+          "fold_count": 0,
+          "forecast_total": 99304290,
+          "model_primary_mae": null,
+          "model_primary_smape_percent": null,
+          "observed_daily_coverage_percent": null,
+          "observed_total_coverage_percent": null,
+          "primary_metric": "total_mae",
+          "reliability": "unavailable",
+          "selected_method": "moving_average_7_days",
+          "selection_reason": null,
+          "total_error_quantile": null
+        },
+        "7": {
+          "available": true,
+          "candidate_primary_mae": {
+            "linear_trend_30_days": 1134675.5,
+            "moving_average_7_days": 1217765.32,
+            "seasonal_naive_7_days": 1417214.29,
+            "weekday_average_4_weeks": 1083410.71
+          },
+          "change_vs_previous_period_percent": -2.004661,
+          "daily_error_quantile": 1786500,
+          "fold_count": 4,
+          "forecast_total": 22706500,
+          "model_primary_mae": 1083410.71,
+          "model_primary_smape_percent": 35.526306,
+          "observed_daily_coverage_percent": 82.142857,
+          "observed_total_coverage_percent": 100.0,
+          "primary_metric": "daily_mae",
+          "reliability": "medium",
+          "selected_method": "weekday_average_4_weeks",
+          "selection_reason": "LOWEST_PRIMARY_ERROR",
+          "total_error_quantile": 5793500
+        }
+      },
+      "input_rows": 611
     },
     "weekly_ground_truth": {
-      "candidate_mae": {
-        "linear_trend_30_days": 46442.57,
-        "moving_average_7_days": 46938.71,
-        "seasonal_naive_7_days": 0.0,
-        "weekday_average_4_weeks": 0.0
-      },
-      "fold_count": 7,
       "history_days": 84,
-      "input_rows": 84,
-      "model_mae": 0.0,
-      "model_smape_percent": 0.0,
-      "observed_backtest_coverage_percent": 100.0,
-      "reliability": "high",
-      "selected_method": "seasonal_naive_7_days",
-      "selection_reason": "LOWEST_MAE",
-      "uncertainty_absolute_error_quantile": 0
+      "horizons": {
+        "30": {
+          "available": true,
+          "candidate_primary_mae": {
+            "moving_average_7_days": 42500.0,
+            "seasonal_naive_7_days": 0.0
+          },
+          "change_vs_previous_period_percent": 1.497326,
+          "daily_error_quantile": null,
+          "fold_count": 2,
+          "forecast_total": 4745000,
+          "model_primary_mae": 0.0,
+          "model_primary_smape_percent": 0.0,
+          "observed_daily_coverage_percent": null,
+          "observed_total_coverage_percent": null,
+          "primary_metric": "total_mae",
+          "reliability": "medium",
+          "selected_method": "seasonal_naive_7_days",
+          "selection_reason": "LOWEST_PRIMARY_ERROR",
+          "total_error_quantile": null
+        },
+        "7": {
+          "available": true,
+          "candidate_primary_mae": {
+            "linear_trend_30_days": 46442.57,
+            "moving_average_7_days": 46938.71,
+            "seasonal_naive_7_days": 0.0,
+            "weekday_average_4_weeks": 0.0
+          },
+          "change_vs_previous_period_percent": 0.0,
+          "daily_error_quantile": 0,
+          "fold_count": 7,
+          "forecast_total": 1110000,
+          "model_primary_mae": 0.0,
+          "model_primary_smape_percent": 0.0,
+          "observed_daily_coverage_percent": 100.0,
+          "observed_total_coverage_percent": 100.0,
+          "primary_metric": "daily_mae",
+          "reliability": "high",
+          "selected_method": "seasonal_naive_7_days",
+          "selection_reason": "LOWEST_PRIMARY_ERROR",
+          "total_error_quantile": 0
+        }
+      },
+      "input_rows": 84
     }
   },
-  "evidence_version": "1.0"
+  "evidence_version": "2.2"
 }

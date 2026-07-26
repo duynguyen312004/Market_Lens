@@ -1,0 +1,2 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,order_status
+IMC-O001,2026-06-01,IMC-C001,Khach hang IMC-C001,IMC-P001,San pham thieu cot,Danh muc synthetic,1,100000,completed

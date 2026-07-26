@@ -4,9 +4,18 @@ from typing import Any
 import pandas as pd
 
 from backend.app.services.analytics.common import number, percent
+from backend.app.services.analytics.growth_drivers import (
+    calculate_growth_drivers,
+)
+from backend.app.services.analytics.period_summaries import (
+    calculate_period_summaries,
+)
 from backend.app.services.analytics.product_intelligence import (
     calculate_discount_analysis,
     calculate_product_intelligence,
+)
+from backend.app.services.analytics.product_order_issues import (
+    calculate_product_order_issues,
 )
 
 
@@ -134,6 +143,7 @@ def revenue_by_weekday(completed: pd.DataFrame) -> list[dict[str, Any]]:
 
 def build_sales_result(
     *,
+    frame: pd.DataFrame,
     completed: pd.DataFrame,
     daily_revenue: list[dict[str, Any]],
     product_rows: list[dict[str, Any]],
@@ -158,6 +168,7 @@ def build_sales_result(
         "gross_revenue": number(gross_revenue),
         "total_discount": number(total_discount),
         "discount_rate_percent": percent(total_discount, gross_revenue),
+        "period_summaries": calculate_period_summaries(completed),
         "revenue_by_month": revenue_by_month(completed),
         "revenue_by_weekday": revenue_by_weekday(completed),
         "revenue_by_category": category_rows,
@@ -198,6 +209,8 @@ def build_sales_result(
             product_rows,
         ),
         "discount_analysis": calculate_discount_analysis(completed),
+        "product_order_issues": calculate_product_order_issues(frame),
+        "growth_drivers": calculate_growth_drivers(completed),
     }
 
 

@@ -1,3 +1,4 @@
+from copy import deepcopy
 import json
 from pathlib import Path
 from typing import Any
@@ -260,6 +261,7 @@ def test_invalid_json_uses_rule_based_fallback(
     "invalid_text",
     [
         "The forecast backtest reports a low sMAPE for this period.",
+        "Backend reports lift of 1.2 with confidence of 60 percent.",
         "Revenue changed by 37.201646 percent during the period.",
     ],
 )
@@ -322,6 +324,70 @@ def test_unknown_evidence_reference_uses_rule_based_fallback(
     assert generation.report == fallback
 
 
+def test_section_figure_must_belong_to_its_selected_evidence(
+    analysis_result: dict[str, Any],
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["sections"][0]["narrative"] = (
+        "Cửa hàng hoàn tất 362 đơn trong kỳ dữ liệu."
+    )
+    invalid_draft["sections"][0]["evidence_keys"] = [
+        "summary.total_revenue"
+    ]
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code == "AI_INVALID_RESPONSE"
+    assert generation.report["source"] == "rule_based"
+
+
+def test_grouped_count_is_valid_when_selected_as_evidence(
+    analysis_result: dict[str, Any],
+) -> None:
+    analysis_with_grouped_count = deepcopy(analysis_result)
+    analysis_with_grouped_count["summary"]["total_orders"] = 10_920
+    valid_draft = _valid_report()
+    total_orders = analysis_with_grouped_count["summary"]["total_orders"]
+    display_orders = f"{total_orders:,.0f}".replace(",", ".")
+    valid_draft["sections"][0]["narrative"] = (
+        f"Cửa hàng hoàn tất {display_orders} đơn trong kỳ dữ liệu."
+    )
+    valid_draft["sections"][0]["evidence_keys"] = [
+        "summary.total_orders"
+    ]
+
+    generation = _generate_vietnamese_draft(
+        analysis_with_grouped_count,
+        valid_draft,
+    )
+
+    assert generation.warning_code is None
+    assert generation.report["source"] == "ai"
+
+
+def test_unnatural_negative_direction_uses_rule_based_fallback(
+    analysis_result: dict[str, Any],
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["sections"][0]["narrative"] = (
+        "Doanh thu 7 ngày gần nhất giảm -17,3% so với kỳ trước."
+    )
+    invalid_draft["sections"][0]["evidence_keys"] = [
+        "summary.growth_rate_percent"
+    ]
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code == "AI_INVALID_RESPONSE"
+    assert generation.report["source"] == "rule_based"
+
+
 def test_section_cannot_cite_unrelated_evidence(
     analysis_result: dict[str, Any],
 ) -> None:
@@ -350,6 +416,52 @@ def test_section_cannot_cite_unrelated_evidence(
 
     assert generation.warning_code == "AI_INVALID_RESPONSE"
     assert generation.report == fallback
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        "Tăng ngân sách quảng cáo lên 999% trong tuần tới để thử nghiệm.",
+        "Tăng ngân sách quảng cáo trong tuần tới để thử nghiệm.",
+    ],
+)
+def test_ungrounded_or_out_of_scope_recommendation_uses_fallback(
+    analysis_result: dict[str, Any],
+    action: str,
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["recommendations"][0]["action"] = action
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code == "AI_INVALID_RESPONSE"
+    assert generation.report["source"] == "rule_based"
+
+
+def test_risk_figure_must_belong_to_selected_evidence(
+    analysis_result: dict[str, Any],
+) -> None:
+    invalid_draft = _valid_report()
+    invalid_draft["risk_signals"] = [
+        {
+            "code": "TEST_RISK",
+            "severity": "warning",
+            "title": "Rủi ro doanh thu",
+            "description": "Doanh thu có thể giảm 999% trong kỳ tiếp theo.",
+            "evidence_keys": ["summary.total_revenue"],
+        }
+    ]
+
+    generation = _generate_vietnamese_draft(
+        analysis_result,
+        invalid_draft,
+    )
+
+    assert generation.warning_code == "AI_INVALID_RESPONSE"
+    assert generation.report["source"] == "rule_based"
 
 
 def test_timeout_uses_rule_based_fallback(
@@ -460,12 +572,41 @@ def _gemini_config() -> AIReportConfig:
     )
 
 
+def _generate_vietnamese_draft(
+    analysis_result: dict[str, Any],
+    draft: dict[str, Any],
+):
+    def handler(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            200,
+            json={
+                "status": "completed",
+                "output_text": json.dumps(
+                    draft,
+                    ensure_ascii=False,
+                ),
+            },
+        )
+
+    return generate_ai_report(
+        analysis_result=analysis_result,
+        fallback_report=build_rule_based_report(
+            analysis_result,
+            "vi",
+        ),
+        config=_openai_config(),
+        safety_subject="verified-user-id",
+        language="vi",
+        transport=httpx.MockTransport(handler),
+    )
+
+
 def _valid_report() -> dict[str, Any]:
     return {
         "title": "Báo cáo AI về tình hình kinh doanh",
         "executive_summary": (
-            "Shop đạt 113.010.000 VND doanh thu từ 273 đơn completed "
-            "trong kỳ dữ liệu."
+            "Báo cáo tóm tắt tình hình doanh thu, sản phẩm, khách hàng "
+            "và triển vọng kinh doanh trong kỳ dữ liệu."
         ),
         "sections": [
             {

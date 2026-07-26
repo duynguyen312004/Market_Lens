@@ -15,6 +15,9 @@ from backend.app.main import app
 from backend.app.repositories.analyses_repository import (
     get_analyses_repository,
 )
+from backend.app.repositories.import_profiles_repository import (
+    get_import_profiles_repository,
+)
 from backend.app.routers.analyses import (
     create_analysis,
     create_combined_analysis,
@@ -28,6 +31,7 @@ from backend.app.services.ai_report import AIReportGeneration
 
 client = TestClient(app)
 SAMPLE_TEMPLATE = Path("sample_data/sample_sales_template.csv")
+PLATFORM_SAMPLE_DIR = Path("sample_data/platform_samples")
 
 
 class FakeAnalysesRepository:
@@ -46,7 +50,6 @@ class FakeAnalysesRepository:
         }
         self.records[record_id] = record
         return record
-
     def list_analyses_for_user(
         self,
         *,
@@ -130,6 +133,17 @@ class FakeAnalysesRepository:
         return record
 
 
+class FakeImportProfilesRepository:
+    def get_profile_for_user(
+        self,
+        *,
+        profile_id: str,
+        user_id: str,
+    ) -> dict[str, Any] | None:
+        del profile_id, user_id
+        return None
+
+
 @pytest.fixture
 def fake_repository() -> FakeAnalysesRepository:
     repository = FakeAnalysesRepository()
@@ -138,6 +152,9 @@ def fake_repository() -> FakeAnalysesRepository:
         email="owner@example.com",
     )
     app.dependency_overrides[get_analyses_repository] = lambda: repository
+    app.dependency_overrides[get_import_profiles_repository] = (
+        lambda: FakeImportProfilesRepository()
+    )
     app.dependency_overrides[get_settings] = lambda: Settings(
         ai_report_enabled=False,
     )
@@ -216,6 +233,37 @@ def test_upload_rejects_invalid_file_type(
     assert fake_repository.records == {}
 
 
+@pytest.mark.parametrize(
+    ("file_name", "source_type", "expected_revenue"),
+    [
+        ("tiktok_shop_orders_sample.csv", "tiktok", 570_000),
+        ("shopee_orders_sample.csv", "shopee", 800_000),
+    ],
+)
+def test_platform_export_is_normalized_before_analysis(
+    fake_repository: FakeAnalysesRepository,
+    file_name: str,
+    source_type: str,
+    expected_revenue: int,
+) -> None:
+    path = PLATFORM_SAMPLE_DIR / file_name
+
+    response = client.post(
+        "/api/v1/analyses",
+        files={"file": (file_name, path.read_bytes(), "text/csv")},
+        data={"source_type": "auto"},
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert payload["summary"]["total_revenue"] == expected_revenue
+    assert payload["summary"]["total_orders"] == 2
+    assert payload["upload"]["source_type"] == source_type
+    assert payload["upload"]["source_row_count"] == 5
+    assert payload["upload"]["skipped_row_count"] == 1
+    assert "NON_FINAL_ORDERS_SKIPPED" in payload["warnings"]
+
+
 def test_invalid_analysis_id_uses_error_contract(
     fake_repository: FakeAnalysesRepository,
 ) -> None:
@@ -246,6 +294,25 @@ def test_upload_rejects_file_larger_than_limit(
     )
 
     assert response.status_code == 400
+    assert response.json()["error"]["code"] == "FILE_TOO_LARGE"
+    assert fake_repository.records == {}
+
+
+def test_request_body_limit_rejects_before_multipart_processing(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    response = client.post(
+        "/api/v1/analyses",
+        files={
+            "file": (
+                "sales.csv",
+                b"x" * (12 * 1024 * 1024),
+                "text/csv",
+            )
+        },
+    )
+
+    assert response.status_code == 413
     assert response.json()["error"]["code"] == "FILE_TOO_LARGE"
     assert fake_repository.records == {}
 
@@ -292,18 +359,18 @@ def test_upload_valid_csv_persists_and_returns_analysis(
     payload = response.json()
     assert payload["file_name"] == "sales.csv"
     assert payload["upload_mode"] == "single"
-    assert payload["contract_version"] == "3.0"
+    assert payload["contract_version"] == "5.0"
     assert payload["source_file_count"] == 1
     assert payload["upload"]["mode"] == "single"
     assert payload["row_count"] == 4
     assert payload["summary"] == {
-        "total_revenue": 740_000,
+        "total_revenue": 926_000,
         "total_orders": 2,
         "total_customers": 2,
         "total_quantity_sold": 4,
         "growth_rate_percent": None,
-        "average_order_value": 370_000,
-        "average_revenue_per_customer": 370_000,
+        "average_order_value": 463_000,
+        "average_revenue_per_customer": 463_000,
     }
     assert payload["orders"]["by_status"] == {
         "completed": 2,
@@ -325,7 +392,10 @@ def test_upload_valid_csv_persists_and_returns_analysis(
     assert associations["observed_pair_count"] == 1
     assert payload["customers"]["cohort_analysis"]["available"] is False
     assert payload["sales"]["discount_analysis"]["discount_amount"] == 30_000
-    assert payload["forecast"]["available"] is False
+    assert all(
+        horizon["available"] is False
+        for horizon in payload["forecast"]["horizons"]
+    )
     assert payload["report"]["source"] == "rule_based"
     assert len(fake_repository.records) == 1
 
@@ -350,19 +420,72 @@ def test_combined_upload_persists_one_analysis_atomically(
     assert payload["upload_mode"] == "combined"
     assert payload["source_file_count"] == 2
     assert payload["row_count"] == 4
-    assert payload["summary"]["total_revenue"] == 740_000
+    assert payload["summary"]["total_revenue"] == 926_000
     assert payload["upload"] == {
         "mode": "combined",
         "file_count": 2,
         "source_files": [
-            {"file_name": "first.csv", "row_count": 2},
-            {"file_name": "second.csv", "row_count": 2},
+            {
+                "file_name": "first.csv",
+                "row_count": 2,
+                "source_type": "marketlens",
+                "source_row_count": 2,
+                "skipped_row_count": 0,
+            },
+            {
+                "file_name": "second.csv",
+                "row_count": 2,
+                "source_type": "marketlens",
+                "source_row_count": 2,
+                "skipped_row_count": 0,
+            },
         ],
         "source_row_count": 4,
         "effective_row_count": 4,
         "duplicate_order_count": 0,
         "duplicate_row_count": 0,
+        "source_type": "marketlens",
+        "import_profile_id": None,
+        "header_fingerprint": (
+            "2ac32f682347911f887217ca57fb3a7a001a93ae4a09e50d8c25b19ccb3fc9ad"
+        ),
+        "skipped_row_count": 0,
+        "capabilities": {
+            "sales_analytics": True,
+            "product_analytics": True,
+            "customer_analytics": True,
+            "category_analytics": True,
+            "discount_analytics": True,
+            "cancellation_return_analysis": True,
+        },
     }
+    assert len(fake_repository.records) == 1
+
+
+def test_combined_auto_detects_each_platform_file_independently(
+    fake_repository: FakeAnalysesRepository,
+) -> None:
+    shopee = PLATFORM_SAMPLE_DIR / "shopee_orders_sample.csv"
+    tiktok = PLATFORM_SAMPLE_DIR / "tiktok_shop_orders_sample.csv"
+
+    response = client.post(
+        "/api/v1/analyses/combined",
+        files=[
+            ("files", (shopee.name, shopee.read_bytes(), "text/csv")),
+            ("files", (tiktok.name, tiktok.read_bytes(), "text/csv")),
+        ],
+        data={"source_type": "auto"},
+    )
+
+    assert response.status_code == 201
+    payload = response.json()
+    assert {
+        item["source_type"]
+        for item in payload["upload"]["source_files"]
+    } == {"shopee", "tiktok"}
+    assert payload["upload"]["source_type"] == "mixed"
+    assert payload["upload"]["source_row_count"] == 10
+    assert payload["upload"]["skipped_row_count"] == 2
     assert len(fake_repository.records) == 1
 
 
@@ -382,7 +505,7 @@ def test_combined_upload_rejects_invalid_second_file_without_persisting(
 
     assert response.status_code == 400
     payload = response.json()["error"]
-    assert payload["code"] == "INVALID_FILE_COLUMNS"
+    assert payload["code"] == "IMPORT_SOURCE_NOT_DETECTED"
     assert payload["details"]["file_name"] == "invalid.csv"
     assert fake_repository.records == {}
 
@@ -441,10 +564,10 @@ def test_combined_upload_rejects_conflicting_order_without_persisting(
 ) -> None:
     original = SAMPLE_TEMPLATE.read_text(encoding="utf-8")
     changed = original.replace(
-        "DH0001,2026-07-01,C001,Nguyen Van A,P001,Ao thun basic,"
-        "Thoi trang,2,150000,20000,completed",
-        "DH0001,2026-07-01,C001,Nguyen Van A,P001,Ao thun basic,"
-        "Thoi trang,3,150000,20000,completed",
+        "TPL-O001,2026-06-01,TPL-C001,Khach hang mau 001,TPL-P001,"
+        "Ao thun co ban,Thoi trang,2,159000,20000,completed",
+        "TPL-O001,2026-06-01,TPL-C001,Khach hang mau 001,TPL-P001,"
+        "Ao thun co ban,Thoi trang,3,159000,20000,completed",
     )
     response = client.post(
         "/api/v1/analyses/combined",
@@ -457,7 +580,7 @@ def test_combined_upload_rejects_conflicting_order_without_persisting(
     assert response.status_code == 400
     payload = response.json()["error"]
     assert payload["code"] == "CONFLICTING_DATA_ACROSS_FILES"
-    assert payload["details"]["errors"][0]["identifier"] == "DH0001"
+    assert payload["details"]["errors"][0]["identifier"] == "TPL-O001"
     assert fake_repository.records == {}
 
 
@@ -636,7 +759,7 @@ def test_list_get_and_delete_analysis(
 
     detail_response = client.get(f"/api/v1/analyses/{analysis_id}")
     assert detail_response.status_code == 200
-    assert detail_response.json()["summary"]["total_revenue"] == 740_000
+    assert detail_response.json()["summary"]["total_revenue"] == 926_000
 
     delete_response = client.delete(f"/api/v1/analyses/{analysis_id}")
     assert delete_response.status_code == 204

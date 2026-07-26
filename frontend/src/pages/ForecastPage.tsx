@@ -5,6 +5,7 @@ import {
   CloudArrowUpIcon,
   InfoIcon,
 } from '@phosphor-icons/react'
+import { useState } from 'react'
 import { Link } from 'react-router'
 
 import type {
@@ -20,6 +21,10 @@ import {
 import { ForecastRevenueChart } from '../components/analytics/Charts'
 import { ForecastMethodologySection } from '../components/analytics/ForecastMethodologySection'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
+import {
+  getDatePeriod,
+  getTrailingPeriodComparison,
+} from '../features/analysis/presentation'
 import {
   buildForecastChartData,
   getForecastMethodLabel,
@@ -44,10 +49,18 @@ const reliabilityClasses = {
 export function ForecastPage() {
   const { t } = useLanguage()
   const { analysis, error, isEmpty, isLoading, retry } = useCurrentAnalysis()
+  const [selectedHorizon, setSelectedHorizon] = useState<7 | 30>(7)
 
   if (isLoading) return <AnalysisLoadingState />
   if (error) return <AnalysisErrorState error={error} onRetry={retry} />
   if (isEmpty || !analysis) {
+    return <AnalysisEmptyState title={t('forecast.noData')} />
+  }
+  const forecast =
+    analysis.forecast.horizons.find(
+      (item) => item.horizon_days === selectedHorizon,
+    ) ?? analysis.forecast.horizons[0]
+  if (!forecast) {
     return <AnalysisEmptyState title={t('forecast.noData')} />
   }
 
@@ -60,19 +73,65 @@ export function ForecastPage() {
           title={t('forecast.title')}
         />
 
-        {!analysis.forecast.available ? (
-          <UnavailableForecast historyDays={analysis.forecast.history_days} />
+        <ForecastHorizonPicker
+          onChange={setSelectedHorizon}
+          selectedHorizon={selectedHorizon}
+        />
+
+        {!forecast.available ? (
+          <UnavailableForecast forecast={forecast} />
         ) : (
-          <AvailableForecast analysis={analysis} />
+          <AvailableForecast analysis={analysis} forecast={forecast} />
         )}
       </div>
     </main>
   )
 }
 
-function UnavailableForecast({ historyDays }: { historyDays: number }) {
+function ForecastHorizonPicker({
+  onChange,
+  selectedHorizon,
+}: {
+  onChange: (value: 7 | 30) => void
+  selectedHorizon: 7 | 30
+}) {
   const { t } = useLanguage()
-  const missingDays = Math.max(0, 14 - historyDays)
+  return (
+    <div className="mt-6">
+      <p className="mb-2 text-xs font-bold text-slate-600">
+        {t('forecast.horizonPicker')}
+      </p>
+      <div
+        className="flex w-fit rounded-xl border border-slate-200 bg-white p-1"
+        role="group"
+      >
+        {([7, 30] as const).map((days) => (
+          <button
+            aria-pressed={selectedHorizon === days}
+            className={[
+              'rounded-lg px-5 py-2.5 text-xs font-extrabold transition',
+              selectedHorizon === days
+                ? 'bg-indigo-600 text-white'
+                : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900',
+            ].join(' ')}
+            key={days}
+            onClick={() => onChange(days)}
+            type="button"
+          >
+            {t('forecast.horizonOption', { count: days })}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function UnavailableForecast({ forecast }: { forecast: ForecastResult }) {
+  const { t } = useLanguage()
+  const missingDays = Math.max(
+    0,
+    forecast.minimum_history_days - forecast.history_days,
+  )
 
   return (
     <div className="mt-7 grid gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(19rem,0.85fr)]">
@@ -85,13 +144,20 @@ function UnavailableForecast({ historyDays }: { historyDays: number }) {
           />
         </span>
         <p className="mt-6 text-sm font-extrabold text-amber-700">
-          {t('forecast.requiredDays', { current: historyDays })}
+          {t('forecast.historyProgress', {
+            current: forecast.history_days,
+            minimum: forecast.minimum_history_days,
+          })}
         </p>
         <h2 className="mt-1.5 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
           {t('forecast.insufficientTitle')}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-500">
-          {t('forecast.insufficientDesc', { count: missingDays })}
+          {t('forecast.insufficientDesc', {
+            current: forecast.history_days,
+            minimum: forecast.minimum_history_days,
+            missing: missingDays,
+          })}
         </p>
         <Link
           className="mt-6 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-5 py-3 text-xs font-black text-white shadow-md shadow-indigo-500/20 transition hover:bg-indigo-700 active:translate-y-px"
@@ -106,16 +172,16 @@ function UnavailableForecast({ historyDays }: { historyDays: number }) {
         <h2 className="font-black text-slate-900">{t('forecast.rulesTitle')}</h2>
         <dl className="mt-4 divide-y divide-slate-100 text-xs">
           <ForecastRule
-            description={t('forecast.ruleUnder14')}
-            label={t('forecast.ruleUnder14Label')}
+            description={t('forecast.rule7Days')}
+            label={t('forecast.rule7DaysLabel')}
           />
           <ForecastRule
-            description={t('forecast.rule14To27')}
-            label={t('forecast.rule14To27Label')}
+            description={t('forecast.rule30Days')}
+            label={t('forecast.rule30DaysLabel')}
           />
           <ForecastRule
-            description={t('forecast.rule28Plus')}
-            label={t('forecast.rule28PlusLabel')}
+            description={t('forecast.ruleTesting')}
+            label={t('forecast.ruleTestingLabel')}
           />
         </dl>
         <div className="mt-5 flex items-start gap-2.5 rounded-xl bg-slate-50 p-4 text-xs leading-relaxed text-slate-500">
@@ -147,14 +213,23 @@ function ForecastRule({
   )
 }
 
-function AvailableForecast({ analysis }: { analysis: AnalysisDetail }) {
-  const { forecast, revenue_by_date } = analysis
+function AvailableForecast({
+  analysis,
+  forecast,
+}: {
+  analysis: AnalysisDetail
+  forecast: ForecastResult
+}) {
+  const { revenue_by_date } = analysis
   const chartData = buildForecastChartData(revenue_by_date, forecast)
 
   return (
     <div className="mt-6 space-y-6">
-      <ForecastSummary forecast={forecast} />
-      <ForecastChartSection data={chartData} />
+      <ForecastSummary
+        forecast={forecast}
+        revenueByDate={revenue_by_date}
+      />
+      <ForecastChartSection data={chartData} forecast={forecast} />
       <DailyForecastSection forecast={forecast} />
       <ForecastMethodologySection forecast={forecast} />
       <ForecastDisclaimer />
@@ -162,22 +237,38 @@ function AvailableForecast({ analysis }: { analysis: AnalysisDetail }) {
   )
 }
 
-function ForecastSummary({ forecast }: { forecast: ForecastResult }) {
+function ForecastSummary({
+  forecast,
+  revenueByDate,
+}: {
+  forecast: ForecastResult
+  revenueByDate: AnalysisDetail['revenue_by_date']
+}) {
   const { language, t } = useLanguage()
   const reliabilityTone = getForecastReliabilityTone(
     forecast.evaluation.reliability,
   )
-  const changeLabel =
-    forecast.change_vs_last_7_days_percent === null
-      ? t('forecast.noComparison')
-      : t('forecast.vsLast7', {
-          value: formatPercent(
-            forecast.change_vs_last_7_days_percent,
-            1,
-            true,
-            language,
-          ),
-        })
+  const forecastPeriod = getDatePeriod(forecast.points)
+  const actualComparison = getTrailingPeriodComparison(
+    revenueByDate,
+    forecast.horizon_days,
+  )
+  const actualPeriod = actualComparison?.current ?? null
+  const forecastPeriodValue = forecastPeriod
+    ? t('forecast.periodValue', {
+        count: forecast.horizon_days,
+        from: formatDate(forecastPeriod.from, language),
+        to: formatDate(forecastPeriod.to, language),
+      })
+    : t('common.notAvailable')
+  const comparisonKey =
+    forecast.change_vs_previous_period_percent === null
+      ? null
+      : forecast.change_vs_previous_period_percent > 0
+        ? 'forecast.comparisonHigher'
+        : forecast.change_vs_previous_period_percent < 0
+          ? 'forecast.comparisonLower'
+          : 'forecast.comparisonUnchanged'
 
   return (
     <section
@@ -190,13 +281,61 @@ function ForecastSummary({ forecast }: { forecast: ForecastResult }) {
             <ChartLineUpIcon aria-hidden="true" size={20} weight="duotone" />
             <span>{t('forecast.expectedRevenue')}</span>
           </div>
+          <p className="mt-2 text-sm font-semibold text-indigo-100">
+            {forecastPeriodValue}
+          </p>
           <p className="mt-3 break-words text-3xl font-black tracking-tight sm:text-4xl">
             {forecast.forecast_total !== null
               ? formatVnd(forecast.forecast_total, language)
               : t('common.notAvailable')}
           </p>
-          <p className="mt-3 inline-block max-w-full rounded-lg border border-white/20 bg-white/10 px-3 py-1.5 text-xs font-bold leading-relaxed text-white">
-            {changeLabel}
+          <div className="mt-4 rounded-xl border border-white/15 bg-white/10 p-3">
+            <p className="text-xs font-bold text-indigo-100">
+              {t('forecast.comparisonLabel')}
+            </p>
+            <p className="mt-1 text-base font-extrabold text-white">
+              {comparisonKey &&
+              forecast.change_vs_previous_period_percent !== null
+                ? t(comparisonKey, {
+                    value: formatPercent(
+                      Math.abs(
+                        forecast.change_vs_previous_period_percent,
+                      ),
+                      1,
+                      false,
+                      language,
+                    ),
+                  })
+                : t('forecast.noComparison')}
+            </p>
+            {actualPeriod && forecast.previous_period_total !== null && (
+              <p className="mt-1 text-sm leading-6 text-indigo-100">
+                {t('forecast.comparisonActualPeriod', {
+                  amount: formatVnd(
+                    forecast.previous_period_total,
+                    language,
+                  ),
+                  from: formatDate(actualPeriod.from, language),
+                  to: formatDate(actualPeriod.to, language),
+                })}
+              </p>
+            )}
+          </div>
+          <p className="mt-4 text-sm font-bold leading-6 text-indigo-100">
+            {t('forecast.totalRange')}:{' '}
+            {forecast.total_lower_bound !== null &&
+            forecast.total_upper_bound !== null
+              ? t('common.dateRange', {
+                  from: formatVnd(
+                    forecast.total_lower_bound,
+                    language,
+                  ),
+                  to: formatVnd(
+                    forecast.total_upper_bound,
+                    language,
+                  ),
+                })
+              : t('forecast.totalRangeUnavailable')}
           </p>
         </div>
 
@@ -223,8 +362,8 @@ function ForecastSummary({ forecast }: { forecast: ForecastResult }) {
       <dl className="grid border-t border-slate-100 sm:grid-cols-3 sm:divide-x sm:divide-slate-100">
         <SummaryDetail
           icon={CalendarDotsIcon}
-          label={t('forecast.horizon')}
-          value={t('forecast.days', { count: forecast.forecast_days })}
+          label={t('forecast.forecastPeriod')}
+          value={forecastPeriodValue}
         />
         <SummaryDetail
           icon={ChartLineUpIcon}
@@ -233,7 +372,7 @@ function ForecastSummary({ forecast }: { forecast: ForecastResult }) {
         />
         <SummaryDetail
           icon={ClockCounterClockwiseIcon}
-          label={t('forecast.historicalInput')}
+          label={t('forecast.historyAvailable')}
           value={t('forecast.days', { count: forecast.history_days })}
         />
       </dl>
@@ -267,8 +406,10 @@ function SummaryDetail({
 
 function ForecastChartSection({
   data,
+  forecast,
 }: {
   data: ReturnType<typeof buildForecastChartData>
+  forecast: ForecastResult
 }) {
   const { t } = useLanguage()
   const hasExpectedRange = data.some((point) => point.interval !== undefined)
@@ -277,13 +418,14 @@ function ForecastChartSection({
     <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
       <div>
         <h2 className="text-lg font-black tracking-tight text-slate-900">
-          {t('forecast.chartTitle')}
+          {t('forecast.chartTitle', { count: forecast.horizon_days })}
         </h2>
         <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">
           {t(
             hasExpectedRange
               ? 'forecast.chartDesc'
               : 'forecast.chartDescWithoutRange',
+            { count: forecast.horizon_days },
           )}
         </p>
       </div>
@@ -319,13 +461,18 @@ function DailyForecastSection({ forecast }: { forecast: ForecastResult }) {
   const { language, t } = useLanguage()
 
   return (
-    <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6">
-      <h2 className="text-lg font-black tracking-tight text-slate-900">
-        {t('forecast.dailyPoints')}
-      </h2>
-      <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">
-        {t('forecast.dailyPointsDesc')}
-      </p>
+    <details
+      className="data-panel group rounded-2xl border border-slate-200/80 bg-white p-5 shadow-xs sm:p-6"
+      open={forecast.horizon_days === 7}
+    >
+      <summary className="cursor-pointer list-none marker:hidden">
+        <h2 className="text-lg font-black tracking-tight text-slate-900">
+          {t('forecast.dailyPoints')}
+        </h2>
+        <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">
+          {t('forecast.dailyPointsDesc')}
+        </p>
+      </summary>
 
       <div className="mt-5 hidden md:block">
         <table className="w-full text-left text-xs">
@@ -391,7 +538,7 @@ function DailyForecastSection({ forecast }: { forecast: ForecastResult }) {
           </article>
         ))}
       </div>
-    </section>
+    </details>
   )
 }
 

@@ -5,10 +5,13 @@ import { supabase } from '../auth/supabase'
 import { resolveApiBaseUrl } from './apiConfig'
 
 export const httpClient = axios.create({
-  baseURL: resolveApiBaseUrl({
-    VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
-    VITE_API_ORIGIN: import.meta.env.VITE_API_ORIGIN,
-  }),
+  baseURL: resolveApiBaseUrl(
+    {
+      VITE_API_BASE_URL: import.meta.env.VITE_API_BASE_URL,
+      VITE_API_ORIGIN: import.meta.env.VITE_API_ORIGIN,
+    },
+    { production: import.meta.env.PROD },
+  ),
   headers: {
     Accept: 'application/json',
   },

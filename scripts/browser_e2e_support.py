@@ -4,15 +4,20 @@ from __future__ import annotations
 
 import os
 import secrets
+import time
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Iterator, cast
+from typing import Callable, Iterator, TypeVar, cast
 
+import httpx
 from supabase import Client, create_client
 from supabase.lib.client_options import SyncClientOptions
 
 from backend.app.core.config import Settings
 from backend.app.core.supabase import get_supabase_client
+
+
+CleanupResult = TypeVar("CleanupResult")
 
 
 @dataclass(frozen=True)
@@ -101,19 +106,38 @@ def user_access_token(user: BrowserE2EUser) -> str:
 
 
 def _cleanup_user(admin: Client, user_id: str) -> None:
-    admin.table("analyses").delete().eq(
-        "user_id",
-        user_id,
-    ).execute()
-    admin.auth.admin.delete_user(user_id)
-    remaining = (
-        admin.table("analyses")
-        .select("id")
-        .eq("user_id", user_id)
-        .execute()
+    _retry_cleanup(
+        lambda: (
+            admin.table("analyses")
+            .delete()
+            .eq("user_id", user_id)
+            .execute()
+        )
+    )
+    _retry_cleanup(lambda: admin.auth.admin.delete_user(user_id))
+    remaining = _retry_cleanup(
+        lambda: (
+            admin.table("analyses")
+            .select("id")
+            .eq("user_id", user_id)
+            .execute()
+        )
     )
     if remaining.data:
         raise RuntimeError("Temporary E2E analyses were not cleaned up.")
+
+
+def _retry_cleanup(
+    operation: Callable[[], CleanupResult],
+) -> CleanupResult:
+    for attempt in range(3):
+        try:
+            return operation()
+        except httpx.HTTPError:
+            if attempt == 2:
+                raise
+            time.sleep(0.5 * (attempt + 1))
+    raise RuntimeError("Cleanup retry loop ended unexpectedly.")
 
 
 def _require_supabase(settings: Settings) -> None:

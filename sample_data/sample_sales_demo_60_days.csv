@@ -1,394 +1,612 @@
-﻿order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
-DH00001,2026-05-01,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00002,2026-05-01,C022,Khach hang 022,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00003,2026-05-01,C008,Khach hang 008,P005,Tui tote,Phu kien,1,90000,20000,completed
-DH00004,2026-05-01,C014,Khach hang 014,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00005,2026-05-01,C025,Khach hang 025,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00006,2026-05-01,C025,Khach hang 025,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00007,2026-05-01,C020,Khach hang 020,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00008,2026-05-02,C018,Khach hang 018,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00009,2026-05-02,C007,Khach hang 007,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00010,2026-05-03,C028,Khach hang 028,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00011,2026-05-03,C006,Khach hang 006,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00012,2026-05-03,C020,Khach hang 020,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00013,2026-05-04,C030,Khach hang 030,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00014,2026-05-04,C008,Khach hang 008,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00015,2026-05-04,C029,Khach hang 029,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00016,2026-05-04,C005,Khach hang 005,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00017,2026-05-05,C019,Khach hang 019,P005,Tui tote,Phu kien,3,90000,0,completed
-DH00017,2026-05-05,C019,Khach hang 019,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00018,2026-05-05,C025,Khach hang 025,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00019,2026-05-05,C020,Khach hang 020,P004,Tai nghe Bluetooth,Dien tu,3,490000,20000,completed
-DH00020,2026-05-05,C009,Khach hang 009,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00021,2026-05-05,C025,Khach hang 025,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00022,2026-05-05,C015,Khach hang 015,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00023,2026-05-05,C025,Khach hang 025,P005,Tui tote,Phu kien,2,90000,0,cancelled
-DH00024,2026-05-06,C017,Khach hang 017,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00025,2026-05-06,C030,Khach hang 030,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00026,2026-05-06,C029,Khach hang 029,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00027,2026-05-06,C003,Khach hang 003,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00027,2026-05-06,C003,Khach hang 003,P005,Tui tote,Phu kien,3,90000,0,completed
-DH00028,2026-05-06,C009,Khach hang 009,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00028,2026-05-06,C009,Khach hang 009,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00029,2026-05-06,C015,Khach hang 015,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00029,2026-05-06,C015,Khach hang 015,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00030,2026-05-06,C008,Khach hang 008,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00031,2026-05-07,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00032,2026-05-07,C007,Khach hang 007,P006,Den ban mini,Gia dung,1,220000,10000,cancelled
-DH00033,2026-05-08,C026,Khach hang 026,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00033,2026-05-08,C026,Khach hang 026,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00034,2026-05-08,C028,Khach hang 028,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00035,2026-05-08,C013,Khach hang 013,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00036,2026-05-09,C014,Khach hang 014,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00037,2026-05-09,C015,Khach hang 015,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00038,2026-05-09,C003,Khach hang 003,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00039,2026-05-10,C006,Khach hang 006,P001,Ao thun basic,Thoi trang,2,150000,10000,completed
-DH00039,2026-05-10,C006,Khach hang 006,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00040,2026-05-10,C022,Khach hang 022,P002,Quan jean,Thoi trang,3,350000,20000,completed
-DH00040,2026-05-10,C022,Khach hang 022,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00041,2026-05-11,C011,Khach hang 011,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00042,2026-05-11,C006,Khach hang 006,P005,Tui tote,Phu kien,1,90000,20000,completed
-DH00043,2026-05-11,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00044,2026-05-11,C019,Khach hang 019,P005,Tui tote,Phu kien,2,90000,20000,completed
-DH00045,2026-05-11,C017,Khach hang 017,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00046,2026-05-11,C009,Khach hang 009,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00046,2026-05-11,C009,Khach hang 009,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00047,2026-05-11,C019,Khach hang 019,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00048,2026-05-12,C029,Khach hang 029,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00049,2026-05-12,C023,Khach hang 023,P005,Tui tote,Phu kien,2,90000,20000,returned
-DH00050,2026-05-12,C001,Khach hang 001,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00051,2026-05-12,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00052,2026-05-13,C023,Khach hang 023,P002,Quan jean,Thoi trang,2,350000,20000,completed
-DH00053,2026-05-13,C016,Khach hang 016,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00054,2026-05-13,C002,Khach hang 002,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00055,2026-05-14,C024,Khach hang 024,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00055,2026-05-14,C024,Khach hang 024,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00056,2026-05-14,C019,Khach hang 019,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00057,2026-05-14,C029,Khach hang 029,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00058,2026-05-15,C029,Khach hang 029,P005,Tui tote,Phu kien,1,90000,0,cancelled
-DH00058,2026-05-15,C029,Khach hang 029,P002,Quan jean,Thoi trang,3,350000,0,cancelled
-DH00059,2026-05-15,C029,Khach hang 029,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00059,2026-05-15,C029,Khach hang 029,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00060,2026-05-15,C009,Khach hang 009,P006,Den ban mini,Gia dung,2,220000,10000,completed
-DH00061,2026-05-15,C008,Khach hang 008,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00062,2026-05-15,C008,Khach hang 008,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00063,2026-05-15,C025,Khach hang 025,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00064,2026-05-16,C001,Khach hang 001,P003,Binh nuoc,Gia dung,3,120000,0,completed
-DH00065,2026-05-16,C002,Khach hang 002,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00066,2026-05-16,C014,Khach hang 014,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,cancelled
-DH00067,2026-05-16,C023,Khach hang 023,P001,Ao thun basic,Thoi trang,1,150000,0,cancelled
-DH00067,2026-05-16,C023,Khach hang 023,P005,Tui tote,Phu kien,1,90000,0,cancelled
-DH00068,2026-05-17,C030,Khach hang 030,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00069,2026-05-17,C017,Khach hang 017,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00070,2026-05-17,C018,Khach hang 018,P002,Quan jean,Thoi trang,3,350000,0,completed
-DH00071,2026-05-17,C020,Khach hang 020,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00072,2026-05-17,C007,Khach hang 007,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00072,2026-05-17,C007,Khach hang 007,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00073,2026-05-17,C016,Khach hang 016,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00074,2026-05-17,C011,Khach hang 011,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00075,2026-05-18,C001,Khach hang 001,P002,Quan jean,Thoi trang,1,350000,0,returned
-DH00076,2026-05-18,C015,Khach hang 015,P006,Den ban mini,Gia dung,2,220000,10000,completed
-DH00076,2026-05-18,C015,Khach hang 015,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00077,2026-05-18,C021,Khach hang 021,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00078,2026-05-19,C002,Khach hang 002,P001,Ao thun basic,Thoi trang,2,150000,20000,completed
-DH00079,2026-05-19,C018,Khach hang 018,P004,Tai nghe Bluetooth,Dien tu,2,490000,20000,completed
-DH00080,2026-05-19,C014,Khach hang 014,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00080,2026-05-19,C014,Khach hang 014,P004,Tai nghe Bluetooth,Dien tu,2,490000,20000,completed
-DH00081,2026-05-19,C016,Khach hang 016,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00082,2026-05-19,C009,Khach hang 009,P003,Binh nuoc,Gia dung,1,120000,0,cancelled
-DH00083,2026-05-20,C013,Khach hang 013,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00084,2026-05-20,C018,Khach hang 018,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00084,2026-05-20,C018,Khach hang 018,P001,Ao thun basic,Thoi trang,3,150000,0,completed
-DH00085,2026-05-20,C028,Khach hang 028,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,cancelled
-DH00085,2026-05-20,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,2,150000,10000,cancelled
-DH00086,2026-05-21,C024,Khach hang 024,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00087,2026-05-21,C013,Khach hang 013,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00088,2026-05-21,C027,Khach hang 027,P002,Quan jean,Thoi trang,2,350000,20000,completed
-DH00088,2026-05-21,C027,Khach hang 027,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00089,2026-05-21,C003,Khach hang 003,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00089,2026-05-21,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00090,2026-05-21,C011,Khach hang 011,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00090,2026-05-21,C011,Khach hang 011,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00091,2026-05-21,C012,Khach hang 012,P006,Den ban mini,Gia dung,3,220000,0,completed
-DH00092,2026-05-21,C025,Khach hang 025,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00093,2026-05-22,C005,Khach hang 005,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00093,2026-05-22,C005,Khach hang 005,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00094,2026-05-22,C020,Khach hang 020,P002,Quan jean,Thoi trang,1,350000,0,returned
-DH00095,2026-05-22,C030,Khach hang 030,P005,Tui tote,Phu kien,3,90000,10000,completed
-DH00096,2026-05-22,C023,Khach hang 023,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00097,2026-05-23,C023,Khach hang 023,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00098,2026-05-23,C026,Khach hang 026,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00099,2026-05-23,C017,Khach hang 017,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00100,2026-05-24,C012,Khach hang 012,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00100,2026-05-24,C012,Khach hang 012,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00101,2026-05-24,C025,Khach hang 025,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00101,2026-05-24,C025,Khach hang 025,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00102,2026-05-24,C009,Khach hang 009,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00102,2026-05-24,C009,Khach hang 009,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00103,2026-05-24,C006,Khach hang 006,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00103,2026-05-24,C006,Khach hang 006,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00104,2026-05-24,C018,Khach hang 018,P005,Tui tote,Phu kien,1,90000,10000,cancelled
-DH00105,2026-05-24,C016,Khach hang 016,P006,Den ban mini,Gia dung,2,220000,10000,completed
-DH00106,2026-05-25,C003,Khach hang 003,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00107,2026-05-25,C012,Khach hang 012,P005,Tui tote,Phu kien,3,90000,20000,completed
-DH00107,2026-05-25,C012,Khach hang 012,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00108,2026-05-25,C009,Khach hang 009,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00109,2026-05-26,C024,Khach hang 024,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00110,2026-05-26,C025,Khach hang 025,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00111,2026-05-26,C006,Khach hang 006,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00112,2026-05-27,C018,Khach hang 018,P006,Den ban mini,Gia dung,1,220000,10000,cancelled
-DH00113,2026-05-27,C004,Khach hang 004,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00114,2026-05-27,C006,Khach hang 006,P003,Binh nuoc,Gia dung,1,120000,0,cancelled
-DH00115,2026-05-28,C016,Khach hang 016,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00116,2026-05-28,C026,Khach hang 026,P001,Ao thun basic,Thoi trang,1,150000,10000,returned
-DH00117,2026-05-28,C020,Khach hang 020,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00118,2026-05-28,C028,Khach hang 028,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00118,2026-05-28,C028,Khach hang 028,P005,Tui tote,Phu kien,3,90000,0,completed
-DH00119,2026-05-28,C021,Khach hang 021,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00120,2026-05-28,C018,Khach hang 018,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00121,2026-05-29,C010,Khach hang 010,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00122,2026-05-29,C003,Khach hang 003,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00123,2026-05-29,C014,Khach hang 014,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00124,2026-05-29,C027,Khach hang 027,P001,Ao thun basic,Thoi trang,2,150000,20000,completed
-DH00125,2026-05-29,C024,Khach hang 024,P004,Tai nghe Bluetooth,Dien tu,2,490000,10000,completed
-DH00126,2026-05-29,C009,Khach hang 009,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00126,2026-05-29,C009,Khach hang 009,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00127,2026-05-30,C008,Khach hang 008,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00128,2026-05-30,C016,Khach hang 016,P003,Binh nuoc,Gia dung,1,120000,10000,returned
-DH00128,2026-05-30,C016,Khach hang 016,P002,Quan jean,Thoi trang,3,350000,10000,returned
-DH00129,2026-05-30,C012,Khach hang 012,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00129,2026-05-30,C012,Khach hang 012,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00130,2026-05-31,C022,Khach hang 022,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00130,2026-05-31,C022,Khach hang 022,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00131,2026-05-31,C028,Khach hang 028,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00132,2026-05-31,C007,Khach hang 007,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00133,2026-05-31,C007,Khach hang 007,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00134,2026-05-31,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00135,2026-06-01,C018,Khach hang 018,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00136,2026-06-01,C015,Khach hang 015,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00137,2026-06-01,C017,Khach hang 017,P004,Tai nghe Bluetooth,Dien tu,3,490000,0,completed
-DH00138,2026-06-01,C015,Khach hang 015,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00139,2026-06-01,C028,Khach hang 028,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00140,2026-06-02,C009,Khach hang 009,P003,Binh nuoc,Gia dung,2,120000,20000,completed
-DH00141,2026-06-02,C022,Khach hang 022,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00141,2026-06-02,C022,Khach hang 022,P004,Tai nghe Bluetooth,Dien tu,2,490000,10000,completed
-DH00142,2026-06-02,C015,Khach hang 015,P002,Quan jean,Thoi trang,1,350000,10000,returned
-DH00143,2026-06-02,C008,Khach hang 008,P001,Ao thun basic,Thoi trang,2,150000,10000,completed
-DH00143,2026-06-02,C008,Khach hang 008,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00144,2026-06-02,C016,Khach hang 016,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00145,2026-06-02,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,1,150000,0,cancelled
-DH00145,2026-06-02,C028,Khach hang 028,P005,Tui tote,Phu kien,1,90000,0,cancelled
-DH00146,2026-06-02,C003,Khach hang 003,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00146,2026-06-02,C003,Khach hang 003,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00147,2026-06-03,C011,Khach hang 011,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00147,2026-06-03,C011,Khach hang 011,P001,Ao thun basic,Thoi trang,3,150000,0,completed
-DH00148,2026-06-03,C014,Khach hang 014,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00149,2026-06-03,C023,Khach hang 023,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00150,2026-06-03,C012,Khach hang 012,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00151,2026-06-03,C022,Khach hang 022,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00152,2026-06-03,C020,Khach hang 020,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,cancelled
-DH00153,2026-06-04,C009,Khach hang 009,P003,Binh nuoc,Gia dung,1,120000,0,cancelled
-DH00153,2026-06-04,C009,Khach hang 009,P001,Ao thun basic,Thoi trang,2,150000,0,cancelled
-DH00154,2026-06-04,C003,Khach hang 003,P003,Binh nuoc,Gia dung,3,120000,0,completed
-DH00154,2026-06-04,C003,Khach hang 003,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00155,2026-06-04,C007,Khach hang 007,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00155,2026-06-04,C007,Khach hang 007,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00156,2026-06-04,C001,Khach hang 001,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00156,2026-06-04,C001,Khach hang 001,P001,Ao thun basic,Thoi trang,2,150000,10000,completed
-DH00157,2026-06-04,C027,Khach hang 027,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00158,2026-06-04,C020,Khach hang 020,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00159,2026-06-04,C021,Khach hang 021,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00160,2026-06-04,C002,Khach hang 002,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00161,2026-06-05,C014,Khach hang 014,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00162,2026-06-05,C017,Khach hang 017,P002,Quan jean,Thoi trang,2,350000,10000,completed
-DH00163,2026-06-05,C026,Khach hang 026,P006,Den ban mini,Gia dung,2,220000,10000,completed
-DH00164,2026-06-05,C003,Khach hang 003,P002,Quan jean,Thoi trang,2,350000,10000,completed
-DH00165,2026-06-05,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00166,2026-06-05,C004,Khach hang 004,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00166,2026-06-05,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00167,2026-06-05,C016,Khach hang 016,P005,Tui tote,Phu kien,1,90000,20000,cancelled
-DH00168,2026-06-05,C008,Khach hang 008,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00169,2026-06-06,C014,Khach hang 014,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00170,2026-06-06,C004,Khach hang 004,P002,Quan jean,Thoi trang,1,350000,10000,cancelled
-DH00171,2026-06-06,C012,Khach hang 012,P005,Tui tote,Phu kien,2,90000,10000,cancelled
-DH00171,2026-06-06,C012,Khach hang 012,P002,Quan jean,Thoi trang,1,350000,0,cancelled
-DH00172,2026-06-06,C002,Khach hang 002,P002,Quan jean,Thoi trang,3,350000,0,completed
-DH00173,2026-06-06,C004,Khach hang 004,P005,Tui tote,Phu kien,1,90000,0,cancelled
-DH00174,2026-06-06,C013,Khach hang 013,P002,Quan jean,Thoi trang,3,350000,10000,returned
-DH00175,2026-06-06,C003,Khach hang 003,P006,Den ban mini,Gia dung,3,220000,0,completed
-DH00176,2026-06-06,C026,Khach hang 026,P002,Quan jean,Thoi trang,2,350000,0,returned
-DH00177,2026-06-07,C027,Khach hang 027,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00178,2026-06-07,C025,Khach hang 025,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00179,2026-06-07,C005,Khach hang 005,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00180,2026-06-08,C012,Khach hang 012,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00181,2026-06-08,C005,Khach hang 005,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00181,2026-06-08,C005,Khach hang 005,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00182,2026-06-08,C015,Khach hang 015,P005,Tui tote,Phu kien,2,90000,20000,completed
-DH00183,2026-06-09,C015,Khach hang 015,P001,Ao thun basic,Thoi trang,2,150000,10000,returned
-DH00184,2026-06-09,C022,Khach hang 022,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00185,2026-06-09,C011,Khach hang 011,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00186,2026-06-09,C018,Khach hang 018,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,returned
-DH00187,2026-06-09,C017,Khach hang 017,P001,Ao thun basic,Thoi trang,2,150000,20000,completed
-DH00187,2026-06-09,C017,Khach hang 017,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00188,2026-06-10,C015,Khach hang 015,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,completed
-DH00189,2026-06-10,C024,Khach hang 024,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00190,2026-06-10,C005,Khach hang 005,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00190,2026-06-10,C005,Khach hang 005,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00191,2026-06-10,C026,Khach hang 026,P005,Tui tote,Phu kien,3,90000,20000,completed
-DH00192,2026-06-10,C011,Khach hang 011,P004,Tai nghe Bluetooth,Dien tu,2,490000,10000,completed
-DH00193,2026-06-10,C028,Khach hang 028,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00194,2026-06-10,C017,Khach hang 017,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00195,2026-06-11,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00196,2026-06-11,C028,Khach hang 028,P005,Tui tote,Phu kien,2,90000,0,cancelled
-DH00197,2026-06-11,C001,Khach hang 001,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00198,2026-06-11,C012,Khach hang 012,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00199,2026-06-11,C003,Khach hang 003,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00200,2026-06-11,C007,Khach hang 007,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00200,2026-06-11,C007,Khach hang 007,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00201,2026-06-12,C003,Khach hang 003,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00202,2026-06-12,C009,Khach hang 009,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00202,2026-06-12,C009,Khach hang 009,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00203,2026-06-12,C004,Khach hang 004,P004,Tai nghe Bluetooth,Dien tu,2,490000,20000,completed
-DH00204,2026-06-12,C016,Khach hang 016,P001,Ao thun basic,Thoi trang,3,150000,0,completed
-DH00205,2026-06-12,C001,Khach hang 001,P003,Binh nuoc,Gia dung,2,120000,0,cancelled
-DH00206,2026-06-12,C010,Khach hang 010,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00207,2026-06-12,C005,Khach hang 005,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00207,2026-06-12,C005,Khach hang 005,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00208,2026-06-12,C014,Khach hang 014,P004,Tai nghe Bluetooth,Dien tu,2,490000,20000,cancelled
-DH00209,2026-06-13,C019,Khach hang 019,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00209,2026-06-13,C019,Khach hang 019,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00210,2026-06-13,C015,Khach hang 015,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00211,2026-06-13,C019,Khach hang 019,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00211,2026-06-13,C019,Khach hang 019,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00212,2026-06-13,C003,Khach hang 003,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00213,2026-06-13,C012,Khach hang 012,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00214,2026-06-13,C020,Khach hang 020,P006,Den ban mini,Gia dung,3,220000,10000,completed
-DH00215,2026-06-13,C015,Khach hang 015,P006,Den ban mini,Gia dung,3,220000,0,completed
-DH00215,2026-06-13,C015,Khach hang 015,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00216,2026-06-14,C015,Khach hang 015,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00217,2026-06-14,C019,Khach hang 019,P003,Binh nuoc,Gia dung,1,120000,10000,completed
-DH00218,2026-06-14,C002,Khach hang 002,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00219,2026-06-14,C020,Khach hang 020,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00219,2026-06-14,C020,Khach hang 020,P005,Tui tote,Phu kien,1,90000,20000,completed
-DH00220,2026-06-14,C021,Khach hang 021,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00221,2026-06-15,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00222,2026-06-15,C008,Khach hang 008,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00222,2026-06-15,C008,Khach hang 008,P005,Tui tote,Phu kien,2,90000,10000,completed
-DH00223,2026-06-15,C014,Khach hang 014,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00224,2026-06-15,C003,Khach hang 003,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00225,2026-06-15,C024,Khach hang 024,P003,Binh nuoc,Gia dung,2,120000,0,completed
-DH00226,2026-06-15,C010,Khach hang 010,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00226,2026-06-15,C010,Khach hang 010,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00227,2026-06-15,C027,Khach hang 027,P006,Den ban mini,Gia dung,3,220000,20000,completed
-DH00228,2026-06-16,C021,Khach hang 021,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00228,2026-06-16,C021,Khach hang 021,P003,Binh nuoc,Gia dung,1,120000,10000,completed
-DH00229,2026-06-16,C007,Khach hang 007,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00230,2026-06-16,C017,Khach hang 017,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00231,2026-06-16,C020,Khach hang 020,P002,Quan jean,Thoi trang,2,350000,20000,completed
-DH00231,2026-06-16,C020,Khach hang 020,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00232,2026-06-17,C015,Khach hang 015,P004,Tai nghe Bluetooth,Dien tu,2,490000,10000,completed
-DH00233,2026-06-17,C020,Khach hang 020,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00234,2026-06-17,C010,Khach hang 010,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00234,2026-06-17,C010,Khach hang 010,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00235,2026-06-17,C025,Khach hang 025,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00235,2026-06-17,C025,Khach hang 025,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00236,2026-06-17,C028,Khach hang 028,P001,Ao thun basic,Thoi trang,2,150000,20000,completed
-DH00237,2026-06-17,C030,Khach hang 030,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00238,2026-06-17,C003,Khach hang 003,P003,Binh nuoc,Gia dung,1,120000,10000,completed
-DH00239,2026-06-17,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,3,490000,10000,cancelled
-DH00240,2026-06-17,C002,Khach hang 002,P005,Tui tote,Phu kien,3,90000,0,completed
-DH00240,2026-06-17,C002,Khach hang 002,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00241,2026-06-18,C027,Khach hang 027,P002,Quan jean,Thoi trang,1,350000,10000,completed
-DH00242,2026-06-18,C023,Khach hang 023,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00243,2026-06-18,C001,Khach hang 001,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00244,2026-06-18,C017,Khach hang 017,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00244,2026-06-18,C017,Khach hang 017,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00245,2026-06-19,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,1,490000,20000,completed
-DH00246,2026-06-19,C019,Khach hang 019,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00247,2026-06-19,C012,Khach hang 012,P005,Tui tote,Phu kien,2,90000,0,completed
-DH00248,2026-06-19,C017,Khach hang 017,P001,Ao thun basic,Thoi trang,1,150000,20000,cancelled
-DH00249,2026-06-19,C018,Khach hang 018,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,completed
-DH00250,2026-06-19,C012,Khach hang 012,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00251,2026-06-19,C008,Khach hang 008,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00252,2026-06-20,C018,Khach hang 018,P006,Den ban mini,Gia dung,2,220000,10000,completed
-DH00253,2026-06-20,C023,Khach hang 023,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00253,2026-06-20,C023,Khach hang 023,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00254,2026-06-20,C002,Khach hang 002,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00255,2026-06-20,C027,Khach hang 027,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00255,2026-06-20,C027,Khach hang 027,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00256,2026-06-20,C028,Khach hang 028,P003,Binh nuoc,Gia dung,1,120000,10000,completed
-DH00257,2026-06-20,C024,Khach hang 024,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,returned
-DH00257,2026-06-20,C024,Khach hang 024,P003,Binh nuoc,Gia dung,1,120000,20000,returned
-DH00258,2026-06-21,C026,Khach hang 026,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00259,2026-06-21,C018,Khach hang 018,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00260,2026-06-21,C010,Khach hang 010,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00260,2026-06-21,C010,Khach hang 010,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00261,2026-06-21,C020,Khach hang 020,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00261,2026-06-21,C020,Khach hang 020,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00262,2026-06-21,C001,Khach hang 001,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00263,2026-06-21,C003,Khach hang 003,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00264,2026-06-22,C020,Khach hang 020,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00265,2026-06-22,C025,Khach hang 025,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00266,2026-06-22,C021,Khach hang 021,P002,Quan jean,Thoi trang,1,350000,0,returned
-DH00267,2026-06-22,C016,Khach hang 016,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00267,2026-06-22,C016,Khach hang 016,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00268,2026-06-23,C023,Khach hang 023,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00268,2026-06-23,C023,Khach hang 023,P001,Ao thun basic,Thoi trang,2,150000,10000,completed
-DH00269,2026-06-23,C003,Khach hang 003,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00270,2026-06-23,C010,Khach hang 010,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00271,2026-06-23,C026,Khach hang 026,P005,Tui tote,Phu kien,3,90000,0,completed
-DH00272,2026-06-23,C008,Khach hang 008,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00272,2026-06-23,C008,Khach hang 008,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00273,2026-06-23,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,2,490000,20000,returned
-DH00274,2026-06-24,C025,Khach hang 025,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00274,2026-06-24,C025,Khach hang 025,P001,Ao thun basic,Thoi trang,1,150000,20000,completed
-DH00275,2026-06-24,C012,Khach hang 012,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00276,2026-06-24,C014,Khach hang 014,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00277,2026-06-24,C011,Khach hang 011,P003,Binh nuoc,Gia dung,1,120000,0,cancelled
-DH00278,2026-06-24,C028,Khach hang 028,P003,Binh nuoc,Gia dung,3,120000,0,completed
-DH00279,2026-06-24,C005,Khach hang 005,P005,Tui tote,Phu kien,1,90000,0,completed
-DH00280,2026-06-24,C019,Khach hang 019,P002,Quan jean,Thoi trang,2,350000,20000,completed
-DH00281,2026-06-25,C027,Khach hang 027,P001,Ao thun basic,Thoi trang,3,150000,20000,completed
-DH00282,2026-06-25,C009,Khach hang 009,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00283,2026-06-25,C029,Khach hang 029,P006,Den ban mini,Gia dung,1,220000,10000,cancelled
-DH00284,2026-06-25,C010,Khach hang 010,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00284,2026-06-25,C010,Khach hang 010,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00285,2026-06-25,C005,Khach hang 005,P006,Den ban mini,Gia dung,3,220000,0,completed
-DH00286,2026-06-25,C013,Khach hang 013,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00287,2026-06-26,C004,Khach hang 004,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00288,2026-06-26,C013,Khach hang 013,P002,Quan jean,Thoi trang,3,350000,0,completed
-DH00288,2026-06-26,C013,Khach hang 013,P006,Den ban mini,Gia dung,1,220000,0,completed
-DH00289,2026-06-26,C016,Khach hang 016,P004,Tai nghe Bluetooth,Dien tu,1,490000,10000,completed
-DH00289,2026-06-26,C016,Khach hang 016,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00290,2026-06-26,C007,Khach hang 007,P001,Ao thun basic,Thoi trang,1,150000,10000,completed
-DH00291,2026-06-26,C010,Khach hang 010,P001,Ao thun basic,Thoi trang,2,150000,0,completed
-DH00292,2026-06-26,C025,Khach hang 025,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00292,2026-06-26,C025,Khach hang 025,P001,Ao thun basic,Thoi trang,1,150000,0,completed
-DH00293,2026-06-26,C003,Khach hang 003,P005,Tui tote,Phu kien,1,90000,20000,completed
-DH00293,2026-06-26,C003,Khach hang 003,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00294,2026-06-27,C004,Khach hang 004,P003,Binh nuoc,Gia dung,1,120000,0,completed
-DH00294,2026-06-27,C004,Khach hang 004,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00295,2026-06-27,C013,Khach hang 013,P001,Ao thun basic,Thoi trang,2,150000,10000,completed
-DH00296,2026-06-27,C017,Khach hang 017,P002,Quan jean,Thoi trang,1,350000,20000,cancelled
-DH00296,2026-06-27,C017,Khach hang 017,P005,Tui tote,Phu kien,1,90000,10000,cancelled
-DH00297,2026-06-27,C020,Khach hang 020,P005,Tui tote,Phu kien,2,90000,20000,completed
-DH00298,2026-06-27,C016,Khach hang 016,P004,Tai nghe Bluetooth,Dien tu,1,490000,0,completed
-DH00299,2026-06-28,C019,Khach hang 019,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00300,2026-06-28,C016,Khach hang 016,P006,Den ban mini,Gia dung,2,220000,20000,completed
-DH00301,2026-06-28,C008,Khach hang 008,P005,Tui tote,Phu kien,1,90000,20000,completed
-DH00302,2026-06-28,C025,Khach hang 025,P002,Quan jean,Thoi trang,3,350000,0,completed
-DH00302,2026-06-28,C025,Khach hang 025,P006,Den ban mini,Gia dung,1,220000,10000,completed
-DH00303,2026-06-28,C011,Khach hang 011,P002,Quan jean,Thoi trang,1,350000,20000,completed
-DH00303,2026-06-28,C011,Khach hang 011,P004,Tai nghe Bluetooth,Dien tu,2,490000,0,completed
-DH00304,2026-06-28,C023,Khach hang 023,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00305,2026-06-28,C017,Khach hang 017,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00305,2026-06-28,C017,Khach hang 017,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00306,2026-06-29,C016,Khach hang 016,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00307,2026-06-29,C025,Khach hang 025,P006,Den ban mini,Gia dung,2,220000,0,completed
-DH00308,2026-06-29,C016,Khach hang 016,P005,Tui tote,Phu kien,2,90000,0,cancelled
-DH00309,2026-06-29,C010,Khach hang 010,P005,Tui tote,Phu kien,1,90000,10000,completed
-DH00310,2026-06-29,C027,Khach hang 027,P002,Quan jean,Thoi trang,1,350000,0,completed
-DH00311,2026-06-29,C012,Khach hang 012,P006,Den ban mini,Gia dung,1,220000,20000,completed
-DH00311,2026-06-29,C012,Khach hang 012,P003,Binh nuoc,Gia dung,1,120000,20000,completed
-DH00312,2026-06-29,C023,Khach hang 023,P002,Quan jean,Thoi trang,2,350000,0,completed
-DH00313,2026-06-29,C008,Khach hang 008,P006,Den ban mini,Gia dung,1,220000,0,cancelled
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+R60O00001,2026-05-01,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00002,2026-05-01,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00002,2026-05-01,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00003,2026-05-01,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,27000,completed
+R60O00004,2026-05-01,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00005,2026-05-01,R60C001,Khach hang regression 001,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00006,2026-05-01,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,15000,completed
+R60O00006,2026-05-01,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00006,2026-05-01,R60C001,Khach hang regression 001,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00007,2026-05-01,R60C001,Khach hang regression 001,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00008,2026-05-02,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00008,2026-05-02,R60C002,Khach hang regression 002,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00009,2026-05-02,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00010,2026-05-02,R60C001,Khach hang regression 001,R60P006,Den ban LED,Gia dung,1,329000,16000,completed
+R60O00011,2026-05-02,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00012,2026-05-02,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,returned
+R60O00013,2026-05-02,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00014,2026-05-02,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00015,2026-05-03,R60C003,Khach hang regression 003,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00015,2026-05-03,R60C003,Khach hang regression 003,R60P008,So tay planner,Van phong,3,109000,0,completed
+R60O00015,2026-05-03,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00016,2026-05-03,R60C001,Khach hang regression 001,R60P006,Den ban LED,Gia dung,1,329000,49000,cancelled
+R60O00017,2026-05-03,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00017,2026-05-03,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00018,2026-05-03,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,0,cancelled
+R60O00019,2026-05-03,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00019,2026-05-03,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,54000,completed
+R60O00020,2026-05-03,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,2,109000,0,completed
+R60O00020,2026-05-03,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00021,2026-05-03,R60C002,Khach hang regression 002,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00022,2026-05-04,R60C004,Khach hang regression 004,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00023,2026-05-04,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00023,2026-05-04,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00024,2026-05-04,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,2,159000,15000,completed
+R60O00024,2026-05-04,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00025,2026-05-04,R60C002,Khach hang regression 002,R60P007,Cap sac nhanh,Dien tu,1,179000,17000,completed
+R60O00026,2026-05-04,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00027,2026-05-05,R60C005,Khach hang regression 005,R60P006,Den ban LED,Gia dung,1,329000,49000,completed
+R60O00027,2026-05-05,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00027,2026-05-05,R60C005,Khach hang regression 005,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00028,2026-05-05,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00029,2026-05-05,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,2,179000,17000,returned
+R60O00030,2026-05-05,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00030,2026-05-05,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00030,2026-05-05,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00031,2026-05-05,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,3,389000,116000,cancelled
+R60O00032,2026-05-06,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00033,2026-05-06,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00034,2026-05-06,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00035,2026-05-06,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00036,2026-05-06,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00037,2026-05-07,R60C007,Khach hang regression 007,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00037,2026-05-07,R60C007,Khach hang regression 007,R60P008,So tay planner,Van phong,1,109000,10000,completed
+R60O00038,2026-05-07,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00038,2026-05-07,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,15000,completed
+R60O00038,2026-05-07,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00039,2026-05-07,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,1,159000,15000,completed
+R60O00040,2026-05-07,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00041,2026-05-07,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,cancelled
+R60O00042,2026-05-08,R60C008,Khach hang regression 008,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00043,2026-05-08,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00044,2026-05-08,R60C005,Khach hang regression 005,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00045,2026-05-08,R60C005,Khach hang regression 005,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00046,2026-05-08,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,58000,completed
+R60O00047,2026-05-08,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00048,2026-05-08,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,3,159000,0,completed
+R60O00048,2026-05-08,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00048,2026-05-08,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,82000,completed
+R60O00049,2026-05-09,R60C009,Khach hang regression 009,R60P006,Den ban LED,Gia dung,1,329000,16000,completed
+R60O00049,2026-05-09,R60C009,Khach hang regression 009,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00049,2026-05-09,R60C009,Khach hang regression 009,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,24000,completed
+R60O00050,2026-05-09,R60C007,Khach hang regression 007,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00050,2026-05-09,R60C007,Khach hang regression 007,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,24000,completed
+R60O00051,2026-05-09,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,0,returned
+R60O00052,2026-05-09,R60C009,Khach hang regression 009,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00053,2026-05-09,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,82000,completed
+R60O00053,2026-05-09,R60C002,Khach hang regression 002,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00053,2026-05-09,R60C002,Khach hang regression 002,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00054,2026-05-09,R60C006,Khach hang regression 006,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00055,2026-05-09,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,returned
+R60O00056,2026-05-10,R60C010,Khach hang regression 010,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00056,2026-05-10,R60C010,Khach hang regression 010,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00057,2026-05-10,R60C009,Khach hang regression 009,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00058,2026-05-10,R60C009,Khach hang regression 009,R60P004,Tai nghe Bluetooth,Dien tu,3,549000,0,completed
+R60O00059,2026-05-10,R60C003,Khach hang regression 003,R60P008,So tay planner,Van phong,1,109000,0,returned
+R60O00059,2026-05-10,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,returned
+R60O00059,2026-05-10,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,2,159000,0,returned
+R60O00060,2026-05-10,R60C009,Khach hang regression 009,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00061,2026-05-10,R60C004,Khach hang regression 004,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00061,2026-05-10,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00062,2026-05-10,R60C004,Khach hang regression 004,R60P001,Ao thun co ban,Thoi trang,2,159000,0,cancelled
+R60O00062,2026-05-10,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,1,329000,0,cancelled
+R60O00063,2026-05-11,R60C011,Khach hang regression 011,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00063,2026-05-11,R60C011,Khach hang regression 011,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00064,2026-05-11,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00065,2026-05-11,R60C009,Khach hang regression 009,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00065,2026-05-11,R60C009,Khach hang regression 009,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00066,2026-05-11,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00066,2026-05-11,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00066,2026-05-11,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00067,2026-05-11,R60C004,Khach hang regression 004,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00068,2026-05-12,R60C012,Khach hang regression 012,R60P002,Quan jean,Thoi trang,3,389000,0,completed
+R60O00069,2026-05-12,R60C004,Khach hang regression 004,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00070,2026-05-12,R60C003,Khach hang regression 003,R60P005,Tui tote,Phu kien,1,119000,5000,completed
+R60O00070,2026-05-12,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00071,2026-05-12,R60C002,Khach hang regression 002,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00072,2026-05-12,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00073,2026-05-13,R60C013,Khach hang regression 013,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00073,2026-05-13,R60C013,Khach hang regression 013,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00074,2026-05-13,R60C003,Khach hang regression 003,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00075,2026-05-13,R60C008,Khach hang regression 008,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00075,2026-05-13,R60C008,Khach hang regression 008,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00076,2026-05-13,R60C011,Khach hang regression 011,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00077,2026-05-13,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,2,109000,0,completed
+R60O00077,2026-05-13,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00078,2026-05-14,R60C014,Khach hang regression 014,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00079,2026-05-14,R60C014,Khach hang regression 014,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00080,2026-05-14,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00081,2026-05-14,R60C007,Khach hang regression 007,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00081,2026-05-14,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00082,2026-05-14,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00083,2026-05-15,R60C015,Khach hang regression 015,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00083,2026-05-15,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00084,2026-05-15,R60C008,Khach hang regression 008,R60P007,Cap sac nhanh,Dien tu,3,179000,26000,completed
+R60O00085,2026-05-15,R60C015,Khach hang regression 015,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00085,2026-05-15,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00085,2026-05-15,R60C015,Khach hang regression 015,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00086,2026-05-15,R60C015,Khach hang regression 015,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00087,2026-05-15,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00088,2026-05-15,R60C015,Khach hang regression 015,R60P006,Den ban LED,Gia dung,3,329000,0,completed
+R60O00089,2026-05-15,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,2,389000,0,returned
+R60O00089,2026-05-15,R60C001,Khach hang regression 001,R60P006,Den ban LED,Gia dung,1,329000,0,returned
+R60O00090,2026-05-16,R60C016,Khach hang regression 016,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00091,2026-05-16,R60C006,Khach hang regression 006,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00091,2026-05-16,R60C006,Khach hang regression 006,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00092,2026-05-16,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00093,2026-05-16,R60C011,Khach hang regression 011,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00094,2026-05-16,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,2,329000,0,cancelled
+R60O00095,2026-05-16,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00096,2026-05-16,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00096,2026-05-16,R60C004,Khach hang regression 004,R60P007,Cap sac nhanh,Dien tu,2,179000,35000,completed
+R60O00097,2026-05-17,R60C017,Khach hang regression 017,R60P001,Ao thun co ban,Thoi trang,1,159000,15000,completed
+R60O00097,2026-05-17,R60C017,Khach hang regression 017,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00098,2026-05-17,R60C005,Khach hang regression 005,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00099,2026-05-17,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00099,2026-05-17,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00099,2026-05-17,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00100,2026-05-17,R60C009,Khach hang regression 009,R60P008,So tay planner,Van phong,1,109000,0,cancelled
+R60O00100,2026-05-17,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,cancelled
+R60O00100,2026-05-17,R60C009,Khach hang regression 009,R60P007,Cap sac nhanh,Dien tu,1,179000,0,cancelled
+R60O00101,2026-05-17,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,returned
+R60O00101,2026-05-17,R60C004,Khach hang regression 004,R60P007,Cap sac nhanh,Dien tu,1,179000,0,returned
+R60O00102,2026-05-17,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00103,2026-05-17,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00104,2026-05-18,R60C018,Khach hang regression 018,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00105,2026-05-18,R60C005,Khach hang regression 005,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00105,2026-05-18,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00106,2026-05-18,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00106,2026-05-18,R60C003,Khach hang regression 003,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00107,2026-05-18,R60C017,Khach hang regression 017,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00107,2026-05-18,R60C017,Khach hang regression 017,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00107,2026-05-18,R60C017,Khach hang regression 017,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00108,2026-05-18,R60C013,Khach hang regression 013,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,0,completed
+R60O00108,2026-05-18,R60C013,Khach hang regression 013,R60P005,Tui tote,Phu kien,2,119000,35000,completed
+R60O00109,2026-05-19,R60C019,Khach hang regression 019,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00110,2026-05-19,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00111,2026-05-19,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00112,2026-05-19,R60C002,Khach hang regression 002,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00112,2026-05-19,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00112,2026-05-19,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00113,2026-05-19,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00114,2026-05-20,R60C020,Khach hang regression 020,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00114,2026-05-20,R60C020,Khach hang regression 020,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00115,2026-05-20,R60C018,Khach hang regression 018,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00115,2026-05-20,R60C018,Khach hang regression 018,R60P002,Quan jean,Thoi trang,3,389000,0,completed
+R60O00116,2026-05-20,R60C011,Khach hang regression 011,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00117,2026-05-20,R60C015,Khach hang regression 015,R60P006,Den ban LED,Gia dung,1,329000,0,cancelled
+R60O00117,2026-05-20,R60C015,Khach hang regression 015,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,74000,cancelled
+R60O00117,2026-05-20,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,1,159000,0,cancelled
+R60O00118,2026-05-20,R60C013,Khach hang regression 013,R60P007,Cap sac nhanh,Dien tu,2,179000,35000,completed
+R60O00119,2026-05-21,R60C021,Khach hang regression 021,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00119,2026-05-21,R60C021,Khach hang regression 021,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,54000,completed
+R60O00119,2026-05-21,R60C021,Khach hang regression 021,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00120,2026-05-21,R60C013,Khach hang regression 013,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00120,2026-05-21,R60C013,Khach hang regression 013,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,82000,completed
+R60O00121,2026-05-21,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00121,2026-05-21,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00122,2026-05-21,R60C010,Khach hang regression 010,R60P001,Ao thun co ban,Thoi trang,3,159000,0,completed
+R60O00123,2026-05-21,R60C018,Khach hang regression 018,R60P005,Tui tote,Phu kien,1,119000,17000,completed
+R60O00123,2026-05-21,R60C018,Khach hang regression 018,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00124,2026-05-21,R60C004,Khach hang regression 004,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,returned
+R60O00124,2026-05-21,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,27000,returned
+R60O00125,2026-05-22,R60C022,Khach hang regression 022,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00126,2026-05-22,R60C001,Khach hang regression 001,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00127,2026-05-22,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00127,2026-05-22,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00128,2026-05-22,R60C011,Khach hang regression 011,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00129,2026-05-22,R60C022,Khach hang regression 022,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00130,2026-05-22,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00131,2026-05-22,R60C022,Khach hang regression 022,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00132,2026-05-22,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00133,2026-05-23,R60C023,Khach hang regression 023,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00133,2026-05-23,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00134,2026-05-23,R60C006,Khach hang regression 006,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00134,2026-05-23,R60C006,Khach hang regression 006,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00135,2026-05-23,R60C012,Khach hang regression 012,R60P005,Tui tote,Phu kien,2,119000,35000,completed
+R60O00135,2026-05-23,R60C012,Khach hang regression 012,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00136,2026-05-23,R60C021,Khach hang regression 021,R60P005,Tui tote,Phu kien,1,119000,5000,returned
+R60O00137,2026-05-23,R60C009,Khach hang regression 009,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00137,2026-05-23,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00138,2026-05-23,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,109000,completed
+R60O00138,2026-05-23,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00138,2026-05-23,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00139,2026-05-23,R60C018,Khach hang regression 018,R60P001,Ao thun co ban,Thoi trang,2,159000,47000,completed
+R60O00139,2026-05-23,R60C018,Khach hang regression 018,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00139,2026-05-23,R60C018,Khach hang regression 018,R60P007,Cap sac nhanh,Dien tu,2,179000,35000,completed
+R60O00140,2026-05-23,R60C013,Khach hang regression 013,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00141,2026-05-24,R60C024,Khach hang regression 024,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00142,2026-05-24,R60C004,Khach hang regression 004,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00143,2026-05-24,R60C006,Khach hang regression 006,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00144,2026-05-24,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,3,159000,0,completed
+R60O00145,2026-05-24,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00145,2026-05-24,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00146,2026-05-24,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00147,2026-05-24,R60C008,Khach hang regression 008,R60P002,Quan jean,Thoi trang,2,389000,116000,completed
+R60O00148,2026-05-24,R60C002,Khach hang regression 002,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00149,2026-05-25,R60C025,Khach hang regression 025,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00149,2026-05-25,R60C025,Khach hang regression 025,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00150,2026-05-25,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00150,2026-05-25,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00151,2026-05-25,R60C007,Khach hang regression 007,R60P005,Tui tote,Phu kien,2,119000,35000,completed
+R60O00151,2026-05-25,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,17000,completed
+R60O00152,2026-05-25,R60C016,Khach hang regression 016,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00153,2026-05-25,R60C012,Khach hang regression 012,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00154,2026-05-25,R60C013,Khach hang regression 013,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00155,2026-05-26,R60C026,Khach hang regression 026,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00156,2026-05-26,R60C002,Khach hang regression 002,R60P005,Tui tote,Phu kien,1,119000,17000,completed
+R60O00157,2026-05-26,R60C025,Khach hang regression 025,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00157,2026-05-26,R60C025,Khach hang regression 025,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00158,2026-05-26,R60C013,Khach hang regression 013,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00159,2026-05-26,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,3,549000,0,completed
+R60O00159,2026-05-26,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00160,2026-05-26,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00160,2026-05-26,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,58000,completed
+R60O00161,2026-05-27,R60C027,Khach hang regression 027,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00162,2026-05-27,R60C004,Khach hang regression 004,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00162,2026-05-27,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,3,329000,49000,completed
+R60O00163,2026-05-27,R60C016,Khach hang regression 016,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00163,2026-05-27,R60C016,Khach hang regression 016,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,27000,completed
+R60O00163,2026-05-27,R60C016,Khach hang regression 016,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00164,2026-05-27,R60C009,Khach hang regression 009,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00165,2026-05-27,R60C008,Khach hang regression 008,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,37000,completed
+R60O00166,2026-05-27,R60C009,Khach hang regression 009,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00167,2026-05-28,R60C028,Khach hang regression 028,R60P008,So tay planner,Van phong,1,109000,16000,completed
+R60O00168,2026-05-28,R60C018,Khach hang regression 018,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00168,2026-05-28,R60C018,Khach hang regression 018,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,109000,completed
+R60O00169,2026-05-28,R60C009,Khach hang regression 009,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00170,2026-05-28,R60C012,Khach hang regression 012,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00171,2026-05-28,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00172,2026-05-28,R60C022,Khach hang regression 022,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00173,2026-05-29,R60C029,Khach hang regression 029,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00174,2026-05-29,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,cancelled
+R60O00175,2026-05-29,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00176,2026-05-29,R60C009,Khach hang regression 009,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,54000,completed
+R60O00176,2026-05-29,R60C009,Khach hang regression 009,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00177,2026-05-29,R60C014,Khach hang regression 014,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00178,2026-05-29,R60C010,Khach hang regression 010,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00179,2026-05-29,R60C002,Khach hang regression 002,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00179,2026-05-29,R60C002,Khach hang regression 002,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00180,2026-05-29,R60C018,Khach hang regression 018,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00181,2026-05-30,R60C030,Khach hang regression 030,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00182,2026-05-30,R60C007,Khach hang regression 007,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00182,2026-05-30,R60C007,Khach hang regression 007,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00183,2026-05-30,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,2,159000,31000,completed
+R60O00184,2026-05-30,R60C004,Khach hang regression 004,R60P008,So tay planner,Van phong,2,109000,32000,completed
+R60O00185,2026-05-30,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,2,389000,77000,completed
+R60O00186,2026-05-30,R60C004,Khach hang regression 004,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,cancelled
+R60O00187,2026-05-30,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,cancelled
+R60O00188,2026-05-30,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00188,2026-05-30,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,37000,completed
+R60O00188,2026-05-30,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00189,2026-05-31,R60C024,Khach hang regression 024,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00189,2026-05-31,R60C024,Khach hang regression 024,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00190,2026-05-31,R60C006,Khach hang regression 006,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00191,2026-05-31,R60C017,Khach hang regression 017,R60P001,Ao thun co ban,Thoi trang,2,159000,15000,completed
+R60O00191,2026-05-31,R60C017,Khach hang regression 017,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00191,2026-05-31,R60C017,Khach hang regression 017,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00192,2026-05-31,R60C022,Khach hang regression 022,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00193,2026-05-31,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00194,2026-05-31,R60C026,Khach hang regression 026,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00194,2026-05-31,R60C026,Khach hang regression 026,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00194,2026-05-31,R60C026,Khach hang regression 026,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,164000,completed
+R60O00195,2026-05-31,R60C016,Khach hang regression 016,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00196,2026-06-01,R60C015,Khach hang regression 015,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,0,completed
+R60O00197,2026-06-01,R60C006,Khach hang regression 006,R60P008,So tay planner,Van phong,1,109000,0,returned
+R60O00197,2026-06-01,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,0,returned
+R60O00197,2026-06-01,R60C006,Khach hang regression 006,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,returned
+R60O00198,2026-06-01,R60C008,Khach hang regression 008,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00199,2026-06-01,R60C010,Khach hang regression 010,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00199,2026-06-01,R60C010,Khach hang regression 010,R60P007,Cap sac nhanh,Dien tu,2,179000,53000,completed
+R60O00200,2026-06-01,R60C021,Khach hang regression 021,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00201,2026-06-02,R60C022,Khach hang regression 022,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00201,2026-06-02,R60C022,Khach hang regression 022,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00202,2026-06-02,R60C011,Khach hang regression 011,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00203,2026-06-02,R60C016,Khach hang regression 016,R60P002,Quan jean,Thoi trang,1,389000,58000,completed
+R60O00203,2026-06-02,R60C016,Khach hang regression 016,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00204,2026-06-02,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00205,2026-06-02,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00206,2026-06-03,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,1,119000,17000,completed
+R60O00206,2026-06-03,R60C001,Khach hang regression 001,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00207,2026-06-03,R60C013,Khach hang regression 013,R60P008,So tay planner,Van phong,1,109000,5000,completed
+R60O00207,2026-06-03,R60C013,Khach hang regression 013,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00208,2026-06-03,R60C009,Khach hang regression 009,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00208,2026-06-03,R60C009,Khach hang regression 009,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00209,2026-06-03,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,0,returned
+R60O00210,2026-06-03,R60C004,Khach hang regression 004,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00211,2026-06-04,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00211,2026-06-04,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,58000,completed
+R60O00212,2026-06-04,R60C007,Khach hang regression 007,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00212,2026-06-04,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00213,2026-06-04,R60C004,Khach hang regression 004,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00214,2026-06-04,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00214,2026-06-04,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00215,2026-06-04,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00215,2026-06-04,R60C009,Khach hang regression 009,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00216,2026-06-05,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00216,2026-06-05,R60C023,Khach hang regression 023,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00217,2026-06-05,R60C001,Khach hang regression 001,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00217,2026-06-05,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00218,2026-06-05,R60C022,Khach hang regression 022,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00218,2026-06-05,R60C022,Khach hang regression 022,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00219,2026-06-05,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00220,2026-06-05,R60C004,Khach hang regression 004,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00220,2026-06-05,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00221,2026-06-05,R60C025,Khach hang regression 025,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00221,2026-06-05,R60C025,Khach hang regression 025,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,24000,completed
+R60O00221,2026-06-05,R60C025,Khach hang regression 025,R60P007,Cap sac nhanh,Dien tu,2,179000,53000,completed
+R60O00222,2026-06-05,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00222,2026-06-05,R60C006,Khach hang regression 006,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00222,2026-06-05,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00223,2026-06-06,R60C019,Khach hang regression 019,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,49000,completed
+R60O00223,2026-06-06,R60C019,Khach hang regression 019,R60P006,Den ban LED,Gia dung,1,329000,16000,completed
+R60O00223,2026-06-06,R60C019,Khach hang regression 019,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00224,2026-06-06,R60C005,Khach hang regression 005,R60P001,Ao thun co ban,Thoi trang,3,159000,23000,completed
+R60O00224,2026-06-06,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00224,2026-06-06,R60C005,Khach hang regression 005,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00225,2026-06-06,R60C019,Khach hang regression 019,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00225,2026-06-06,R60C019,Khach hang regression 019,R60P001,Ao thun co ban,Thoi trang,2,159000,47000,completed
+R60O00226,2026-06-06,R60C024,Khach hang regression 024,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00226,2026-06-06,R60C024,Khach hang regression 024,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00227,2026-06-06,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00227,2026-06-06,R60C023,Khach hang regression 023,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00228,2026-06-06,R60C010,Khach hang regression 010,R60P005,Tui tote,Phu kien,2,119000,11000,completed
+R60O00229,2026-06-06,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00230,2026-06-07,R60C015,Khach hang regression 015,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00230,2026-06-07,R60C015,Khach hang regression 015,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00230,2026-06-07,R60C015,Khach hang regression 015,R60P005,Tui tote,Phu kien,3,119000,35000,completed
+R60O00231,2026-06-07,R60C004,Khach hang regression 004,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00232,2026-06-07,R60C008,Khach hang regression 008,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00233,2026-06-07,R60C016,Khach hang regression 016,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00233,2026-06-07,R60C016,Khach hang regression 016,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00234,2026-06-07,R60C006,Khach hang regression 006,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00234,2026-06-07,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,1,329000,49000,completed
+R60O00234,2026-06-07,R60C006,Khach hang regression 006,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00235,2026-06-07,R60C019,Khach hang regression 019,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00236,2026-06-07,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00236,2026-06-07,R60C006,Khach hang regression 006,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00237,2026-06-08,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,0,returned
+R60O00238,2026-06-08,R60C014,Khach hang regression 014,R60P005,Tui tote,Phu kien,2,119000,23000,completed
+R60O00239,2026-06-08,R60C015,Khach hang regression 015,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00239,2026-06-08,R60C015,Khach hang regression 015,R60P002,Quan jean,Thoi trang,2,389000,116000,completed
+R60O00240,2026-06-08,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00241,2026-06-08,R60C013,Khach hang regression 013,R60P006,Den ban LED,Gia dung,1,329000,32000,returned
+R60O00241,2026-06-08,R60C013,Khach hang regression 013,R60P001,Ao thun co ban,Thoi trang,2,159000,0,returned
+R60O00241,2026-06-08,R60C013,Khach hang regression 013,R60P008,So tay planner,Van phong,1,109000,0,returned
+R60O00242,2026-06-09,R60C025,Khach hang regression 025,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00243,2026-06-09,R60C005,Khach hang regression 005,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00244,2026-06-09,R60C018,Khach hang regression 018,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00244,2026-06-09,R60C018,Khach hang regression 018,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00245,2026-06-09,R60C004,Khach hang regression 004,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00245,2026-06-09,R60C004,Khach hang regression 004,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00246,2026-06-09,R60C024,Khach hang regression 024,R60P006,Den ban LED,Gia dung,1,329000,49000,completed
+R60O00247,2026-06-10,R60C017,Khach hang regression 017,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00247,2026-06-10,R60C017,Khach hang regression 017,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,82000,completed
+R60O00248,2026-06-10,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00249,2026-06-10,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00249,2026-06-10,R60C007,Khach hang regression 007,R60P005,Tui tote,Phu kien,3,119000,53000,completed
+R60O00250,2026-06-10,R60C008,Khach hang regression 008,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00251,2026-06-10,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00252,2026-06-10,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00252,2026-06-10,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00253,2026-06-11,R60C020,Khach hang regression 020,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00253,2026-06-11,R60C020,Khach hang regression 020,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00254,2026-06-11,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,26000,completed
+R60O00254,2026-06-11,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00255,2026-06-11,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,3,179000,0,completed
+R60O00256,2026-06-11,R60C011,Khach hang regression 011,R60P007,Cap sac nhanh,Dien tu,2,179000,35000,completed
+R60O00257,2026-06-11,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00258,2026-06-11,R60C006,Khach hang regression 006,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00258,2026-06-11,R60C006,Khach hang regression 006,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,74000,completed
+R60O00259,2026-06-12,R60C019,Khach hang regression 019,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00259,2026-06-12,R60C019,Khach hang regression 019,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,112000,completed
+R60O00260,2026-06-12,R60C017,Khach hang regression 017,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00260,2026-06-12,R60C017,Khach hang regression 017,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00261,2026-06-12,R60C007,Khach hang regression 007,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00262,2026-06-12,R60C019,Khach hang regression 019,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00263,2026-06-12,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00264,2026-06-12,R60C022,Khach hang regression 022,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00265,2026-06-12,R60C008,Khach hang regression 008,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00265,2026-06-12,R60C008,Khach hang regression 008,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00266,2026-06-12,R60C005,Khach hang regression 005,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00267,2026-06-12,R60C012,Khach hang regression 012,R60P007,Cap sac nhanh,Dien tu,1,179000,0,cancelled
+R60O00268,2026-06-12,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,1,329000,32000,completed
+R60O00269,2026-06-12,R60C007,Khach hang regression 007,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00269,2026-06-12,R60C007,Khach hang regression 007,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00270,2026-06-12,R60C023,Khach hang regression 023,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,cancelled
+R60O00270,2026-06-12,R60C023,Khach hang regression 023,R60P002,Quan jean,Thoi trang,3,389000,0,cancelled
+R60O00270,2026-06-12,R60C023,Khach hang regression 023,R60P008,So tay planner,Van phong,1,109000,5000,cancelled
+R60O00271,2026-06-13,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00272,2026-06-13,R60C021,Khach hang regression 021,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00273,2026-06-13,R60C010,Khach hang regression 010,R60P008,So tay planner,Van phong,3,109000,0,cancelled
+R60O00273,2026-06-13,R60C010,Khach hang regression 010,R60P006,Den ban LED,Gia dung,3,329000,0,cancelled
+R60O00274,2026-06-13,R60C016,Khach hang regression 016,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00274,2026-06-13,R60C016,Khach hang regression 016,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00275,2026-06-13,R60C005,Khach hang regression 005,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00276,2026-06-13,R60C013,Khach hang regression 013,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00277,2026-06-13,R60C005,Khach hang regression 005,R60P008,So tay planner,Van phong,1,109000,0,returned
+R60O00278,2026-06-13,R60C011,Khach hang regression 011,R60P007,Cap sac nhanh,Dien tu,2,179000,53000,completed
+R60O00278,2026-06-13,R60C011,Khach hang regression 011,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00278,2026-06-13,R60C011,Khach hang regression 011,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00279,2026-06-13,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00280,2026-06-13,R60C027,Khach hang regression 027,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00281,2026-06-13,R60C008,Khach hang regression 008,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00282,2026-06-13,R60C021,Khach hang regression 021,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,cancelled
+R60O00282,2026-06-13,R60C021,Khach hang regression 021,R60P008,So tay planner,Van phong,3,109000,0,cancelled
+R60O00282,2026-06-13,R60C021,Khach hang regression 021,R60P001,Ao thun co ban,Thoi trang,2,159000,0,cancelled
+R60O00283,2026-06-14,R60C013,Khach hang regression 013,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00283,2026-06-14,R60C013,Khach hang regression 013,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00284,2026-06-14,R60C015,Khach hang regression 015,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00285,2026-06-14,R60C020,Khach hang regression 020,R60P002,Quan jean,Thoi trang,1,389000,0,returned
+R60O00286,2026-06-14,R60C019,Khach hang regression 019,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00286,2026-06-14,R60C019,Khach hang regression 019,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00286,2026-06-14,R60C019,Khach hang regression 019,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00287,2026-06-14,R60C015,Khach hang regression 015,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00287,2026-06-14,R60C015,Khach hang regression 015,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00288,2026-06-14,R60C009,Khach hang regression 009,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00288,2026-06-14,R60C009,Khach hang regression 009,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00289,2026-06-14,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00290,2026-06-14,R60C012,Khach hang regression 012,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00291,2026-06-14,R60C016,Khach hang regression 016,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00291,2026-06-14,R60C016,Khach hang regression 016,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00292,2026-06-14,R60C023,Khach hang regression 023,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00293,2026-06-14,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00293,2026-06-14,R60C006,Khach hang regression 006,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00294,2026-06-14,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,1,119000,5000,completed
+R60O00295,2026-06-15,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00296,2026-06-15,R60C008,Khach hang regression 008,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00297,2026-06-15,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,3,329000,0,completed
+R60O00298,2026-06-15,R60C003,Khach hang regression 003,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00299,2026-06-15,R60C025,Khach hang regression 025,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00299,2026-06-15,R60C025,Khach hang regression 025,R60P002,Quan jean,Thoi trang,1,389000,58000,completed
+R60O00300,2026-06-15,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00301,2026-06-15,R60C016,Khach hang regression 016,R60P005,Tui tote,Phu kien,2,119000,0,cancelled
+R60O00302,2026-06-15,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,cancelled
+R60O00303,2026-06-15,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00303,2026-06-15,R60C003,Khach hang regression 003,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,27000,completed
+R60O00304,2026-06-15,R60C006,Khach hang regression 006,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00304,2026-06-15,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00305,2026-06-16,R60C007,Khach hang regression 007,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00306,2026-06-16,R60C015,Khach hang regression 015,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00307,2026-06-16,R60C019,Khach hang regression 019,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00308,2026-06-16,R60C011,Khach hang regression 011,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00308,2026-06-16,R60C011,Khach hang regression 011,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00309,2026-06-16,R60C015,Khach hang regression 015,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00309,2026-06-16,R60C015,Khach hang regression 015,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00310,2026-06-16,R60C016,Khach hang regression 016,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00311,2026-06-16,R60C011,Khach hang regression 011,R60P002,Quan jean,Thoi trang,3,389000,116000,completed
+R60O00312,2026-06-16,R60C018,Khach hang regression 018,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00313,2026-06-16,R60C013,Khach hang regression 013,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00313,2026-06-16,R60C013,Khach hang regression 013,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00314,2026-06-16,R60C013,Khach hang regression 013,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00315,2026-06-17,R60C023,Khach hang regression 023,R60P001,Ao thun co ban,Thoi trang,2,159000,31000,completed
+R60O00316,2026-06-17,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00317,2026-06-17,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,2,159000,31000,completed
+R60O00318,2026-06-17,R60C012,Khach hang regression 012,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00318,2026-06-17,R60C012,Khach hang regression 012,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00319,2026-06-17,R60C016,Khach hang regression 016,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00320,2026-06-17,R60C019,Khach hang regression 019,R60P001,Ao thun co ban,Thoi trang,1,159000,7000,completed
+R60O00321,2026-06-18,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00321,2026-06-18,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00322,2026-06-18,R60C021,Khach hang regression 021,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00323,2026-06-18,R60C024,Khach hang regression 024,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00324,2026-06-18,R60C015,Khach hang regression 015,R60P004,Tai nghe Bluetooth,Dien tu,3,549000,0,completed
+R60O00325,2026-06-18,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00325,2026-06-18,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,24000,completed
+R60O00326,2026-06-18,R60C016,Khach hang regression 016,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00326,2026-06-18,R60C016,Khach hang regression 016,R60P001,Ao thun co ban,Thoi trang,2,159000,47000,completed
+R60O00327,2026-06-19,R60C005,Khach hang regression 005,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00327,2026-06-19,R60C005,Khach hang regression 005,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00328,2026-06-19,R60C030,Khach hang regression 030,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,24000,completed
+R60O00328,2026-06-19,R60C030,Khach hang regression 030,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00329,2026-06-19,R60C004,Khach hang regression 004,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00330,2026-06-19,R60C013,Khach hang regression 013,R60P005,Tui tote,Phu kien,1,119000,5000,completed
+R60O00330,2026-06-19,R60C013,Khach hang regression 013,R60P007,Cap sac nhanh,Dien tu,1,179000,17000,completed
+R60O00330,2026-06-19,R60C013,Khach hang regression 013,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,82000,completed
+R60O00331,2026-06-19,R60C006,Khach hang regression 006,R60P008,So tay planner,Van phong,1,109000,10000,cancelled
+R60O00332,2026-06-19,R60C004,Khach hang regression 004,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00333,2026-06-19,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00334,2026-06-19,R60C019,Khach hang regression 019,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,54000,cancelled
+R60O00335,2026-06-20,R60C022,Khach hang regression 022,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,49000,cancelled
+R60O00336,2026-06-20,R60C003,Khach hang regression 003,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00337,2026-06-20,R60C017,Khach hang regression 017,R60P001,Ao thun co ban,Thoi trang,3,159000,0,completed
+R60O00338,2026-06-20,R60C017,Khach hang regression 017,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00339,2026-06-20,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00339,2026-06-20,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00340,2026-06-20,R60C028,Khach hang regression 028,R60P002,Quan jean,Thoi trang,1,389000,38000,completed
+R60O00340,2026-06-20,R60C028,Khach hang regression 028,R60P008,So tay planner,Van phong,2,109000,0,completed
+R60O00341,2026-06-20,R60C024,Khach hang regression 024,R60P008,So tay planner,Van phong,1,109000,10000,completed
+R60O00341,2026-06-20,R60C024,Khach hang regression 024,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00342,2026-06-20,R60C019,Khach hang regression 019,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00342,2026-06-20,R60C019,Khach hang regression 019,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00343,2026-06-21,R60C008,Khach hang regression 008,R60P005,Tui tote,Phu kien,2,119000,0,completed
+R60O00344,2026-06-21,R60C008,Khach hang regression 008,R60P001,Ao thun co ban,Thoi trang,3,159000,0,completed
+R60O00345,2026-06-21,R60C019,Khach hang regression 019,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00345,2026-06-21,R60C019,Khach hang regression 019,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00346,2026-06-21,R60C006,Khach hang regression 006,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00346,2026-06-21,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00347,2026-06-21,R60C001,Khach hang regression 001,R60P008,So tay planner,Van phong,3,109000,0,completed
+R60O00348,2026-06-21,R60C026,Khach hang regression 026,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00349,2026-06-21,R60C013,Khach hang regression 013,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00350,2026-06-21,R60C022,Khach hang regression 022,R60P001,Ao thun co ban,Thoi trang,2,159000,15000,cancelled
+R60O00351,2026-06-22,R60C023,Khach hang regression 023,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00352,2026-06-22,R60C003,Khach hang regression 003,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00353,2026-06-22,R60C030,Khach hang regression 030,R60P002,Quan jean,Thoi trang,1,389000,19000,completed
+R60O00354,2026-06-22,R60C025,Khach hang regression 025,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00355,2026-06-22,R60C005,Khach hang regression 005,R60P005,Tui tote,Phu kien,3,119000,0,cancelled
+R60O00356,2026-06-22,R60C007,Khach hang regression 007,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00357,2026-06-23,R60C002,Khach hang regression 002,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00358,2026-06-23,R60C021,Khach hang regression 021,R60P006,Den ban LED,Gia dung,2,329000,98000,completed
+R60O00359,2026-06-23,R60C028,Khach hang regression 028,R60P006,Den ban LED,Gia dung,1,329000,16000,completed
+R60O00359,2026-06-23,R60C028,Khach hang regression 028,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00360,2026-06-23,R60C004,Khach hang regression 004,R60P005,Tui tote,Phu kien,3,119000,0,returned
+R60O00361,2026-06-23,R60C022,Khach hang regression 022,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00361,2026-06-23,R60C022,Khach hang regression 022,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00362,2026-06-23,R60C007,Khach hang regression 007,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,cancelled
+R60O00363,2026-06-24,R60C003,Khach hang regression 003,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00364,2026-06-24,R60C024,Khach hang regression 024,R60P001,Ao thun co ban,Thoi trang,3,159000,0,cancelled
+R60O00364,2026-06-24,R60C024,Khach hang regression 024,R60P002,Quan jean,Thoi trang,1,389000,0,cancelled
+R60O00365,2026-06-24,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00365,2026-06-24,R60C006,Khach hang regression 006,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00365,2026-06-24,R60C006,Khach hang regression 006,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00366,2026-06-24,R60C020,Khach hang regression 020,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,54000,completed
+R60O00367,2026-06-24,R60C001,Khach hang regression 001,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,0,completed
+R60O00368,2026-06-24,R60C029,Khach hang regression 029,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00369,2026-06-25,R60C002,Khach hang regression 002,R60P007,Cap sac nhanh,Dien tu,1,179000,8000,completed
+R60O00369,2026-06-25,R60C002,Khach hang regression 002,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00370,2026-06-25,R60C013,Khach hang regression 013,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00371,2026-06-25,R60C005,Khach hang regression 005,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00371,2026-06-25,R60C005,Khach hang regression 005,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00372,2026-06-25,R60C029,Khach hang regression 029,R60P008,So tay planner,Van phong,3,109000,16000,cancelled
+R60O00372,2026-06-25,R60C029,Khach hang regression 029,R60P005,Tui tote,Phu kien,1,119000,0,cancelled
+R60O00372,2026-06-25,R60C029,Khach hang regression 029,R60P006,Den ban LED,Gia dung,2,329000,0,cancelled
+R60O00373,2026-06-25,R60C018,Khach hang regression 018,R60P007,Cap sac nhanh,Dien tu,1,179000,17000,returned
+R60O00373,2026-06-25,R60C018,Khach hang regression 018,R60P008,So tay planner,Van phong,1,109000,5000,returned
+R60O00374,2026-06-25,R60C008,Khach hang regression 008,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00375,2026-06-26,R60C008,Khach hang regression 008,R60P008,So tay planner,Van phong,1,109000,5000,completed
+R60O00376,2026-06-26,R60C004,Khach hang regression 004,R60P006,Den ban LED,Gia dung,1,329000,49000,completed
+R60O00376,2026-06-26,R60C004,Khach hang regression 004,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00376,2026-06-26,R60C004,Khach hang regression 004,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00377,2026-06-26,R60C020,Khach hang regression 020,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00378,2026-06-26,R60C018,Khach hang regression 018,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00378,2026-06-26,R60C018,Khach hang regression 018,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00379,2026-06-26,R60C012,Khach hang regression 012,R60P002,Quan jean,Thoi trang,2,389000,0,completed
+R60O00380,2026-06-26,R60C018,Khach hang regression 018,R60P004,Tai nghe Bluetooth,Dien tu,1,549000,0,completed
+R60O00381,2026-06-26,R60C015,Khach hang regression 015,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00382,2026-06-26,R60C007,Khach hang regression 007,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00383,2026-06-27,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,3,249000,112000,completed
+R60O00384,2026-06-27,R60C026,Khach hang regression 026,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00384,2026-06-27,R60C026,Khach hang regression 026,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00385,2026-06-27,R60C028,Khach hang regression 028,R60P008,So tay planner,Van phong,2,109000,0,completed
+R60O00386,2026-06-27,R60C002,Khach hang regression 002,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00386,2026-06-27,R60C002,Khach hang regression 002,R60P002,Quan jean,Thoi trang,2,389000,38000,completed
+R60O00387,2026-06-27,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00387,2026-06-27,R60C006,Khach hang regression 006,R60P001,Ao thun co ban,Thoi trang,1,159000,23000,completed
+R60O00387,2026-06-27,R60C006,Khach hang regression 006,R60P004,Tai nghe Bluetooth,Dien tu,2,549000,164000,completed
+R60O00388,2026-06-27,R60C006,Khach hang regression 006,R60P005,Tui tote,Phu kien,1,119000,11000,completed
+R60O00389,2026-06-27,R60C003,Khach hang regression 003,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,74000,completed
+R60O00389,2026-06-27,R60C003,Khach hang regression 003,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00390,2026-06-27,R60C008,Khach hang regression 008,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00390,2026-06-27,R60C008,Khach hang regression 008,R60P007,Cap sac nhanh,Dien tu,2,179000,0,completed
+R60O00391,2026-06-28,R60C019,Khach hang regression 019,R60P001,Ao thun co ban,Thoi trang,3,159000,23000,completed
+R60O00392,2026-06-28,R60C021,Khach hang regression 021,R60P005,Tui tote,Phu kien,1,119000,17000,completed
+R60O00393,2026-06-28,R60C001,Khach hang regression 001,R60P005,Tui tote,Phu kien,1,119000,0,completed
+R60O00394,2026-06-28,R60C001,Khach hang regression 001,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00395,2026-06-28,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00395,2026-06-28,R60C007,Khach hang regression 007,R60P008,So tay planner,Van phong,1,109000,5000,completed
+R60O00396,2026-06-28,R60C007,Khach hang regression 007,R60P001,Ao thun co ban,Thoi trang,2,159000,0,completed
+R60O00396,2026-06-28,R60C007,Khach hang regression 007,R60P002,Quan jean,Thoi trang,1,389000,0,completed
+R60O00397,2026-06-28,R60C010,Khach hang regression 010,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00398,2026-06-28,R60C016,Khach hang regression 016,R60P001,Ao thun co ban,Thoi trang,1,159000,15000,completed
+R60O00399,2026-06-29,R60C008,Khach hang regression 008,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,0,completed
+R60O00399,2026-06-29,R60C008,Khach hang regression 008,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00400,2026-06-29,R60C021,Khach hang regression 021,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00400,2026-06-29,R60C021,Khach hang regression 021,R60P003,Binh nuoc giu nhiet,Gia dung,2,249000,0,completed
+R60O00401,2026-06-29,R60C008,Khach hang regression 008,R60P006,Den ban LED,Gia dung,2,329000,0,completed
+R60O00401,2026-06-29,R60C008,Khach hang regression 008,R60P001,Ao thun co ban,Thoi trang,1,159000,0,completed
+R60O00401,2026-06-29,R60C008,Khach hang regression 008,R60P003,Binh nuoc giu nhiet,Gia dung,1,249000,12000,completed
+R60O00402,2026-06-29,R60C006,Khach hang regression 006,R60P008,So tay planner,Van phong,1,109000,0,completed
+R60O00403,2026-06-29,R60C028,Khach hang regression 028,R60P006,Den ban LED,Gia dung,1,329000,0,completed
+R60O00403,2026-06-29,R60C028,Khach hang regression 028,R60P007,Cap sac nhanh,Dien tu,1,179000,0,completed
+R60O00404,2026-06-29,R60C017,Khach hang regression 017,R60P005,Tui tote,Phu kien,1,119000,0,completed

@@ -8,7 +8,6 @@ import numpy as np
 from .evaluation import calculate_error_metrics, recent_fold_origins
 from .methods import (
     FORECAST_CANDIDATES,
-    FORECAST_HORIZON_DAYS,
     METHOD_COMPLEXITY,
     ForecastMethod,
     minimum_training_days,
@@ -20,10 +19,9 @@ from .methods import (
 MODEL_SELECTION_MAX_FOLDS = 8
 MODEL_SELECTION_MINIMUM_FOLDS = 2
 SIMPLICITY_TOLERANCE_PERCENT = 5.0
-MINIMUM_SELECTION_HISTORY_DAYS = 28
 
 SelectionReason = Literal[
-    "LOWEST_MAE",
+    "LOWEST_PRIMARY_ERROR",
     "SIMPLER_WITHIN_FIVE_PERCENT",
 ]
 
@@ -38,16 +36,19 @@ class BacktestFold:
 @dataclass(frozen=True)
 class CandidateEvaluation:
     method: ForecastMethod
-    metrics: dict[str, float]
+    daily_metrics: dict[str, float]
+    total_metrics: dict[str, float]
     folds: tuple[BacktestFold, ...]
     residuals: tuple[float, ...]
+    total_residuals: tuple[float, ...]
 
     def to_contract(self, *, rank: int) -> dict[str, Any]:
         return {
             "rank": rank,
             "method": self.method,
             "minimum_training_days": minimum_training_days(self.method),
-            "metrics": self.metrics,
+            "daily_metrics": self.daily_metrics,
+            "total_metrics": self.total_metrics,
         }
 
 
@@ -55,10 +56,15 @@ class CandidateEvaluation:
 class ModelSelection:
     available: bool
     reason: Literal["INSUFFICIENT_SELECTION_HISTORY"] | None
+    horizon_days: int
     fold_origins: tuple[int, ...]
     candidates: tuple[CandidateEvaluation, ...]
     selected_method: ForecastMethod | None
     selection_reason: SelectionReason | None
+
+    @property
+    def primary_metric(self) -> Literal["daily_mae", "total_mae"]:
+        return "daily_mae" if self.horizon_days == 7 else "total_mae"
 
     @property
     def selected_candidate(self) -> CandidateEvaluation | None:
@@ -70,11 +76,39 @@ class ModelSelection:
             if candidate.method == self.selected_method
         )
 
-    def to_contract(self) -> dict[str, Any]:
-        ranked = sorted(
-            self.candidates,
-            key=_candidate_ranking_key,
+    @property
+    def minimum_history_days(self) -> int:
+        return (
+            min(minimum_training_days(method) for method in FORECAST_CANDIDATES)
+            + MODEL_SELECTION_MINIMUM_FOLDS * self.horizon_days
         )
+
+    def primary_error(self, candidate: CandidateEvaluation) -> float:
+        metrics = (
+            candidate.daily_metrics
+            if self.primary_metric == "daily_mae"
+            else candidate.total_metrics
+        )
+        return metrics["mae"]
+
+    def ranking_key(
+        self,
+        candidate: CandidateEvaluation,
+    ) -> tuple[float, float, int, str]:
+        metrics = (
+            candidate.daily_metrics
+            if self.primary_metric == "daily_mae"
+            else candidate.total_metrics
+        )
+        return (
+            metrics["mae"],
+            metrics["smape_percent"],
+            METHOD_COMPLEXITY[candidate.method],
+            candidate.method,
+        )
+
+    def to_contract(self) -> dict[str, Any]:
+        ranked = sorted(self.candidates, key=self.ranking_key)
         ranks = {
             candidate.method: rank
             for rank, candidate in enumerate(ranked, start=1)
@@ -83,16 +117,14 @@ class ModelSelection:
             "available": self.available,
             "reason": self.reason,
             "strategy": "rolling_origin_candidate_comparison",
-            "primary_metric": "mae",
-            "simplicity_tolerance_percent": (
-                SIMPLICITY_TOLERANCE_PERCENT
-            ),
+            "primary_metric": self.primary_metric,
+            "simplicity_tolerance_percent": SIMPLICITY_TOLERANCE_PERCENT,
             "minimum_fold_count": MODEL_SELECTION_MINIMUM_FOLDS,
             "maximum_fold_count": MODEL_SELECTION_MAX_FOLDS,
-            "minimum_history_days": MINIMUM_SELECTION_HISTORY_DAYS,
+            "minimum_history_days": self.minimum_history_days,
             "fold_count": len(self.fold_origins),
             "evaluation_points": (
-                len(self.fold_origins) * FORECAST_HORIZON_DAYS
+                len(self.fold_origins) * self.horizon_days
             ),
             "selected_method": self.selected_method,
             "selection_reason": self.selection_reason,
@@ -105,6 +137,8 @@ class ModelSelection:
 
 def select_forecast_model(
     revenue_by_date: list[dict[str, Any]],
+    *,
+    horizon_days: int = 7,
 ) -> ModelSelection:
     values = np.array(
         [float(item["revenue"]) for item in revenue_by_date],
@@ -115,35 +149,24 @@ def select_forecast_model(
         for method in FORECAST_CANDIDATES
         if len(values)
         >= minimum_training_days(method)
-        + MODEL_SELECTION_MINIMUM_FOLDS * FORECAST_HORIZON_DAYS
+        + MODEL_SELECTION_MINIMUM_FOLDS * horizon_days
     ]
     if not eligible_methods:
-        return ModelSelection(
-            available=False,
-            reason="INSUFFICIENT_SELECTION_HISTORY",
-            fold_origins=(),
-            candidates=(),
-            selected_method=None,
-            selection_reason=None,
-        )
+        return _unavailable_selection(horizon_days=horizon_days)
 
     common_minimum_training = max(
-        minimum_training_days(method)
-        for method in eligible_methods
+        minimum_training_days(method) for method in eligible_methods
     )
     origins = recent_fold_origins(
         history_days=len(values),
         minimum_training=common_minimum_training,
+        horizon_days=horizon_days,
         maximum_folds=MODEL_SELECTION_MAX_FOLDS,
     )
     if len(origins) < MODEL_SELECTION_MINIMUM_FOLDS:
-        return ModelSelection(
-            available=False,
-            reason="INSUFFICIENT_SELECTION_HISTORY",
-            fold_origins=tuple(origins),
-            candidates=(),
-            selected_method=None,
-            selection_reason=None,
+        return _unavailable_selection(
+            horizon_days=horizon_days,
+            origins=origins,
         )
 
     candidates = tuple(
@@ -151,17 +174,27 @@ def select_forecast_model(
             values=values,
             method=method,
             origins=origins,
+            horizon_days=horizon_days,
         )
         for method in eligible_methods
     )
-    best_by_mae = min(candidates, key=_candidate_ranking_key)
-    tolerance_limit = best_by_mae.metrics["mae"] * (
+    provisional = ModelSelection(
+        available=True,
+        reason=None,
+        horizon_days=horizon_days,
+        fold_origins=tuple(origins),
+        candidates=candidates,
+        selected_method=None,
+        selection_reason=None,
+    )
+    best = min(candidates, key=provisional.ranking_key)
+    tolerance_limit = provisional.primary_error(best) * (
         1 + SIMPLICITY_TOLERANCE_PERCENT / 100
     )
     within_tolerance = [
         candidate
         for candidate in candidates
-        if candidate.metrics["mae"] <= tolerance_limit
+        if provisional.primary_error(candidate) <= tolerance_limit
     ]
     selected = min(
         within_tolerance,
@@ -171,13 +204,14 @@ def select_forecast_model(
         ),
     )
     reason: SelectionReason = (
-        "LOWEST_MAE"
-        if selected.method == best_by_mae.method
+        "LOWEST_PRIMARY_ERROR"
+        if selected.method == best.method
         else "SIMPLER_WITHIN_FIVE_PERCENT"
     )
     return ModelSelection(
         available=True,
         reason=None,
+        horizon_days=horizon_days,
         fold_origins=tuple(origins),
         candidates=candidates,
         selected_method=selected.method,
@@ -190,15 +224,23 @@ def _evaluate_candidate(
     values: np.ndarray,
     method: ForecastMethod,
     origins: list[int],
+    horizon_days: int,
 ) -> CandidateEvaluation:
     folds = []
     actual_values: list[float] = []
     predicted_values: list[float] = []
     residuals: list[float] = []
+    actual_totals: list[float] = []
+    predicted_totals: list[float] = []
+    total_residuals: list[float] = []
     for origin in origins:
-        actual = values[origin : origin + FORECAST_HORIZON_DAYS]
+        actual = values[origin : origin + horizon_days]
         predictions = round_predictions(
-            predict_revenue(method, values[:origin])
+            predict_revenue(
+                method,
+                values[:origin],
+                horizon_days=horizon_days,
+            )
         ).astype(float)
         folds.append(
             BacktestFold(
@@ -210,24 +252,39 @@ def _evaluate_candidate(
         actual_values.extend(actual.tolist())
         predicted_values.extend(predictions.tolist())
         residuals.extend((actual - predictions).tolist())
+        actual_total = float(actual.sum())
+        predicted_total = float(predictions.sum())
+        actual_totals.append(actual_total)
+        predicted_totals.append(predicted_total)
+        total_residuals.append(actual_total - predicted_total)
 
     return CandidateEvaluation(
         method=method,
-        metrics=calculate_error_metrics(
+        daily_metrics=calculate_error_metrics(
             np.array(actual_values, dtype=float),
             np.array(predicted_values, dtype=float),
         ),
+        total_metrics=calculate_error_metrics(
+            np.array(actual_totals, dtype=float),
+            np.array(predicted_totals, dtype=float),
+        ),
         folds=tuple(folds),
         residuals=tuple(residuals),
+        total_residuals=tuple(total_residuals),
     )
 
 
-def _candidate_ranking_key(
-    candidate: CandidateEvaluation,
-) -> tuple[float, float, int, str]:
-    return (
-        candidate.metrics["mae"],
-        candidate.metrics["smape_percent"],
-        METHOD_COMPLEXITY[candidate.method],
-        candidate.method,
+def _unavailable_selection(
+    *,
+    horizon_days: int,
+    origins: list[int] | None = None,
+) -> ModelSelection:
+    return ModelSelection(
+        available=False,
+        reason="INSUFFICIENT_SELECTION_HISTORY",
+        horizon_days=horizon_days,
+        fold_origins=tuple(origins or []),
+        candidates=(),
+        selected_method=None,
+        selection_reason=None,
     )

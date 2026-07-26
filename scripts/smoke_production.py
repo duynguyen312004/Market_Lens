@@ -9,12 +9,12 @@ import httpx
 
 
 EXPECTED_SUMMARY = {
-    "total_revenue": 113_010_000,
-    "total_orders": 273,
+    "total_revenue": 185_263_000,
+    "total_orders": 362,
     "total_customers": 30,
-    "total_quantity_sold": 503,
+    "total_quantity_sold": 719,
 }
-EXPECTED_FORECAST_TOTAL = 15_450_331
+EXPECTED_FORECAST_TOTAL = 22_706_500
 SAMPLE_FILE = Path("sample_data/sample_sales_demo_60_days.csv")
 
 
@@ -80,7 +80,15 @@ def assert_demo_metrics(payload: dict[str, Any]) -> None:
             )
 
     forecast = payload.get("forecast") or {}
-    if forecast.get("forecast_total") != EXPECTED_FORECAST_TOTAL:
+    forecast_7 = next(
+        (
+            item
+            for item in forecast.get("horizons") or []
+            if item.get("horizon_days") == 7
+        ),
+        {},
+    )
+    if forecast_7.get("forecast_total") != EXPECTED_FORECAST_TOTAL:
         raise RuntimeError("Forecast total không khớp test oracle production.")
 
 

@@ -1,5 +1,6 @@
 import {
   CaretDownIcon,
+  CloudArrowUpIcon,
   CrownIcon,
   SparkleIcon,
   UserPlusIcon,
@@ -7,6 +8,7 @@ import {
   UserSwitchIcon,
 } from '@phosphor-icons/react'
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 
 import type {
   AnalysisDetail,
@@ -97,44 +99,81 @@ export function CustomerAnalyticsPage() {
           title={t('customers.title')}
         />
 
-        <AnalyticsTabs
-          activeId={activeSection}
-          ariaLabel={t('customers.sectionsAria')}
-          idPrefix="customers"
-          items={[
-            { id: 'overview', label: t('customers.overviewTab') },
-            { id: 'customers', label: t('customers.customerListTab') },
-            { id: 'behavior', label: t('customers.behaviorTab') },
-            { id: 'retention', label: t('customers.retentionTab') },
-          ]}
-          onChange={setActiveSection}
-        />
-
-        {activeSection === 'overview' && (
-          <CustomerOverview analysis={analysis} />
-        )}
-        {activeSection === 'customers' && (
-          <CustomerLists analysis={analysis} />
-        )}
-        {activeSection === 'behavior' && (
-          <div
-            aria-labelledby="customers-tab-behavior"
-            id="customers-panel-behavior"
-            role="tabpanel"
-          >
-            <CustomerRfmSection rfm={analysis.customers.rfm} />
-          </div>
-        )}
-        {activeSection === 'retention' && (
-          <div
-            aria-labelledby="customers-tab-retention"
-            id="customers-panel-retention"
-            role="tabpanel"
-          >
-            <CustomerCohortSection
-              cohort={analysis.customers.cohort_analysis}
+        {!analysis.customers.available ? (
+          <section className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-6 sm:p-8">
+            <span className="grid size-12 place-items-center rounded-xl bg-white text-amber-700 shadow-xs">
+              <UsersThreeIcon
+                aria-hidden="true"
+                size={26}
+                weight="duotone"
+              />
+            </span>
+            <h2 className="mt-4 text-xl font-black tracking-tight text-slate-900">
+              {t('customers.unavailableTitle')}
+            </h2>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-700">
+              {t('customers.unavailableDesc')}
+            </p>
+            <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-600">
+              {t('customers.unavailableHelp')}
+            </p>
+            <Link
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-extrabold text-white transition hover:bg-indigo-700"
+              to="/upload"
+            >
+              <CloudArrowUpIcon
+                aria-hidden="true"
+                size={18}
+                weight="bold"
+              />
+              {t('customers.uploadAnother')}
+            </Link>
+          </section>
+        ) : (
+          <>
+            <AnalyticsTabs
+              activeId={activeSection}
+              ariaLabel={t('customers.sectionsAria')}
+              idPrefix="customers"
+              items={[
+                { id: 'overview', label: t('customers.overviewTab') },
+                {
+                  id: 'customers',
+                  label: t('customers.customerListTab'),
+                },
+                { id: 'behavior', label: t('customers.behaviorTab') },
+                { id: 'retention', label: t('customers.retentionTab') },
+              ]}
+              onChange={setActiveSection}
             />
-          </div>
+
+            {activeSection === 'overview' && (
+              <CustomerOverview analysis={analysis} />
+            )}
+            {activeSection === 'customers' && (
+              <CustomerLists analysis={analysis} />
+            )}
+            {activeSection === 'behavior' && (
+              <div
+                aria-labelledby="customers-tab-behavior"
+                id="customers-panel-behavior"
+                role="tabpanel"
+              >
+                <CustomerRfmSection rfm={analysis.customers.rfm} />
+              </div>
+            )}
+            {activeSection === 'retention' && (
+              <div
+                aria-labelledby="customers-tab-retention"
+                id="customers-panel-retention"
+                role="tabpanel"
+              >
+                <CustomerCohortSection
+                  cohort={analysis.customers.cohort_analysis}
+                />
+              </div>
+            )}
+          </>
         )}
       </div>
     </main>

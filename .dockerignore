@@ -8,6 +8,7 @@
 **/.env.*
 !**/.env.example
 frontend
+backend/tests
 docs
 sample_data
 supabase

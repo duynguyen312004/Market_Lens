@@ -3,7 +3,7 @@ from typing import Any
 import pandas as pd
 
 from backend.app.core.errors import AppError
-from backend.app.services.analytics.common import number
+from backend.app.services.analytics.common import growth_rate, number
 from backend.app.services.analytics.customers import (
     calculate_customer_analytics,
 )
@@ -16,10 +16,14 @@ from backend.app.services.analytics.sales import (
 )
 
 
-ANALYSIS_CONTRACT_VERSION = "3.0"
+ANALYSIS_CONTRACT_VERSION = "5.0"
 
 
-def calculate_analytics(frame: pd.DataFrame) -> dict[str, Any]:
+def calculate_analytics(
+    frame: pd.DataFrame,
+    *,
+    customer_data_available: bool = True,
+) -> dict[str, Any]:
     completed = frame.loc[frame["order_status"] == "completed"].copy()
     if completed.empty:
         raise AppError(
@@ -35,10 +39,17 @@ def calculate_analytics(frame: pd.DataFrame) -> dict[str, Any]:
     growth_rate, growth_warnings = _growth_rate(daily_revenue)
     product_rows = product_analytics(completed)
     category_rows = category_analytics(completed)
-    customer_result = calculate_customer_analytics(completed)
+    customer_result = calculate_customer_analytics(
+        completed,
+        available=customer_data_available,
+    )
 
     completed_orders = int(completed["order_id"].nunique())
-    completed_customers = int(completed["customer_id"].nunique())
+    completed_customers = (
+        int(completed["customer_id"].nunique())
+        if customer_data_available
+        else 0
+    )
     total_revenue = float(completed["line_revenue"].sum())
     date_from = completed["order_date"].min().date().isoformat()
     date_to = completed["order_date"].max().date().isoformat()
@@ -61,11 +72,14 @@ def calculate_analytics(frame: pd.DataFrame) -> dict[str, Any]:
             ),
             "average_revenue_per_customer": number(
                 total_revenue / completed_customers
+                if completed_customers
+                else 0
             ),
         },
         "orders": calculate_order_analytics(frame, completed),
         "revenue_by_date": daily_revenue,
         "sales": build_sales_result(
+            frame=frame,
             completed=completed,
             daily_revenue=daily_revenue,
             product_rows=product_rows,
@@ -85,8 +99,10 @@ def _growth_rate(
     recent = sum(float(item["revenue"]) for item in daily_revenue[-7:])
     previous = sum(float(item["revenue"]) for item in daily_revenue[-14:-7])
 
-    if previous > 0:
-        return round((recent - previous) / previous * 100, 6), []
-    if recent == 0:
-        return 0.0, []
-    return None, ["NO_COMPARABLE_PREVIOUS_REVENUE"]
+    rate = growth_rate(recent, previous)
+    warnings = (
+        ["NO_COMPARABLE_PREVIOUS_REVENUE"]
+        if rate is None
+        else []
+    )
+    return rate, warnings

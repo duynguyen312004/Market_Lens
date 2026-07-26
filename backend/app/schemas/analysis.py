@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from backend.app.schemas.imports import ImportCapabilities
+
 
 class AnalysisListItem(BaseModel):
     id: UUID
@@ -206,10 +208,137 @@ class DiscountAnalysis(StrictContractModel):
     by_category: list[CategoryDiscountMetric]
 
 
+class ProductOrderIssueMetric(StrictContractModel):
+    product_id: str
+    product_name: str
+    category: str
+    total_order_count: int
+    completed_order_count: int
+    cancelled_order_count: int
+    returned_order_count: int
+    issue_order_count: int
+    cancellation_rate_percent: float
+    return_rate_percent: float
+    issue_rate_percent: float
+    ranking_score_percent: float
+    affected_product_value: float
+
+
+class ProductOrderIssueAnalysis(StrictContractModel):
+    available: bool
+    reason: Literal[
+        "INSUFFICIENT_PRODUCT_ORDERS",
+        "NO_CANCELLED_OR_RETURNED_ORDERS",
+    ] | None
+    minimum_order_count: int
+    ranking_method: Literal["adjusted_issue_rate_lower_bound"]
+    evaluated_product_count: int
+    qualified_product_count: int
+    affected_order_count: int
+    affected_product_value: float
+    products: list[ProductOrderIssueMetric]
+
+
+class GrowthPeriodRange(StrictContractModel):
+    from_: date = Field(alias="from")
+    to: date
+
+
+class PeriodComparison(StrictContractModel):
+    available: bool
+    reason: Literal["INSUFFICIENT_COMPARISON_HISTORY"] | None
+    previous_period: GrowthPeriodRange
+    previous_revenue: float | None
+    revenue_change: float | None
+    growth_rate_percent: float | None
+
+
+class SalesPeriodSummary(StrictContractModel):
+    key: str
+    period_type: Literal["month", "year"]
+    period: GrowthPeriodRange
+    is_complete: bool
+    total_revenue: float
+    total_orders: int
+    total_quantity_sold: int
+    average_order_value: float
+    gross_revenue: float
+    total_discount: float
+    discount_rate_percent: float
+    comparison: PeriodComparison
+
+
+class SalesPeriodSummaries(StrictContractModel):
+    months: list[SalesPeriodSummary]
+    years: list[SalesPeriodSummary]
+
+
+GrowthChangeType = Literal[
+    "new",
+    "growing",
+    "stable",
+    "declining",
+    "inactive",
+]
+
+
+class GrowthMetricBase(StrictContractModel):
+    comparison_type: Literal["month", "year"]
+    current_revenue: float
+    previous_revenue: float
+    revenue_change: float
+    growth_rate_percent: float | None
+    current_order_count: int
+    previous_order_count: int
+    order_count_change: int
+    current_quantity: int
+    previous_quantity: int
+    quantity_change: int
+    change_type: GrowthChangeType
+    contribution_to_direction_percent: float
+
+
+class ProductGrowthMetric(GrowthMetricBase):
+    product_id: str
+    product_name: str
+    category: str
+
+
+class CategoryGrowthMetric(GrowthMetricBase):
+    category: str
+
+
+class GrowthDriverPeriod(StrictContractModel):
+    available: bool
+    reason: Literal["INSUFFICIENT_COMPARISON_HISTORY"] | None
+    comparison_type: Literal["month", "year"]
+    required_history_from: date
+    current_period: GrowthPeriodRange
+    previous_period: GrowthPeriodRange
+    current_revenue: float | None
+    previous_revenue: float | None
+    net_revenue_change: float | None
+    growth_rate_percent: float | None
+    positive_revenue_change: float | None
+    negative_revenue_change: float | None
+    evaluated_product_count: int
+    evaluated_category_count: int
+    product_growth_drivers: list[ProductGrowthMetric]
+    product_decline_drivers: list[ProductGrowthMetric]
+    category_growth_drivers: list[CategoryGrowthMetric]
+    category_decline_drivers: list[CategoryGrowthMetric]
+
+
+class GrowthDriverAnalysis(StrictContractModel):
+    default_comparison_type: Literal["month", "year"]
+    periods: list[GrowthDriverPeriod]
+
+
 class SalesAnalytics(StrictContractModel):
     gross_revenue: float
     total_discount: float
     discount_rate_percent: float
+    period_summaries: SalesPeriodSummaries
     revenue_by_month: list[RevenueMonthMetric]
     revenue_by_weekday: list[WeekdayRevenueMetric]
     revenue_by_category: list[CategoryMetric]
@@ -221,6 +350,8 @@ class SalesAnalytics(StrictContractModel):
     concentration: RevenueConcentration
     product_intelligence: ProductIntelligence
     discount_analysis: DiscountAnalysis
+    product_order_issues: ProductOrderIssueAnalysis
+    growth_drivers: GrowthDriverAnalysis
 
 
 class CustomerSegments(StrictContractModel):
@@ -277,7 +408,10 @@ class RFMCustomerMetric(StrictContractModel):
 
 class RFMAnalysis(StrictContractModel):
     available: bool
-    reason: Literal["INSUFFICIENT_CUSTOMERS"] | None
+    reason: Literal[
+        "INSUFFICIENT_CUSTOMERS",
+        "MISSING_CUSTOMER_IDENTIFIERS",
+    ] | None
     snapshot_date: date
     customer_count: int
     minimum_customers: int
@@ -307,7 +441,10 @@ class CustomerCohort(StrictContractModel):
 
 class CustomerCohortAnalysis(StrictContractModel):
     available: bool
-    reason: Literal["INSUFFICIENT_COHORT_HISTORY"] | None
+    reason: Literal[
+        "INSUFFICIENT_COHORT_HISTORY",
+        "MISSING_CUSTOMER_IDENTIFIERS",
+    ] | None
     method: Literal["acquisition_month_completed_orders"]
     period_from: str
     period_to: str
@@ -320,6 +457,8 @@ class CustomerCohortAnalysis(StrictContractModel):
 
 
 class CustomerAnalytics(StrictContractModel):
+    available: bool = True
+    reason: Literal["MISSING_CUSTOMER_IDENTIFIERS"] | None = None
     segments: CustomerSegments
     repeat_customer_count: int
     repeat_customer_rate_percent: float
@@ -334,6 +473,14 @@ class CustomerAnalytics(StrictContractModel):
 class UploadSourceFile(StrictContractModel):
     file_name: str
     row_count: int
+    source_type: Literal[
+        "marketlens",
+        "shopee",
+        "tiktok",
+        "custom",
+    ] = "marketlens"
+    source_row_count: int | None = None
+    skipped_row_count: int = 0
 
 
 class UploadMetadata(StrictContractModel):
@@ -344,6 +491,26 @@ class UploadMetadata(StrictContractModel):
     effective_row_count: int
     duplicate_order_count: int
     duplicate_row_count: int
+    source_type: Literal[
+        "marketlens",
+        "shopee",
+        "tiktok",
+        "custom",
+        "mixed",
+    ] = "marketlens"
+    import_profile_id: UUID | None = None
+    header_fingerprint: str | None = None
+    skipped_row_count: int = 0
+    capabilities: ImportCapabilities = Field(
+        default_factory=lambda: ImportCapabilities(
+            sales_analytics=True,
+            product_analytics=True,
+            customer_analytics=True,
+            category_analytics=True,
+            discount_analytics=True,
+            cancellation_return_analysis=True,
+        )
+    )
 
 
 ForecastMethod = Literal[
@@ -373,8 +540,11 @@ class ForecastEvaluationFold(StrictContractModel):
     train_end_date: date
     validation_from: date
     validation_to: date
-    model_metrics: ForecastErrorMetrics
-    baseline_metrics: ForecastErrorMetrics
+    model_daily_metrics: ForecastErrorMetrics
+    baseline_daily_metrics: ForecastErrorMetrics
+    model_total_revenue: int
+    actual_total_revenue: int
+    baseline_total_revenue: int
 
 
 class ForecastEvaluation(StrictContractModel):
@@ -385,16 +555,19 @@ class ForecastEvaluation(StrictContractModel):
     ] | None
     strategy: Literal["rolling_origin_selected_method"]
     evaluated_method: ForecastMethod | None
+    primary_metric: Literal["daily_mae", "total_mae"]
     baseline_method: Literal["seasonal_naive_7_days"]
-    horizon_days: Literal[7]
+    horizon_days: Literal[7, 30]
     minimum_fold_count: Literal[2]
     maximum_fold_count: Literal[8]
     minimum_history_days: int
     fold_count: int
     evaluation_points: int
-    model_metrics: ForecastErrorMetrics | None
-    baseline_metrics: ForecastErrorMetrics | None
-    mae_improvement_vs_baseline_percent: float | None
+    model_daily_metrics: ForecastErrorMetrics | None
+    baseline_daily_metrics: ForecastErrorMetrics | None
+    model_total_metrics: ForecastErrorMetrics | None
+    baseline_total_metrics: ForecastErrorMetrics | None
+    primary_mae_improvement_vs_baseline_percent: float | None
     reliability: Literal["high", "medium", "low", "unavailable"]
     folds: list[ForecastEvaluationFold]
 
@@ -403,23 +576,24 @@ class ForecastCandidate(StrictContractModel):
     rank: int
     method: ForecastMethod
     minimum_training_days: int
-    metrics: ForecastErrorMetrics
+    daily_metrics: ForecastErrorMetrics
+    total_metrics: ForecastErrorMetrics
 
 
 class ForecastSelection(StrictContractModel):
     available: bool
     reason: Literal["INSUFFICIENT_SELECTION_HISTORY"] | None
     strategy: Literal["rolling_origin_candidate_comparison"]
-    primary_metric: Literal["mae"]
+    primary_metric: Literal["daily_mae", "total_mae"]
     simplicity_tolerance_percent: Literal[5.0]
     minimum_fold_count: Literal[2]
     maximum_fold_count: Literal[8]
-    minimum_history_days: Literal[28]
+    minimum_history_days: int
     fold_count: int
     evaluation_points: int
     selected_method: ForecastMethod | None
     selection_reason: Literal[
-        "LOWEST_MAE",
+        "LOWEST_PRIMARY_ERROR",
         "SIMPLER_WITHIN_FIVE_PERCENT",
     ] | None
     candidates: list[ForecastCandidate]
@@ -436,20 +610,44 @@ class ForecastUncertainty(StrictContractModel):
     residual_count: int
     absolute_error_quantile: int | None
     observed_backtest_coverage_percent: float | None
+    total_interval_available: bool
+    total_interval_reason: Literal[
+        "MODEL_SELECTION_UNAVAILABLE",
+        "INSUFFICIENT_RESIDUALS",
+    ] | None
+    total_residual_count: int
+    total_absolute_error_quantile: int | None
+    observed_total_backtest_coverage_percent: float | None
 
 
 class ForecastResult(StrictContractModel):
     available: bool
+    reason: Literal["INSUFFICIENT_HISTORY"] | None
+    horizon_days: Literal[7, 30]
+    minimum_history_days: int
     method: ForecastMethod | None
     history_days: int
-    forecast_days: int
     forecast_total: int | None
-    change_vs_last_7_days_percent: float | None
+    previous_period_total: int | None
+    change_vs_previous_period_percent: float | None
+    total_lower_bound: int | None
+    total_upper_bound: int | None
     points: list[ForecastPoint]
     selection: ForecastSelection
     evaluation: ForecastEvaluation
     uncertainty: ForecastUncertainty
     disclaimer: str
+
+
+class ForecastBundle(StrictContractModel):
+    default_horizon_days: Literal[7]
+    horizons: list[ForecastResult] = Field(min_length=2, max_length=2)
+
+    @model_validator(mode="after")
+    def validate_horizon_order(self) -> "ForecastBundle":
+        if [item.horizon_days for item in self.horizons] != [7, 30]:
+            raise ValueError("Forecast horizons must be ordered as 7, 30.")
+        return self
 
 
 class ReportEvidence(StrictContractModel):
@@ -532,7 +730,7 @@ class ReportContent(StrictContractModel):
 
 
 class AnalysisDetailResponse(StrictContractModel):
-    contract_version: Literal["3.0"]
+    contract_version: Literal["5.0"]
     id: UUID
     file_name: str
     upload_mode: Literal["single", "combined"] = "single"
@@ -546,7 +744,7 @@ class AnalysisDetailResponse(StrictContractModel):
     revenue_by_date: list[RevenueDayMetric]
     sales: SalesAnalytics
     customers: CustomerAnalytics
-    forecast: ForecastResult
+    forecast: ForecastBundle
     report: ReportContent
     reports: dict[Literal["en", "vi"], ReportContent]
     upload: UploadMetadata

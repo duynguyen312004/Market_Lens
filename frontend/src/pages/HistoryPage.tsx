@@ -23,6 +23,7 @@ import {
 } from '../api/analysesApi'
 import { parseApiError } from '../api/apiErrors'
 import { queryClient } from '../app/queryClient'
+import { useAuth } from '../auth/useAuth'
 import { useActiveAnalysis } from '../features/analysis/ActiveAnalysisContext'
 import { analysisKeys } from '../features/analysis/analysisQueries'
 import {
@@ -38,16 +39,19 @@ import {
 
 export function HistoryPage() {
   const { language, t } = useLanguage()
+  const { user } = useAuth()
   const { activeAnalysisId, selectAnalysis } = useActiveAnalysis()
   const [page, setPage] = useState(0)
   const [deleteTarget, setDeleteTarget] = useState<AnalysisListItem | null>(null)
   const navigate = useNavigate()
   const offset = page * HISTORY_PAGE_SIZE
+  const userId = user?.id ?? 'signed-out'
 
   const historyQuery = useQuery({
-    queryKey: analysisKeys.list(HISTORY_PAGE_SIZE, offset),
+    queryKey: analysisKeys.list(userId, HISTORY_PAGE_SIZE, offset),
     queryFn: () => listAnalyses(HISTORY_PAGE_SIZE, offset),
     placeholderData: (previousData) => previousData,
+    enabled: Boolean(user),
   })
   const items = historyQuery.data?.items ?? []
 
@@ -55,17 +59,14 @@ export function HistoryPage() {
     mutationFn: (item: AnalysisListItem) => deleteAnalysis(item.id),
     onSuccess: (_, item) => {
       if (activeAnalysisId === item.id) {
-        const nextCompleted = items.find(
-          (candidate) =>
-            candidate.id !== item.id &&
-            candidate.status === 'completed',
-        )
-        selectAnalysis(nextCompleted?.id ?? null)
+        selectAnalysis(null)
       }
       queryClient.removeQueries({
-        queryKey: analysisKeys.detail(item.id),
+        queryKey: analysisKeys.detail(userId, item.id),
       })
-      void queryClient.invalidateQueries({ queryKey: analysisKeys.all })
+      void queryClient.invalidateQueries({
+        queryKey: analysisKeys.all(userId),
+      })
       setDeleteTarget(null)
       if (items.length === 1 && page > 0) {
         setPage((currentPage) => currentPage - 1)

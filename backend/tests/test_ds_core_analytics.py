@@ -29,13 +29,13 @@ def test_known_association_metrics_match_oracle() -> None:
     p001_to_p002 = next(
         rule
         for rule in result["rules"]
-        if rule["source_product_id"] == "P001"
+        if rule["source_product_id"] == "AS-P001"
     )
     assert p001_to_p002 == {
-        "source_product_id": "P001",
-        "source_product_name": "San pham P001",
-        "target_product_id": "P002",
-        "target_product_name": "San pham P002",
+        "source_product_id": "AS-P001",
+        "source_product_name": "San pham AS-P001",
+        "target_product_id": "AS-P002",
+        "target_product_name": "San pham AS-P002",
         "pair_order_count": 30,
         "source_order_count": 50,
         "target_order_count": 40,
@@ -44,7 +44,7 @@ def test_known_association_metrics_match_oracle() -> None:
         "lift": 1.5,
     }
     assert result["rules"][0]["confidence_percent"] == 75.0
-    assert result["rules"][0]["source_product_id"] == "P002"
+    assert result["rules"][0]["source_product_id"] == "AS-P002"
 
 
 def test_association_explains_insufficient_support() -> None:

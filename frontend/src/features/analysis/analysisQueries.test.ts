@@ -1,90 +1,35 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  analysisKeys,
   deriveAnalysisViewState,
-  findLatestCompletedAnalysis,
-  resolveFallbackAnalysisId,
 } from './analysisQueries'
 
-describe('findLatestCompletedAnalysis', () => {
-  it('chọn analysis completed đầu tiên từ danh sách mới nhất', () => {
-    const result = findLatestCompletedAnalysis([
-      {
-        id: 'processing',
-        file_name: 'processing.csv',
-        upload_mode: 'single',
-        source_file_count: 1,
-        status: 'processing',
-        row_count: 10,
-        date_from: null,
-        date_to: null,
-        created_at: '2026-07-24T10:00:00Z',
-      },
-      {
-        id: 'completed',
-        file_name: 'sales.csv',
-        upload_mode: 'single',
-        source_file_count: 1,
-        status: 'completed',
-        row_count: 20,
-        date_from: '2026-06-01',
-        date_to: '2026-07-30',
-        created_at: '2026-07-24T09:00:00Z',
-      },
+describe('analysis query keys', () => {
+  it('isolates list and detail caches by authenticated user', () => {
+    expect(analysisKeys.list('user-one', 20, 0)).not.toEqual(
+      analysisKeys.list('user-two', 20, 0),
+    )
+    expect(analysisKeys.detail('user-one', 'analysis-one')).not.toEqual(
+      analysisKeys.detail('user-two', 'analysis-one'),
+    )
+    expect(analysisKeys.all('user-one')).toEqual([
+      'users',
+      'user-one',
+      'analyses',
     ])
-
-    expect(result?.id).toBe('completed')
-  })
-
-  it('trả null khi chưa có analysis hoàn thành', () => {
-    expect(
-      findLatestCompletedAnalysis([
-        {
-          id: 'failed',
-          file_name: 'broken.csv',
-          upload_mode: 'single',
-          source_file_count: 1,
-          status: 'failed',
-          row_count: 0,
-          date_from: null,
-          date_to: null,
-          created_at: '2026-07-24T10:00:00Z',
-        },
-      ]),
-    ).toBeNull()
-  })
-
-  it('phục hồi analysis mới nhất khi ID đã lưu không còn tồn tại', () => {
-    expect(
-      resolveFallbackAnalysisId('stale-id', [
-        {
-          id: 'latest-id',
-          file_name: 'latest.csv',
-          upload_mode: 'single',
-          source_file_count: 1,
-          status: 'completed',
-          row_count: 20,
-          date_from: '2026-06-01',
-          date_to: '2026-07-30',
-          created_at: '2026-07-24T10:00:00Z',
-        },
-      ]),
-    ).toBe('latest-id')
   })
 })
 
 describe('deriveAnalysisViewState', () => {
-  it('hiển thị empty state thay vì loading vô hạn khi tài khoản chưa có analysis', () => {
+  it('hiển thị lựa chọn dữ liệu ngay khi phiên chưa chọn analysis', () => {
     expect(
       deriveAnalysisViewState({
         hasActiveId: false,
         hasAnalysis: false,
         hasError: false,
-        hasLatestAnalysis: false,
-        hasPreferredId: false,
+        activeIsMissing: false,
         isDetailPending: false,
-        isListSuccess: true,
-        preferredIsMissing: false,
       }),
     ).toEqual({
       isEmpty: true,
@@ -98,15 +43,27 @@ describe('deriveAnalysisViewState', () => {
         hasActiveId: true,
         hasAnalysis: false,
         hasError: false,
-        hasLatestAnalysis: true,
-        hasPreferredId: true,
+        activeIsMissing: false,
         isDetailPending: true,
-        isListSuccess: true,
-        preferredIsMissing: false,
       }),
     ).toEqual({
       isEmpty: false,
       isLoading: true,
+    })
+  })
+
+  it('quay về lựa chọn dữ liệu khi analysis đã chọn không còn tồn tại', () => {
+    expect(
+      deriveAnalysisViewState({
+        hasActiveId: true,
+        hasAnalysis: false,
+        hasError: false,
+        activeIsMissing: true,
+        isDetailPending: false,
+      }),
+    ).toEqual({
+      isEmpty: true,
+      isLoading: false,
     })
   })
 })

@@ -11,11 +11,16 @@ import {
 
 const forecast: ForecastResult = {
   available: true,
+  reason: null,
+  horizon_days: 7,
+  minimum_history_days: 14,
   method: 'linear_trend_30_days',
   history_days: 60,
-  forecast_days: 7,
   forecast_total: 15_450_331,
-  change_vs_last_7_days_percent: 2.4,
+  previous_period_total: 15_000_000,
+  change_vs_previous_period_percent: 2.4,
+  total_lower_bound: 14_000_000,
+  total_upper_bound: 17_000_000,
   points: Array.from({ length: 7 }, (_, index) => ({
     date: `2026-07-${String(index + 1).padStart(2, '0')}`,
     predicted_revenue: 1_000_000 + index,
@@ -26,7 +31,7 @@ const forecast: ForecastResult = {
     available: true,
     reason: null,
     strategy: 'rolling_origin_candidate_comparison',
-    primary_metric: 'mae',
+    primary_metric: 'daily_mae',
     simplicity_tolerance_percent: 5,
     minimum_fold_count: 2,
     maximum_fold_count: 8,
@@ -34,7 +39,7 @@ const forecast: ForecastResult = {
     fold_count: 4,
     evaluation_points: 28,
     selected_method: 'linear_trend_30_days',
-    selection_reason: 'LOWEST_MAE',
+    selection_reason: 'LOWEST_PRIMARY_ERROR',
     candidates: [],
   },
   evaluation: {
@@ -42,6 +47,7 @@ const forecast: ForecastResult = {
     reason: null,
     strategy: 'rolling_origin_selected_method',
     evaluated_method: 'linear_trend_30_days',
+    primary_metric: 'daily_mae',
     baseline_method: 'seasonal_naive_7_days',
     horizon_days: 7,
     minimum_fold_count: 2,
@@ -49,17 +55,27 @@ const forecast: ForecastResult = {
     minimum_history_days: 28,
     fold_count: 4,
     evaluation_points: 28,
-    model_metrics: {
+    model_daily_metrics: {
       mae: 856_855.5,
       rmse: 1_034_308.06,
       smape_percent: 42.263957,
     },
-    baseline_metrics: {
+    baseline_daily_metrics: {
       mae: 1_223_928.57,
       rmse: 1_432_915.36,
       smape_percent: 67.306507,
     },
-    mae_improvement_vs_baseline_percent: 29.99138,
+    model_total_metrics: {
+      mae: 5_000_000,
+      rmse: 6_000_000,
+      smape_percent: 20,
+    },
+    baseline_total_metrics: {
+      mae: 6_000_000,
+      rmse: 7_000_000,
+      smape_percent: 25,
+    },
+    primary_mae_improvement_vs_baseline_percent: 29.99138,
     reliability: 'low',
     folds: [],
   },
@@ -71,6 +87,11 @@ const forecast: ForecastResult = {
     residual_count: 28,
     absolute_error_quantile: 200_000,
     observed_backtest_coverage_percent: 82.142857,
+    total_interval_available: true,
+    total_interval_reason: null,
+    total_residual_count: 4,
+    total_absolute_error_quantile: 1_000_000,
+    observed_total_backtest_coverage_percent: 80,
   },
   disclaimer: 'Dự báo chỉ mang tính tham khảo.',
 }

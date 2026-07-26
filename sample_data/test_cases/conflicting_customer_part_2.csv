@@ -1,0 +1,2 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+CC-B-O001,2026-06-02,CC-C001,Ten khach hang khong nhat quan,CC-P001,San pham xung dot,Danh muc synthetic,1,100000,0,completed

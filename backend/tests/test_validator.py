@@ -157,6 +157,38 @@ def test_negative_line_revenue_is_rejected() -> None:
     )
 
 
+def test_quantity_outside_supported_integer_range_is_rejected() -> None:
+    frame = valid_frame()
+    frame.loc[0, "quantity"] = "9223372036854775808"
+
+    with pytest.raises(AppError) as error:
+        validate_sales_data(frame, max_rows=50_000)
+
+    app_error = assert_app_error(error, "INVALID_ROW_DATA")
+    assert {
+        "row": 2,
+        "column": "quantity",
+        "reason": "must_be_positive_integer",
+    } in app_error.details["errors"]
+
+
+def test_overflowing_line_value_is_rejected() -> None:
+    frame = valid_frame()
+    frame.loc[0, "quantity"] = 2
+    frame.loc[0, "unit_price"] = "1e308"
+    frame.loc[0, "discount"] = 0
+
+    with pytest.raises(AppError) as error:
+        validate_sales_data(frame, max_rows=50_000)
+
+    app_error = assert_app_error(error, "INVALID_ROW_DATA")
+    assert {
+        "row": 2,
+        "column": "unit_price",
+        "reason": "line_value_out_of_supported_range",
+    } in app_error.details["errors"]
+
+
 def test_completely_blank_rows_are_ignored() -> None:
     blank = pd.DataFrame(
         [{column: None for column in REQUIRED_COLUMNS}],

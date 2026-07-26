@@ -24,6 +24,7 @@ import { getAuthErrorMessage } from '../auth/authErrors'
 import { useAuth } from '../auth/useAuth'
 import {
   ActiveAnalysisProvider,
+  storeSelectedAnalysisId,
 } from '../features/analysis/ActiveAnalysisContext'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
 import {
@@ -79,6 +80,7 @@ function AppShellContent() {
 
     try {
       await signOut()
+      if (user) storeSelectedAnalysisId(user.id, null)
     } catch (error) {
       setLogoutError(getAuthErrorMessage(error, language))
       setIsLoggingOut(false)
@@ -152,7 +154,7 @@ function AppShellContent() {
         {/* Active File Pill & Language Switcher & Profile Footer */}
         <div className="space-y-3 border-t border-white/10 p-4">
           {/* Active File Pill */}
-          {analysis && (
+          {analysis ? (
             <button
               className="flex w-full items-center gap-2 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-left text-xs text-slate-100 transition hover:border-white/20 hover:bg-white/10"
               onClick={openSelector}
@@ -177,6 +179,25 @@ function AppShellContent() {
                 className="shrink-0 text-slate-400"
                 size={17}
               />
+            </button>
+          ) : (
+            <button
+              aria-label={t('selector.open')}
+              className="flex w-full items-center gap-3 rounded-lg border border-dashed border-white/20 bg-white/5 px-3 py-2.5 text-left transition hover:border-blue-300/60 hover:bg-white/10"
+              onClick={openSelector}
+              type="button"
+            >
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white/8 text-blue-300">
+                <FilesIcon aria-hidden="true" size={17} weight="bold" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-xs font-bold leading-5 text-white">
+                  {t('selector.noSelection')}
+                </span>
+                <span className="block text-xs leading-4 text-slate-300">
+                  {t('selector.open')}
+                </span>
+              </span>
             </button>
           )}
 
@@ -248,16 +269,14 @@ function AppShellContent() {
 
             {/* Mobile Language Switcher & Logout */}
             <div className="flex items-center gap-2">
-              {analysis && (
-                <button
-                  aria-label={t('selector.open')}
-                  className="grid size-8 place-items-center rounded-md border border-white/15 bg-white/7 text-slate-200"
-                  onClick={openSelector}
-                  type="button"
-                >
-                  <FilesIcon size={16} weight="bold" />
-                </button>
-              )}
+              <button
+                aria-label={t('selector.open')}
+                className="grid size-8 place-items-center rounded-md border border-white/15 bg-white/7 text-slate-200"
+                onClick={openSelector}
+                type="button"
+              >
+                <FilesIcon size={16} weight="bold" />
+              </button>
               <button
                 className="flex items-center gap-1 rounded-md border border-white/15 bg-white/7 px-2.5 py-1.5 text-xs font-bold text-slate-200"
                 onClick={() => setLanguage(language === 'en' ? 'vi' : 'en')}

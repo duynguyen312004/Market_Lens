@@ -14,9 +14,14 @@ from backend.app.core.errors import (
     unexpected_error_handler,
     validation_error_handler,
 )
+from backend.app.core.request_limits import RequestBodyLimitMiddleware
 from backend.app.routers.analyses import router as analyses_router
 from backend.app.routers.auth import router as auth_router
 from backend.app.routers.health import router as health_router
+from backend.app.routers.imports import (
+    preview_router as imports_preview_router,
+    profiles_router as import_profiles_router,
+)
 
 
 settings = get_settings()
@@ -38,10 +43,21 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
     allow_credentials=False,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PATCH", "DELETE", "OPTIONS"],
     allow_headers=["Accept", "Authorization", "Content-Type"],
     expose_headers=["X-Request-ID"],
     max_age=600,
+)
+app.add_middleware(
+    RequestBodyLimitMiddleware,
+    maximum_bytes=(settings.max_upload_mb + 1) * 1024 * 1024,
+    protected_paths=frozenset(
+        {
+            f"{settings.api_v1_prefix}/analyses",
+            f"{settings.api_v1_prefix}/analyses/combined",
+            f"{settings.api_v1_prefix}/imports/preview",
+        }
+    ),
 )
 
 
@@ -74,3 +90,5 @@ async def add_security_headers(
 app.include_router(health_router, prefix=settings.api_v1_prefix)
 app.include_router(auth_router, prefix=settings.api_v1_prefix)
 app.include_router(analyses_router, prefix=settings.api_v1_prefix)
+app.include_router(imports_preview_router, prefix=settings.api_v1_prefix)
+app.include_router(import_profiles_router, prefix=settings.api_v1_prefix)

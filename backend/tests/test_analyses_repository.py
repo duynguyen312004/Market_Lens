@@ -5,7 +5,10 @@ from typing import Any
 import pytest
 
 from backend.app.core.errors import AppError
-from backend.app.repositories.analyses_repository import AnalysesRepository
+from backend.app.repositories.analyses_repository import (
+    AnalysesRepository,
+    _is_missing_report_rpc,
+)
 
 
 class FakeQuery:
@@ -61,6 +64,16 @@ class FakeClient:
         self.queries.append(query)
         return query
 
+    def rpc(
+        self,
+        name: str,
+        params: dict[str, Any],
+    ) -> FakeQuery:
+        query = FakeQuery(self.responses[len(self.queries)])
+        query.operations.append(("rpc", name, params))
+        self.queries.append(query)
+        return query
+
 
 class FailingQuery(FakeQuery):
     def execute(self) -> SimpleNamespace:
@@ -70,6 +83,32 @@ class FailingQuery(FakeQuery):
 class FailingClient:
     def table(self, _: str) -> FailingQuery:
         return FailingQuery([])
+
+
+class MissingRpcError(Exception):
+    code = "PGRST202"
+
+
+class MissingRpcQuery(FakeQuery):
+    def execute(self) -> SimpleNamespace:
+        raise MissingRpcError
+
+
+class MissingRpcClient(FakeClient):
+    def rpc(
+        self,
+        name: str,
+        params: dict[str, Any],
+    ) -> FakeQuery:
+        query = MissingRpcQuery(self.responses[len(self.queries)])
+        query.operations.append(("rpc", name, params))
+        self.queries.append(query)
+        return query
+
+
+def test_missing_report_rpc_is_the_only_legacy_fallback_condition() -> None:
+    assert _is_missing_report_rpc(MissingRpcError()) is True
+    assert _is_missing_report_rpc(RuntimeError("database failed")) is False
 
 
 def test_create_assigns_verified_user_id() -> None:
@@ -155,16 +194,12 @@ def test_delete_filters_by_analysis_and_verified_user() -> None:
 
 
 def test_update_report_filters_by_analysis_and_verified_user() -> None:
-    existing = {
+    updated = {
         "id": "analysis-id",
         "user_id": "owner",
-        "result_json": {"summary": {}, "report": {"source": "rule_based"}},
-    }
-    updated = {
-        **existing,
         "result_json": {"summary": {}, "report": {"source": "ai"}},
     }
-    client = FakeClient([[existing], [updated]])
+    client = FakeClient([[updated]])
     repository = AnalysesRepository(client)  # type: ignore[arg-type]
 
     result = repository.update_analysis_report_for_user(
@@ -174,19 +209,65 @@ def test_update_report_filters_by_analysis_and_verified_user() -> None:
     )
 
     assert result == updated
-    operations = client.queries[1].operations
+    operations = client.queries[0].operations
+    assert (
+        "rpc",
+        "set_analysis_report",
+        {
+            "p_analysis_id": "analysis-id",
+            "p_user_id": "owner",
+            "p_language": "en",
+            "p_report": {"source": "ai"},
+        },
+    ) in operations
+
+
+def test_update_report_falls_back_when_rpc_migration_is_missing() -> None:
+    existing = {
+        "id": "analysis-id",
+        "user_id": "owner",
+        "result_json": {
+            "summary": {},
+            "reports": {"vi": {"source": "rule_based"}},
+        },
+    }
+    updated = {
+        **existing,
+        "result_json": {
+            "summary": {},
+            "report": {"source": "ai"},
+            "reports": {
+                "en": {"source": "ai"},
+                "vi": {"source": "rule_based"},
+            },
+        },
+    }
+    client = MissingRpcClient([[], [existing], [updated]])
+    repository = AnalysesRepository(client)  # type: ignore[arg-type]
+
+    result = repository.update_analysis_report_for_user(
+        analysis_id="analysis-id",
+        user_id="owner",
+        report={"source": "ai"},
+        language="en",
+    )
+
+    assert result == updated
     assert (
         "update",
         {
             "result_json": {
                 "summary": {},
                 "report": {"source": "ai"},
-                "reports": {"en": {"source": "ai"}},
+                "reports": {
+                    "en": {"source": "ai"},
+                    "vi": {"source": "rule_based"},
+                },
             }
         },
-    ) in operations
-    assert ("eq", "id", "analysis-id") in operations
-    assert ("eq", "user_id", "owner") in operations
+    ) in client.queries[2].operations
+    assert ("eq", "id", "analysis-id") in client.queries[2].operations
+    assert ("eq", "user_id", "owner") in client.queries[2].operations
 
 
 def test_repository_failure_maps_to_safe_database_error() -> None:

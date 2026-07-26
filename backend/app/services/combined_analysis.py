@@ -4,6 +4,7 @@ from typing import Any
 import pandas as pd
 
 from backend.app.core.errors import AppError
+from backend.app.schemas.imports import ImportCapabilities
 from backend.app.services.validator import MAX_RETURNED_ERRORS, REQUIRED_COLUMNS
 
 
@@ -11,6 +12,11 @@ from backend.app.services.validator import MAX_RETURNED_ERRORS, REQUIRED_COLUMNS
 class ValidatedSource:
     file_name: str
     frame: pd.DataFrame
+    source_type: str = "marketlens"
+    source_row_count: int | None = None
+    skipped_row_count: int = 0
+    header_fingerprint: str | None = None
+    capabilities: ImportCapabilities | None = None
 
 
 @dataclass(frozen=True)
@@ -21,6 +27,10 @@ class CombinedSalesData:
     duplicate_order_count: int
     duplicate_row_count: int
     warnings: list[str]
+    skipped_row_count: int
+    source_type: str
+    header_fingerprint: str | None
+    capabilities: ImportCapabilities
 
 
 def combine_validated_sales_data(
@@ -36,7 +46,12 @@ def combine_validated_sales_data(
             details={"minimum_files": 2},
         )
 
-    source_row_count = sum(len(source.frame.index) for source in sources)
+    source_row_count = sum(
+        source.source_row_count
+        if source.source_row_count is not None
+        else len(source.frame.index)
+        for source in sources
+    )
     if source_row_count > max_rows:
         raise AppError(
             code="TOO_MANY_ROWS",
@@ -53,7 +68,17 @@ def combine_validated_sales_data(
         )
 
     source_files = [
-        {"file_name": source.file_name, "row_count": len(source.frame.index)}
+        {
+            "file_name": source.file_name,
+            "row_count": len(source.frame.index),
+            "source_type": source.source_type,
+            "source_row_count": (
+                source.source_row_count
+                if source.source_row_count is not None
+                else len(source.frame.index)
+            ),
+            "skipped_row_count": source.skipped_row_count,
+        }
         for source in sources
     ]
     marked_frames: list[pd.DataFrame] = []
@@ -100,6 +125,13 @@ def combine_validated_sales_data(
     warnings = (
         ["DUPLICATE_ORDERS_REMOVED"] if duplicate_order_ids else []
     )
+    capabilities = _combined_capabilities(sources)
+    source_types = {source.source_type for source in sources}
+    fingerprints = {
+        source.header_fingerprint
+        for source in sources
+        if source.header_fingerprint
+    }
     return CombinedSalesData(
         frame=cleaned,
         source_files=source_files,
@@ -107,6 +139,47 @@ def combine_validated_sales_data(
         duplicate_order_count=len(duplicate_order_ids),
         duplicate_row_count=duplicate_row_count,
         warnings=warnings,
+        skipped_row_count=sum(source.skipped_row_count for source in sources),
+        source_type=(
+            next(iter(source_types))
+            if len(source_types) == 1
+            else "mixed"
+        ),
+        header_fingerprint=(
+            next(iter(fingerprints))
+            if len(fingerprints) == 1
+            else None
+        ),
+        capabilities=capabilities,
+    )
+
+
+def _combined_capabilities(
+    sources: list[ValidatedSource],
+) -> ImportCapabilities:
+    capabilities = [
+        source.capabilities
+        for source in sources
+        if source.capabilities is not None
+    ]
+    if not capabilities:
+        return ImportCapabilities(
+            sales_analytics=True,
+            product_analytics=True,
+            customer_analytics=True,
+            category_analytics=True,
+            discount_analytics=True,
+            cancellation_return_analysis=True,
+        )
+    fields = ImportCapabilities.model_fields
+    return ImportCapabilities(
+        **{
+            field: all(
+                bool(getattr(capability, field))
+                for capability in capabilities
+            )
+            for field in fields
+        }
     )
 
 

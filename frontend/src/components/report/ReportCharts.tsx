@@ -35,6 +35,13 @@ const CHART = {
 
 export function ReportCharts({ analysis }: ReportChartsProps) {
   const { language, t } = useLanguage()
+  const forecast =
+    analysis.forecast.horizons.find(
+      (item) => item.horizon_days === 30 && item.available,
+    ) ??
+    analysis.forecast.horizons.find(
+      (item) => item.horizon_days === 7,
+    )
   const revenuePoints = analysis.revenue_by_date.slice(-30).map((point) => ({
     date: point.date,
     value: point.revenue,
@@ -49,13 +56,13 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
       upper: null,
     }))
   const forecastPoints: ForecastChartPoint[] =
-    analysis.forecast.points.map((point) => ({
+    forecast?.points.map((point) => ({
       actual: null,
       date: point.date,
       lower: point.lower_bound,
       predicted: point.predicted_revenue,
       upper: point.upper_bound,
-    }))
+    })) ?? []
   const forecastSeries = [...actualPoints, ...forecastPoints]
 
   return (
@@ -78,7 +85,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
               {t('report.revenueChartDesc')}
             </p>
           </figcaption>
-          <div className="mt-4 aspect-[13/6] min-w-0">
+          <div className="report-chart-canvas mt-4 aspect-[13/6] min-w-0">
             <RevenueSvgChart
               ariaLabel={t('report.revenueChartTitle')}
               language={language}
@@ -90,15 +97,19 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
         <figure className="report-print-break-avoid rounded-2xl border border-slate-200 bg-white p-4">
           <figcaption>
             <p className="text-sm font-black text-slate-900">
-              {t('report.forecastChartTitle')}
+              {t('report.forecastChartTitle', {
+                count: forecast?.horizon_days ?? 7,
+              })}
             </p>
             <p className="mt-1 text-xs leading-relaxed text-slate-600">
-              {analysis.forecast.available
-                ? t('report.forecastChartDesc')
+              {forecast?.available
+                ? t('report.forecastChartDesc', {
+                    count: forecast.horizon_days,
+                  })
                 : t('report.forecastChartUnavailable')}
             </p>
           </figcaption>
-          {analysis.forecast.available ? (
+          {forecast?.available ? (
             <>
               <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[9px] font-bold text-slate-500">
                 <ChartLegend
@@ -110,7 +121,7 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
                   dashed
                   label={t('report.predictedRevenue')}
                 />
-                {analysis.forecast.uncertainty.available && (
+                {forecast.uncertainty.available && (
                   <ChartLegend
                     color="#bfdbfe"
                     label={t('report.forecastInterval')}
@@ -118,9 +129,11 @@ export function ReportCharts({ analysis }: ReportChartsProps) {
                   />
                 )}
               </div>
-              <div className="mt-2 aspect-[13/6] min-w-0">
+              <div className="report-chart-canvas mt-2 aspect-[13/6] min-w-0">
                 <ForecastSvgChart
-                  ariaLabel={t('report.forecastChartTitle')}
+                  ariaLabel={t('report.forecastChartTitle', {
+                    count: forecast.horizon_days,
+                  })}
                   language={language}
                   points={forecastSeries}
                 />

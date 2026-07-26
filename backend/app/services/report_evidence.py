@@ -37,7 +37,7 @@ def build_report_evidence_catalog(
             "label": label_vi if language == "vi" else label_en,
             "value": _normalize_value(value),
             "unit": unit,
-            "context": context,
+            "context": _safe_context(context),
         }
 
     add(
@@ -54,13 +54,15 @@ def build_report_evidence_catalog(
         summary.get("total_orders"),
         "count",
     )
-    add(
-        "summary.total_customers",
-        "Unique completed-order customers",
-        "Khách hàng có đơn hoàn tất",
-        summary.get("total_customers"),
-        "count",
-    )
+    customer_data_available = customers.get("available", True)
+    if customer_data_available:
+        add(
+            "summary.total_customers",
+            "Unique completed-order customers",
+            "Khách hàng có đơn hoàn tất",
+            summary.get("total_customers"),
+            "count",
+        )
     add(
         "summary.total_quantity_sold",
         "Units sold in completed orders",
@@ -207,8 +209,8 @@ def build_report_evidence_catalog(
         )
         add(
             "sales.association.top_rule_lift",
-            "Leading relationship strength",
-            "Mức liên quan của cặp sản phẩm nổi bật",
+            "Compared with usual purchasing",
+            "Mức phổ biến so với thông thường",
             top_rule.get("lift"),
             "ratio",
             context=association_context,
@@ -230,21 +232,113 @@ def build_report_evidence_catalog(
             context=association_context,
         )
 
+    product_order_issues = sales.get("product_order_issues") or {}
+    issue_products = product_order_issues.get("products") or []
+    if product_order_issues.get("available") and issue_products:
+        top_issue_product = issue_products[0]
+        issue_context = str(
+            top_issue_product.get("product_name") or ""
+        )
+        add(
+            "sales.product_order_issues.top.issue_rate_percent",
+            "Cancelled or returned order rate",
+            "Tỷ lệ đơn hủy hoặc trả",
+            top_issue_product.get("issue_rate_percent"),
+            "percent",
+            context=issue_context,
+        )
+        add(
+            "sales.product_order_issues.top.issue_order_count",
+            "Cancelled or returned orders",
+            "Số đơn hủy hoặc trả",
+            top_issue_product.get("issue_order_count"),
+            "count",
+            context=issue_context,
+        )
+        add(
+            "sales.product_order_issues.top.affected_product_value",
+            "Product value in cancelled or returned orders",
+            "Giá trị sản phẩm trong đơn hủy hoặc trả",
+            top_issue_product.get("affected_product_value"),
+            "vnd",
+            context=issue_context,
+        )
+
+    growth_drivers = sales.get("growth_drivers") or {}
+    growth_period = _growth_period(
+        growth_drivers,
+        str(
+            growth_drivers.get("default_comparison_type")
+            or "month"
+        ),
+    )
+    if not growth_period or not growth_period.get("available"):
+        growth_period = next(
+            (
+                period
+                for period in growth_drivers.get("periods") or []
+                if period.get("available")
+            ),
+            None,
+        )
+    if growth_period and growth_period.get("available"):
+        comparison_type = str(growth_period["comparison_type"])
+        prefix = f"sales.growth.{comparison_type}"
+        period_en = (
+            "latest calendar month"
+            if comparison_type == "month"
+            else "current calendar year"
+        )
+        period_vi = (
+            "tháng gần nhất"
+            if comparison_type == "month"
+            else "năm hiện tại"
+        )
+        add(
+            f"{prefix}.net_revenue_change",
+            f"Revenue change for the {period_en}",
+            f"Thay đổi doanh thu của {period_vi}",
+            growth_period.get("net_revenue_change"),
+            "vnd",
+        )
+        add(
+            f"{prefix}.growth_rate_percent",
+            f"Revenue growth for the {period_en}",
+            f"Tăng trưởng doanh thu của {period_vi}",
+            growth_period.get("growth_rate_percent"),
+            "percent",
+        )
+        _add_growth_driver_evidence(
+            add=add,
+            period=growth_period,
+            prefix=prefix,
+            language=language,
+        )
+
     segments = customers.get("segments") or {}
-    add(
-        "customers.repeat_customer_rate_percent",
-        "Repeat customer rate",
-        "Tỷ lệ khách hàng quay lại",
-        customers.get("repeat_customer_rate_percent"),
-        "percent",
-    )
-    add(
-        "customers.vip_count",
-        "VIP customers",
-        "Khách hàng VIP",
-        segments.get("vip"),
-        "count",
-    )
+    if not customer_data_available:
+        add(
+            "customers.availability",
+            "Customer analysis availability",
+            "Khả năng phân tích khách hàng",
+            "Unavailable",
+            "label",
+        )
+    else:
+        add(
+            "customers.repeat_customer_rate_percent",
+            "Repeat customer rate",
+            "Tỷ lệ khách hàng quay lại",
+            customers.get("repeat_customer_rate_percent"),
+            "percent",
+        )
+        add(
+            "customers.vip_count",
+            "VIP customers",
+            "Khách hàng VIP",
+            segments.get("vip"),
+            "count",
+        )
     rfm = customers.get("rfm") or {}
     rfm_segments = rfm.get("segments") or {}
     if rfm.get("available"):
@@ -284,79 +378,83 @@ def build_report_evidence_catalog(
         "forecast.history_days",
         "Forecast history length",
         "Độ dài lịch sử dự báo",
-        forecast.get("history_days")
-        if forecast
-        else (analysis_result.get("period") or {}).get("history_days"),
+        (analysis_result.get("period") or {}).get("history_days"),
         "days",
     )
-    add(
-        "forecast.forecast_total",
-        "Next 7-day forecast revenue",
-        "Doanh thu dự báo 7 ngày tới",
-        forecast.get("forecast_total"),
-        "vnd",
-    )
-    add(
-        "forecast.change_vs_last_7_days_percent",
-        "Forecast change versus latest actual 7 days",
-        "Thay đổi dự báo so với 7 ngày thực tế gần nhất",
-        forecast.get("change_vs_last_7_days_percent"),
-        "percent",
-    )
-    add(
-        "forecast.selected_method",
-        "Selected forecast method",
-        "Phương pháp dự báo được chọn",
-        _forecast_method_label(forecast.get("method"), language),
-        "label",
-    )
-    evaluation = forecast.get("evaluation") or {}
-    if evaluation.get("available"):
-        model_metrics = evaluation.get("model_metrics") or {}
+    for horizon in forecast.get("horizons") or []:
+        if not horizon.get("available"):
+            continue
+        horizon_days = int(horizon["horizon_days"])
+        prefix = f"forecast.h{horizon_days}"
         add(
-            "forecast.evaluation.mae",
-            "Average daily forecast difference",
-            "Sai lệch dự báo trung bình mỗi ngày",
-            model_metrics.get("mae"),
+            f"{prefix}.forecast_total",
+            f"Next {horizon_days}-day forecast revenue",
+            f"Doanh thu dự báo {horizon_days} ngày tới",
+            horizon.get("forecast_total"),
             "vnd",
         )
         add(
-            "forecast.evaluation.smape_percent",
-            "Average percentage forecast difference",
-            "Sai lệch dự báo tương đối trung bình",
-            model_metrics.get("smape_percent"),
+            f"{prefix}.change_vs_previous_period_percent",
+            f"Forecast change versus latest actual {horizon_days} days",
+            (
+                "Thay đổi dự báo so với "
+                f"{horizon_days} ngày thực tế gần nhất"
+            ),
+            horizon.get("change_vs_previous_period_percent"),
             "percent",
         )
         add(
-            "forecast.evaluation.mae_improvement_vs_baseline_percent",
-            "Improvement over a simple weekly estimate",
-            "Mức cải thiện so với cách tính tuần đơn giản",
-            evaluation.get("mae_improvement_vs_baseline_percent"),
-            "percent",
+            f"{prefix}.total_lower_bound",
+            f"Lower expected total for {horizon_days} days",
+            f"Cận dưới tổng doanh thu {horizon_days} ngày",
+            horizon.get("total_lower_bound"),
+            "vnd",
         )
         add(
-            "forecast.evaluation.reliability",
-            "Forecast reliability",
-            "Độ tin cậy dự báo",
-            _reliability_label(evaluation.get("reliability"), language),
+            f"{prefix}.total_upper_bound",
+            f"Upper expected total for {horizon_days} days",
+            f"Cận trên tổng doanh thu {horizon_days} ngày",
+            horizon.get("total_upper_bound"),
+            "vnd",
+        )
+        add(
+            f"{prefix}.selected_method",
+            "Selected forecast method",
+            "Phương pháp dự báo được chọn",
+            _forecast_method_label(horizon.get("method"), language),
             "label",
         )
-    uncertainty = forecast.get("uncertainty") or {}
-    if uncertainty.get("available"):
-        add(
-            "forecast.uncertainty.observed_coverage_percent",
-            "Expected-range coverage in historical tests",
-            "Mức bao phủ của khoảng dự kiến trên dữ liệu cũ",
-            uncertainty.get("observed_backtest_coverage_percent"),
-            "percent",
-        )
-        add(
-            "forecast.uncertainty.absolute_error_quantile",
-            "Expected difference used for the revenue range",
-            "Mức sai lệch dùng để tạo khoảng doanh thu dự kiến",
-            uncertainty.get("absolute_error_quantile"),
-            "vnd",
-        )
+        evaluation = horizon.get("evaluation") or {}
+        if evaluation.get("available"):
+            primary_metrics = (
+                evaluation.get("model_daily_metrics")
+                if horizon_days == 7
+                else evaluation.get("model_total_metrics")
+            ) or {}
+            add(
+                f"{prefix}.evaluation.primary_mae",
+                "Typical forecast difference",
+                "Mức lệch dự báo thường gặp",
+                primary_metrics.get("mae"),
+                "vnd",
+            )
+            add(
+                f"{prefix}.evaluation.smape_percent",
+                "Average percentage forecast difference",
+                "Mức lệch trung bình theo phần trăm",
+                primary_metrics.get("smape_percent"),
+                "percent",
+            )
+            add(
+                f"{prefix}.evaluation.reliability",
+                "Forecast reliability",
+                "Độ tin cậy dự báo",
+                _reliability_label(
+                    evaluation.get("reliability"),
+                    language,
+                ),
+                "label",
+            )
 
     add(
         "upload.duplicate_order_count",
@@ -373,6 +471,61 @@ def build_report_evidence_catalog(
         "count",
     )
     return catalog
+
+
+def _growth_period(
+    growth_drivers: dict[str, Any],
+    comparison_type: str,
+) -> dict[str, Any] | None:
+    return next(
+        (
+            period
+            for period in growth_drivers.get("periods") or []
+            if str(period.get("comparison_type") or "")
+            == comparison_type
+        ),
+        None,
+    )
+
+
+def _add_growth_driver_evidence(
+    *,
+    add: Any,
+    period: dict[str, Any],
+    prefix: str,
+    language: ReportLanguage,
+) -> None:
+    driver_specs = (
+        ("product_growth_drivers", "product_increase"),
+        ("product_decline_drivers", "product_decrease"),
+        ("category_growth_drivers", "category_increase"),
+        ("category_decline_drivers", "category_decrease"),
+    )
+    for source_key, evidence_key in driver_specs:
+        rows = period.get(source_key) or []
+        if not rows:
+            continue
+        row = rows[0]
+        entity_name = str(
+            row.get("product_name") or row.get("category") or ""
+        )
+        is_increase = float(row.get("revenue_change") or 0) > 0
+        add(
+            f"{prefix}.{evidence_key}.revenue_change",
+            (
+                "Largest observed revenue increase"
+                if is_increase
+                else "Largest observed revenue decrease"
+            ),
+            (
+                "Mức tăng doanh thu lớn nhất quan sát được"
+                if is_increase
+                else "Mức giảm doanh thu lớn nhất quan sát được"
+            ),
+            abs(float(row.get("revenue_change") or 0)),
+            "vnd",
+            context=entity_name,
+        )
 
 
 def _latest_observed_cohort_metric(
@@ -393,6 +546,18 @@ def _normalize_value(value: Any) -> int | float | str:
     if isinstance(value, Real):
         return float(value)
     return str(value)
+
+
+def _safe_context(value: str | None) -> str | None:
+    if value is None:
+        return None
+    normalized = " ".join(str(value).split())
+    if not normalized:
+        return None
+    maximum_length = 200
+    if len(normalized) <= maximum_length:
+        return normalized
+    return f"{normalized[: maximum_length - 1].rstrip()}…"
 
 
 def _forecast_method_label(

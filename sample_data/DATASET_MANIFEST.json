@@ -1,0 +1,286 @@
+{
+  "combined_cases": {
+    "invalid_customer_conflict": [
+      "sample_data/test_cases/conflicting_customer_part_1.csv",
+      "sample_data/test_cases/conflicting_customer_part_2.csv"
+    ],
+    "invalid_order_conflict": [
+      "sample_data/test_cases/conflicting_order_part_1.csv",
+      "sample_data/test_cases/conflicting_order_part_2.csv"
+    ],
+    "invalid_product_conflict": [
+      "sample_data/test_cases/conflicting_product_part_1.csv",
+      "sample_data/test_cases/conflicting_product_part_2.csv"
+    ],
+    "valid_with_exact_duplicate": [
+      "frontend/public/marketlens_combined_demo_part_1.csv",
+      "frontend/public/marketlens_combined_demo_part_2.csv"
+    ]
+  },
+  "cutoff_date": "2026-06-30",
+  "files": {
+    "frontend/public/marketlens_combined_demo_part_1.csv": {
+      "dataset_key": "combined_part_1",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-10",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Valid combined-analysis first part",
+      "row_count": 10,
+      "sha256": "1d2e8d17dffab6ecaae193d3c26b2ecc5816981a3927a8659bbe4bf66c1f69fd"
+    },
+    "frontend/public/marketlens_combined_demo_part_2.csv": {
+      "dataset_key": "combined_part_2",
+      "date_from": "2026-06-10",
+      "date_to": "2026-06-20",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Valid second part with one exact duplicate order",
+      "row_count": 11,
+      "sha256": "d22a5908b257627b03fe34f98f60e7c4097851b3cc289af8e58631d4bb6288ca"
+    },
+    "frontend/public/marketlens_ds_demo_365_days.csv": {
+      "dataset_key": "public_rich_demo",
+      "date_from": "2025-07-01",
+      "date_to": "2026-06-30",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Download copy of integrated demonstration",
+      "row_count": 21313,
+      "sha256": "c876ed97c0a80f5106392867dd8b6d7b5db499b861d1379be7a33577951dc142"
+    },
+    "frontend/public/sample_sales_template.csv": {
+      "dataset_key": "public_template",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-03",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Download copy of upload template",
+      "row_count": 4,
+      "sha256": "2fb5cf44530140e1ea635df7623d6c8b242b1c585b0874737fa51bad05a4426e"
+    },
+    "frontend/public/shopee_orders_sample.csv": {
+      "dataset_key": "public_shopee_platform_sample",
+      "date_from": null,
+      "date_to": null,
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Download copy of synthetic Shopee fixture",
+      "row_count": 5,
+      "sha256": "0dc0414360ef889c64e54dd0a176944350a6ce9ebd3a97579c592095ceca6296"
+    },
+    "frontend/public/tiktok_shop_orders_sample.csv": {
+      "dataset_key": "public_tiktok_platform_sample",
+      "date_from": null,
+      "date_to": null,
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Download copy of synthetic TikTok Shop fixture",
+      "row_count": 5,
+      "sha256": "4dc3271717203e3368da5ab01db700efb0fb0844ad3986923a7763e5f8de3cae"
+    },
+    "sample_data/ds_scenarios/association_known_lift.csv": {
+      "dataset_key": "known_association",
+      "date_from": "2026-01-01",
+      "date_to": "2026-03-01",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Known support, confidence and lift oracle",
+      "row_count": 130,
+      "sha256": "29d99d5ad67b530c58077c8cd01029ffc3b07f64361b7623362b3eb2c90592e0"
+    },
+    "sample_data/ds_scenarios/cohort_known_retention.csv": {
+      "dataset_key": "known_cohort",
+      "date_from": "2026-01-05",
+      "date_to": "2026-06-20",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Known monthly retention oracle",
+      "row_count": 57,
+      "sha256": "d44e3af4d5217f8ef8e6523d9cb288f6e5a73d414d42c852f5636c21044a9a4e"
+    },
+    "sample_data/ds_scenarios/forecast_weekly_84_days.csv": {
+      "dataset_key": "weekly_forecast",
+      "date_from": "2026-01-01",
+      "date_to": "2026-03-25",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Exact weekly seasonality oracle",
+      "row_count": 84,
+      "sha256": "f409be3d1ed792e651bdd21974cb89331c3c6808c0117f2020d7eab42eafb321"
+    },
+    "sample_data/marketlens_ds_demo_365_days.csv": {
+      "dataset_key": "rich_demo",
+      "date_from": "2025-07-01",
+      "date_to": "2026-06-30",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Integrated 365-day DS demonstration",
+      "row_count": 21313,
+      "sha256": "c876ed97c0a80f5106392867dd8b6d7b5db499b861d1379be7a33577951dc142"
+    },
+    "sample_data/platform_samples/shopee_orders_sample.csv": {
+      "dataset_key": "shopee_platform_sample",
+      "date_from": null,
+      "date_to": null,
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Synthetic Shopee export-header regression fixture",
+      "row_count": 5,
+      "sha256": "0dc0414360ef889c64e54dd0a176944350a6ce9ebd3a97579c592095ceca6296"
+    },
+    "sample_data/platform_samples/tiktok_shop_orders_sample.csv": {
+      "dataset_key": "tiktok_platform_sample",
+      "date_from": null,
+      "date_to": null,
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Synthetic TikTok Shop export-header regression fixture",
+      "row_count": 5,
+      "sha256": "4dc3271717203e3368da5ab01db700efb0fb0844ad3986923a7763e5f8de3cae"
+    },
+    "sample_data/sample_sales_demo_60_days.csv": {
+      "dataset_key": "regression_60_days",
+      "date_from": "2026-05-01",
+      "date_to": "2026-06-29",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Compact end-to-end regression oracle",
+      "row_count": 611,
+      "sha256": "2c0cbb5e5a0cc1176aca98b907b8a06d8b64ac09c8edee51ef8208a85d87a732"
+    },
+    "sample_data/sample_sales_template.csv": {
+      "dataset_key": "template",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-03",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Minimal valid upload template",
+      "row_count": 4,
+      "sha256": "2fb5cf44530140e1ea635df7623d6c8b242b1c585b0874737fa51bad05a4426e"
+    },
+    "sample_data/test_cases/conflicting_customer_part_1.csv": {
+      "dataset_key": "conflicting_customer_part_1",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-01",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file customer-conflict first part",
+      "row_count": 1,
+      "sha256": "db5dc169f91657f25923a1d5b8aecd8d92ae717d6cf30f648b01d3e7f9885641"
+    },
+    "sample_data/test_cases/conflicting_customer_part_2.csv": {
+      "dataset_key": "conflicting_customer_part_2",
+      "date_from": "2026-06-02",
+      "date_to": "2026-06-02",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file customer-conflict second part",
+      "row_count": 1,
+      "sha256": "d196c76af9f260470e6b6610f95f3eb6f576d118f8b347f1a5b529e1032558b9"
+    },
+    "sample_data/test_cases/conflicting_order_part_1.csv": {
+      "dataset_key": "conflicting_order_part_1",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-01",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file order-conflict first part",
+      "row_count": 1,
+      "sha256": "9afd483dc44e54b448a06fc1177d61b97b9af106e6775c87b270072f22fd939b"
+    },
+    "sample_data/test_cases/conflicting_order_part_2.csv": {
+      "dataset_key": "conflicting_order_part_2",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-01",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file order-conflict second part",
+      "row_count": 1,
+      "sha256": "6b93ccd8f5727081a9a48aa97cf4a175861465a32bce95c8f9fab5ec53c1775b"
+    },
+    "sample_data/test_cases/conflicting_product_part_1.csv": {
+      "dataset_key": "conflicting_product_part_1",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-01",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file product-conflict first part",
+      "row_count": 1,
+      "sha256": "d134587fb4067321cc9bb54850346c1f7dc31a229e37a1f4416b6e75deddeb58"
+    },
+    "sample_data/test_cases/conflicting_product_part_2.csv": {
+      "dataset_key": "conflicting_product_part_2",
+      "date_from": "2026-06-02",
+      "date_to": "2026-06-02",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Cross-file product-conflict second part",
+      "row_count": 1,
+      "sha256": "089c2d7ecf5397bb85ef116a18b987f2c32fe9dc31259d1abab8bd50c0a32894"
+    },
+    "sample_data/test_cases/forecast_7_only_30_days.csv": {
+      "dataset_key": "forecast_7_only_30_days",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-30",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Seven-day-only forecast boundary",
+      "row_count": 30,
+      "sha256": "4a75e7122ea92ff09d0f4374c689c99b03130e94f3225094f8f3ef3731c14fbb"
+    },
+    "sample_data/test_cases/insufficient_history_13_days.csv": {
+      "dataset_key": "insufficient_history_13_days",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-13",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Forecast unavailable boundary",
+      "row_count": 13,
+      "sha256": "be8c58bfd823ce7042ab79e6976a58ff7fa4d74b5f09b16a4e945a09568ae363"
+    },
+    "sample_data/test_cases/invalid_missing_discount_column.csv": {
+      "dataset_key": "invalid_missing_discount_column",
+      "date_from": "2026-06-01",
+      "date_to": "2026-06-01",
+      "expected_error_code": "INVALID_FILE_COLUMNS",
+      "expected_valid": false,
+      "purpose": "Missing required-column validation error",
+      "row_count": 1,
+      "sha256": "c0344883aa6c6bffaf58eb2cebf7238500d3db0e6c70fcc12ea95e686f8d111d"
+    },
+    "sample_data/test_cases/invalid_row_values.csv": {
+      "dataset_key": "invalid_row_values",
+      "date_from": null,
+      "date_to": null,
+      "expected_error_code": "INVALID_ROW_DATA",
+      "expected_valid": false,
+      "purpose": "Invalid row-value validation errors",
+      "row_count": 1,
+      "sha256": "3ff784f0e3b933f59351d2442fc91b15096c38a33f3cd979feefdf19b18fdf01"
+    },
+    "sample_data/test_cases/no_cancelled_or_returned.csv": {
+      "dataset_key": "no_cancelled_or_returned",
+      "date_from": "2026-05-01",
+      "date_to": "2026-05-30",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "Empty order-issue state",
+      "row_count": 30,
+      "sha256": "c66445aabf74d80515300d5852f81d0e7b3d75a7a665043e657967f566b71874"
+    },
+    "sample_data/test_cases/single_product_orders.csv": {
+      "dataset_key": "single_product_orders",
+      "date_from": "2026-05-01",
+      "date_to": "2026-06-09",
+      "expected_error_code": null,
+      "expected_valid": true,
+      "purpose": "No product-association state",
+      "row_count": 40,
+      "sha256": "e38e6a7c8289ce6259d7f35e0d26d1ad43c02b782766eac25b64aaf6fcef243e"
+    }
+  },
+  "seed": 20260725,
+  "suite_version": "2.1",
+  "synthetic_data_only": true
+}

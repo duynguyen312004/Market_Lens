@@ -11,16 +11,32 @@ import {
   TrashIcon,
   WarningCircleIcon,
 } from '@phosphor-icons/react'
-import { useMutation } from '@tanstack/react-query'
-import { useRef, useState, type ChangeEvent, type DragEvent } from 'react'
+import { useMutation, useQuery } from '@tanstack/react-query'
+import {
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type DragEvent,
+} from 'react'
 import { Link } from 'react-router'
 
 import {
+  createImportProfile,
   createAnalysis,
   createCombinedAnalysis,
+  deleteImportProfile,
+  listImportProfiles,
+  previewImport,
+  type CanonicalImportField,
+  type CanonicalStatus,
+  type ImportPreview,
+  type ImportRequestConfig,
+  type ImportSourceType,
 } from '../api/analysesApi'
 import { parseApiError, type ParsedApiError } from '../api/apiErrors'
 import { queryClient } from '../app/queryClient'
+import { useAuth } from '../auth/useAuth'
 import {
   analysisKeys,
 } from '../features/analysis/analysisQueries'
@@ -38,8 +54,14 @@ import {
   formatInteger,
 } from '../utils/formatters'
 
+type PreviewedFile = {
+  fileName: string
+  preview: ImportPreview
+}
+
 export function UploadPage() {
   const { language, t } = useLanguage()
+  const { user } = useAuth()
   const { selectAnalysis } = useActiveAnalysis()
   const inputRef = useRef<HTMLInputElement>(null)
   const [uploadMode, setUploadMode] = useState<'single' | 'combined'>('single')
@@ -48,22 +70,174 @@ export function UploadPage() {
   const [serverError, setServerError] = useState<ParsedApiError | null>(null)
   const [isDragging, setIsDragging] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
+  const [sourceType, setSourceType] = useState<ImportSourceType>('auto')
+  const [selectedProfileId, setSelectedProfileId] = useState('')
+  const [columnMapping, setColumnMapping] = useState<
+    Partial<Record<CanonicalImportField, string>>
+  >({})
+  const [statusMapping, setStatusMapping] = useState<
+    Record<string, CanonicalStatus>
+  >({})
+  const [profileName, setProfileName] = useState('')
+  const [showMapping, setShowMapping] = useState(false)
+  const [mappingEdited, setMappingEdited] = useState(false)
+  const [previewConfigDirty, setPreviewConfigDirty] = useState(false)
+  const userId = user?.id ?? 'signed-out'
+  const importProfilesKey = [
+    'users',
+    userId,
+    'import-profiles',
+  ] as const
+
+  const profilesQuery = useQuery({
+    queryKey: importProfilesKey,
+    queryFn: listImportProfiles,
+    retry: false,
+    enabled: Boolean(user),
+  })
+  const selectedProfile = useMemo(
+    () =>
+      profilesQuery.data?.find(
+        (profile) => profile.id === selectedProfileId,
+      ) ?? null,
+    [profilesQuery.data, selectedProfileId],
+  )
+
+  function importConfig(): ImportRequestConfig {
+    if (selectedProfile) {
+      return {
+        source_type: selectedProfile.source_type,
+        import_profile_id: selectedProfile.id,
+      }
+    }
+    if (
+      uploadMode === 'combined' &&
+      sourceType === 'auto' &&
+      !mappingEdited
+    ) {
+      return {
+        source_type: 'auto',
+        status_mapping: statusMapping,
+      }
+    }
+    const displayedPreview = previewMutation.data?.find(
+      (item) => !item.preview.ready_for_analysis,
+    )?.preview ?? previewMutation.data?.[0]?.preview
+    return {
+      source_type:
+        sourceType === 'auto' && displayedPreview?.detected_source_type
+          ? displayedPreview.detected_source_type
+          : sourceType === 'auto' && Object.keys(columnMapping).length > 0
+            ? 'custom'
+          : sourceType,
+      column_mapping: columnMapping,
+      status_mapping: statusMapping,
+    }
+  }
+
+  const previewMutation = useMutation({
+    mutationFn: ({
+      files,
+      config,
+    }: {
+      files: File[]
+      config: ImportRequestConfig
+    }) =>
+      Promise.all(
+        files.map(async (file): Promise<PreviewedFile> => ({
+          fileName: file.name,
+          preview: await previewImport(file, config),
+        })),
+      ),
+    onMutate: () => {
+      setServerError(null)
+    },
+    onSuccess: (results) => {
+      const preview = (
+        results.find((item) => !item.preview.ready_for_analysis)
+        ?? results[0]
+      ).preview
+      setColumnMapping(
+        Object.fromEntries(
+          Object.entries(preview.suggested_mapping).filter(
+            (entry): entry is [CanonicalImportField, string] =>
+              Boolean(entry[1]),
+          ),
+        ),
+      )
+      setPreviewConfigDirty(false)
+      setShowMapping(
+        preview.detected_source_type === null ||
+          preview.missing_required_fields.length > 0 ||
+          preview.unknown_status_values.length > 0,
+      )
+    },
+    onError: (error) => {
+      setServerError(parseApiError(error, language))
+    },
+  })
+
+  const saveProfileMutation = useMutation({
+    mutationFn: (preview: ImportPreview) =>
+      createImportProfile({
+        name: profileName.trim(),
+        source_type: preview.detected_source_type ?? 'custom',
+        column_mapping: columnMapping,
+        status_mapping: statusMapping,
+        header_fingerprint: preview.header_fingerprint,
+        schema_version: 2,
+      }),
+    onSuccess: (profile) => {
+      queryClient.setQueryData(
+        importProfilesKey,
+        (existing: typeof profilesQuery.data) => [
+          profile,
+          ...(existing ?? []),
+        ],
+      )
+      setSelectedProfileId(profile.id)
+      setProfileName('')
+    },
+    onError: (error) => {
+      setServerError(parseApiError(error, language))
+    },
+  })
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: deleteImportProfile,
+    onSuccess: (_, profileId) => {
+      queryClient.setQueryData(
+        importProfilesKey,
+        (existing: typeof profilesQuery.data) =>
+          (existing ?? []).filter((profile) => profile.id !== profileId),
+      )
+      setSelectedProfileId('')
+      resetPreview()
+    },
+    onError: (error) => {
+      setServerError(parseApiError(error, language))
+    },
+  })
 
   const uploadMutation = useMutation({
     mutationFn: ({
       files,
       mode,
+      importConfig: requestImportConfig,
     }: {
       files: File[]
       mode: 'single' | 'combined'
+      importConfig: ImportRequestConfig
     }) =>
       mode === 'single'
         ? createAnalysis({
             file: files[0],
+            importConfig: requestImportConfig,
             onUploadProgress: setUploadProgress,
           })
         : createCombinedAnalysis({
             files,
+            importConfig: requestImportConfig,
             onUploadProgress: setUploadProgress,
           }),
     onMutate: () => {
@@ -73,8 +247,13 @@ export function UploadPage() {
     onSuccess: (analysis) => {
       setUploadProgress(100)
       selectAnalysis(analysis.id)
-      queryClient.setQueryData(analysisKeys.detail(analysis.id), analysis)
-      void queryClient.invalidateQueries({ queryKey: analysisKeys.all })
+      queryClient.setQueryData(
+        analysisKeys.detail(userId, analysis.id),
+        analysis,
+      )
+      void queryClient.invalidateQueries({
+        queryKey: analysisKeys.all(userId),
+      })
     },
     onError: (error) => {
       setServerError(parseApiError(error, language))
@@ -87,6 +266,7 @@ export function UploadPage() {
     setClientError(null)
     setServerError(null)
     uploadMutation.reset()
+    resetPreview()
 
     const nextFiles =
       uploadMode === 'single'
@@ -135,6 +315,16 @@ export function UploadPage() {
     setServerError(null)
     setUploadProgress(0)
     uploadMutation.reset()
+    resetPreview()
+  }
+
+  function resetPreview() {
+    previewMutation.reset()
+    setColumnMapping({})
+    setStatusMapping({})
+    setShowMapping(false)
+    setMappingEdited(false)
+    setPreviewConfigDirty(false)
   }
 
   function changeMode(mode: 'single' | 'combined') {
@@ -151,6 +341,18 @@ export function UploadPage() {
     setClientError(null)
     setServerError(null)
     uploadMutation.reset()
+    resetPreview()
+  }
+
+  function runPreview() {
+    if (selectedFiles.length === 0 || previewMutation.isPending) return
+    previewMutation.mutate({
+      files:
+        uploadMode === 'combined'
+          ? selectedFiles
+          : selectedFiles.slice(0, 1),
+      config: importConfig(),
+    })
   }
 
   function submitFiles() {
@@ -164,7 +366,21 @@ export function UploadPage() {
       setClientError(validationError)
       return
     }
-    uploadMutation.mutate({ files: selectedFiles, mode: uploadMode })
+    const allSelectedFilesAreReady =
+      !previewConfigDirty &&
+      previewMutation.data?.length === selectedFiles.length &&
+      previewMutation.data.every(
+        (item) => item.preview.ready_for_analysis,
+      )
+    if (!allSelectedFilesAreReady) {
+      setClientError(t('upload.previewRequired'))
+      return
+    }
+    uploadMutation.mutate({
+      files: selectedFiles,
+      mode: uploadMode,
+      importConfig: importConfig(),
+    })
   }
 
   const analysis = uploadMutation.data
@@ -172,6 +388,18 @@ export function UploadPage() {
     (total, file) => total + file.size,
     0,
   )
+  const displayedPreview = (
+    previewMutation.data?.find(
+      (item) => !item.preview.ready_for_analysis,
+    )
+    ?? previewMutation.data?.[0]
+  )?.preview
+  const allPreviewsReady =
+    !previewConfigDirty &&
+    previewMutation.data?.length === selectedFiles.length &&
+    previewMutation.data.every(
+      (item) => item.preview.ready_for_analysis,
+    )
 
   return (
     <main className="px-4 py-7 sm:px-7 lg:px-10 lg:py-9">
@@ -190,6 +418,84 @@ export function UploadPage() {
 
         <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(20rem,0.65fr)]">
           <section className="data-panel rounded-2xl border border-slate-200/80 bg-white p-6 sm:p-8 shadow-xs">
+            <div className="mb-6 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="text-xs font-extrabold text-slate-800">
+                    {t('upload.sourceLabel')}
+                  </span>
+                  <select
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    disabled={uploadMutation.isPending}
+                    onChange={(event) => {
+                      setSourceType(event.target.value as ImportSourceType)
+                      setSelectedProfileId('')
+                      resetPreview()
+                    }}
+                    value={sourceType}
+                  >
+                    <option value="auto">{t('upload.sourceAuto')}</option>
+                    <option value="marketlens">MarketLens</option>
+                    <option value="shopee">Shopee</option>
+                    <option value="tiktok">TikTok Shop</option>
+                    <option value="custom">{t('upload.sourceCustom')}</option>
+                  </select>
+                </label>
+
+                <label className="block">
+                  <span className="text-xs font-extrabold text-slate-800">
+                    {t('upload.savedProfileLabel')}
+                  </span>
+                  <select
+                    className="mt-2 w-full rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-sm font-bold text-slate-800 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                    disabled={
+                      profilesQuery.isLoading || uploadMutation.isPending
+                    }
+                    onChange={(event) => {
+                      const profileId = event.target.value
+                      setSelectedProfileId(profileId)
+                      const profile = profilesQuery.data?.find(
+                        (item) => item.id === profileId,
+                      )
+                      if (profile) setSourceType(profile.source_type)
+                      resetPreview()
+                    }}
+                    value={selectedProfileId}
+                  >
+                    <option value="">{t('upload.noSavedProfile')}</option>
+                    {(profilesQuery.data ?? []).map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <div className="mt-3 flex items-start justify-between gap-4">
+                <p className="text-xs leading-5 text-slate-600">
+                  {profilesQuery.isError
+                    ? t('upload.profilesUnavailable')
+                    : selectedProfile
+                    ? t('upload.savedProfileActive', {
+                        name: selectedProfile.name,
+                      })
+                    : t('upload.sourceHelp')}
+                </p>
+                {selectedProfile && (
+                  <button
+                    className="shrink-0 text-xs font-extrabold text-rose-700 hover:underline disabled:opacity-50"
+                    disabled={deleteProfileMutation.isPending}
+                    onClick={() =>
+                      deleteProfileMutation.mutate(selectedProfile.id)
+                    }
+                    type="button"
+                  >
+                    {t('upload.deleteProfile')}
+                  </button>
+                )}
+              </div>
+            </div>
+
             <div
               aria-label={t('upload.modeLabel')}
               className="mb-6 grid grid-cols-2 rounded-xl border border-slate-200 bg-slate-100 p-1"
@@ -345,6 +651,105 @@ export function UploadPage() {
                   ))}
                 </ul>
 
+                {!uploadMutation.isPending && (
+                  <div className="mt-5">
+                    <button
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-indigo-200 bg-indigo-50 px-5 py-3 text-sm font-extrabold text-indigo-800 transition hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-55"
+                      disabled={previewMutation.isPending}
+                      onClick={runPreview}
+                      type="button"
+                    >
+                      {previewMutation.isPending ? (
+                        <SpinnerGapIcon
+                          aria-hidden="true"
+                          className="animate-spin"
+                          size={18}
+                          weight="bold"
+                        />
+                      ) : (
+                        <CheckCircleIcon
+                          aria-hidden="true"
+                          size={18}
+                          weight="bold"
+                        />
+                      )}
+                      {displayedPreview
+                        ? t('upload.previewAgain')
+                        : t('upload.previewAction')}
+                    </button>
+                    <p className="mt-2 text-center text-xs leading-5 text-slate-500">
+                      {uploadMode === 'combined'
+                        ? t('upload.previewCombinedHelp')
+                        : t('upload.previewHelp')}
+                    </p>
+                  </div>
+                )}
+
+                {displayedPreview && (
+                  <>
+                    {uploadMode === 'combined' &&
+                      previewMutation.data && (
+                        <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                          <p className="text-xs font-extrabold text-slate-800">
+                            {t('upload.previewCombinedSummary', {
+                              ready: previewMutation.data.filter(
+                                (item) =>
+                                  item.preview.ready_for_analysis,
+                              ).length,
+                              count: previewMutation.data.length,
+                            })}
+                          </p>
+                          <ul className="mt-2 space-y-1.5">
+                            {previewMutation.data.map((item) => (
+                              <li
+                                className="flex items-center justify-between gap-3 text-xs text-slate-600"
+                                key={item.fileName}
+                              >
+                                <span className="truncate">
+                                  {item.fileName}
+                                </span>
+                                <span
+                                  className={
+                                    item.preview.ready_for_analysis
+                                      ? 'font-extrabold text-emerald-700'
+                                      : 'font-extrabold text-amber-700'
+                                  }
+                                >
+                                  {item.preview.ready_for_analysis
+                                    ? t('upload.readyBadge')
+                                    : t('upload.actionBadge')}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    <ImportPreviewPanel
+                      columnMapping={columnMapping}
+                      onColumnMappingChange={(field, value) => {
+                        setMappingEdited(true)
+                        setPreviewConfigDirty(true)
+                        setColumnMapping((current) => ({
+                          ...current,
+                          [field]: value,
+                        }))
+                      }}
+                      onRunPreview={runPreview}
+                      onShowMappingChange={setShowMapping}
+                      onStatusMappingChange={(status, value) => {
+                        setPreviewConfigDirty(true)
+                        setStatusMapping((current) => ({
+                          ...current,
+                          [status]: value,
+                        }))
+                      }}
+                      preview={displayedPreview}
+                      showMapping={showMapping}
+                      statusMapping={statusMapping}
+                    />
+                  </>
+                )}
+
                 {uploadMutation.isPending && (
                   <div className="mt-5" role="status">
                     <div className="flex items-center justify-between text-xs font-bold text-slate-700">
@@ -371,18 +776,63 @@ export function UploadPage() {
                 )}
 
                 {!uploadMutation.isPending && (
-                  <button
-                    className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-700 active:scale-[0.98] transition"
-                    onClick={submitFiles}
-                    type="button"
-                  >
-                    {uploadMode === 'single'
-                      ? t('upload.startAnalysis')
-                      : t('upload.startCombinedAnalysis', {
-                          count: selectedFiles.length,
-                        })}
-                    <ArrowRightIcon aria-hidden="true" size={18} weight="bold" />
-                  </button>
+                  <>
+                    {allPreviewsReady &&
+                      uploadMode === 'single' &&
+                      !selectedProfile && (
+                        <div className="mt-5 rounded-xl border border-slate-200 bg-white p-4">
+                          <p className="text-xs font-extrabold text-slate-800">
+                            {t('upload.saveProfileTitle')}
+                          </p>
+                          <p className="mt-1 text-xs leading-5 text-slate-500">
+                            {t('upload.saveProfileHelp')}
+                          </p>
+                          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                            <input
+                              className="min-w-0 flex-1 rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                              maxLength={100}
+                              onChange={(event) =>
+                                setProfileName(event.target.value)
+                              }
+                              placeholder={t('upload.profileNamePlaceholder')}
+                              value={profileName}
+                            />
+                            <button
+                              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-xs font-extrabold text-slate-800 transition hover:bg-slate-50 disabled:opacity-50"
+                              disabled={
+                                !profileName.trim() ||
+                                saveProfileMutation.isPending
+                              }
+                              onClick={() =>
+                                saveProfileMutation.mutate(
+                                  displayedPreview!,
+                                )
+                              }
+                              type="button"
+                            >
+                              {t('upload.saveProfile')}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    <button
+                      className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-3.5 text-sm font-extrabold text-white shadow-md shadow-indigo-500/20 transition hover:bg-indigo-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none"
+                      disabled={!allPreviewsReady}
+                      onClick={submitFiles}
+                      type="button"
+                    >
+                      {uploadMode === 'single'
+                        ? t('upload.startAnalysis')
+                        : t('upload.startCombinedAnalysis', {
+                            count: selectedFiles.length,
+                          })}
+                      <ArrowRightIcon
+                        aria-hidden="true"
+                        size={18}
+                        weight="bold"
+                      />
+                    </button>
+                  </>
                 )}
               </div>
             )}
@@ -489,6 +939,32 @@ export function UploadPage() {
                 <FileCsvIcon aria-hidden="true" size={18} weight="duotone" />
                 {t('upload.downloadDemo')}
               </a>
+              <div className="mt-4 border-t border-slate-200 pt-4">
+                <p className="text-xs font-extrabold text-slate-800">
+                  {t('upload.platformSamples')}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-slate-500">
+                  {t('upload.platformSamplesHelp')}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
+                  <a
+                    className="inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 hover:underline"
+                    download
+                    href="/shopee_orders_sample.csv"
+                  >
+                    <FileCsvIcon size={16} weight="duotone" />
+                    Shopee
+                  </a>
+                  <a
+                    className="inline-flex items-center gap-1.5 text-xs font-black text-indigo-600 hover:underline"
+                    download
+                    href="/tiktok_shop_orders_sample.csv"
+                  >
+                    <FileCsvIcon size={16} weight="duotone" />
+                    TikTok Shop
+                  </a>
+                </div>
+              </div>
               {uploadMode === 'combined' && (
                 <div className="mt-4 border-t border-slate-200 pt-4">
                   <p className="text-[11px] font-bold text-slate-500">
@@ -537,6 +1013,265 @@ export function UploadPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+const IMPORT_FIELDS: CanonicalImportField[] = [
+  'order_id',
+  'order_date',
+  'customer_id',
+  'customer_name',
+  'product_id',
+  'product_name',
+  'category',
+  'quantity',
+  'unit_price',
+  'discount',
+  'line_revenue',
+  'order_status',
+]
+
+function ImportPreviewPanel({
+  preview,
+  columnMapping,
+  statusMapping,
+  showMapping,
+  onColumnMappingChange,
+  onStatusMappingChange,
+  onShowMappingChange,
+  onRunPreview,
+}: {
+  preview: ImportPreview
+  columnMapping: Partial<Record<CanonicalImportField, string>>
+  statusMapping: Record<string, CanonicalStatus>
+  showMapping: boolean
+  onColumnMappingChange: (
+    field: CanonicalImportField,
+    value: string,
+  ) => void
+  onStatusMappingChange: (
+    status: string,
+    value: CanonicalStatus,
+  ) => void
+  onShowMappingChange: (value: boolean) => void
+  onRunPreview: () => void
+}) {
+  const { language, t } = useLanguage()
+  const sourceLabels: Record<string, string> = {
+    marketlens: 'MarketLens',
+    shopee: 'Shopee',
+    tiktok: 'TikTok Shop',
+    custom: t('upload.sourceCustom'),
+  }
+  const capabilityLabels: Array<
+    [keyof ImportPreview['capabilities'], string]
+  > = [
+    ['sales_analytics', t('upload.capabilitySales')],
+    ['product_analytics', t('upload.capabilityProducts')],
+    ['customer_analytics', t('upload.capabilityCustomers')],
+    ['category_analytics', t('upload.capabilityCategories')],
+    ['discount_analytics', t('upload.capabilityDiscounts')],
+    [
+      'cancellation_return_analysis',
+      t('upload.capabilityOrderIssues'),
+    ],
+  ]
+  const warningLabels: Record<string, string> = {
+    SOURCE_SELECTION_DIFFERS_FROM_DETECTION: t(
+      'upload.warningSourceMismatch',
+    ),
+    PROFILE_HEADERS_CHANGED: t('upload.warningProfileChanged'),
+    CUSTOMER_ANALYTICS_UNAVAILABLE: t(
+      'upload.warningNoCustomerIdentifiers',
+    ),
+    CATEGORY_DEFAULTED: t('upload.warningNoCategory'),
+    DISCOUNT_BREAKDOWN_UNAVAILABLE: t('upload.warningNoDiscount'),
+    STATUS_VALUES_TRUNCATED: t(
+      'upload.warningStatusValuesTruncated',
+    ),
+    MARKETLENS_COLUMNS_MISMATCH: t(
+      'upload.warningMarketLensColumnsMismatch',
+    ),
+  }
+
+  return (
+    <div
+      className={`mt-5 rounded-2xl border p-4 ${
+        preview.ready_for_analysis
+          ? 'border-emerald-200 bg-emerald-50/60'
+          : 'border-amber-200 bg-amber-50/60'
+      }`}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-black text-slate-900">
+            {preview.ready_for_analysis
+              ? t('upload.previewReady')
+              : t('upload.previewNeedsAction')}
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            {t('upload.previewSummary', {
+              source: preview.detected_source_type
+                ? sourceLabels[preview.detected_source_type]
+                : t('upload.sourceUnknown'),
+              count: formatInteger(preview.row_count, language),
+            })}
+          </p>
+        </div>
+        <span
+          className={`rounded-full px-3 py-1 text-xs font-extrabold ${
+            preview.ready_for_analysis
+              ? 'bg-emerald-100 text-emerald-800'
+              : 'bg-amber-100 text-amber-900'
+          }`}
+        >
+          {preview.ready_for_analysis
+            ? t('upload.readyBadge')
+            : t('upload.actionBadge')}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        {capabilityLabels.map(([key, label]) => (
+          <div
+            className="flex items-center gap-2 rounded-lg bg-white/80 px-3 py-2 text-xs font-bold text-slate-700"
+            key={key}
+          >
+            {preview.capabilities[key] ? (
+              <CheckCircleIcon
+                aria-hidden="true"
+                className="shrink-0 text-emerald-600"
+                size={16}
+                weight="fill"
+              />
+            ) : (
+              <WarningCircleIcon
+                aria-hidden="true"
+                className="shrink-0 text-amber-600"
+                size={16}
+                weight="fill"
+              />
+            )}
+            {label}
+          </div>
+        ))}
+      </div>
+
+      {preview.warnings.length > 0 && (
+        <ul className="mt-4 space-y-1.5 text-xs leading-5 text-slate-700">
+          {preview.warnings.map((warning) => (
+            <li className="flex items-start gap-2" key={warning}>
+              <InfoIcon
+                aria-hidden="true"
+                className="mt-0.5 shrink-0 text-amber-600"
+                size={15}
+                weight="fill"
+              />
+              {warningLabels[warning] ?? warning}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {(preview.missing_required_fields.length > 0 ||
+        preview.detected_source_type === null ||
+        showMapping) && (
+        <div className="mt-4 border-t border-amber-200 pt-4">
+          <button
+            className="text-xs font-extrabold text-indigo-700 hover:underline"
+            onClick={() => onShowMappingChange(!showMapping)}
+            type="button"
+          >
+            {showMapping
+              ? t('upload.hideMapping')
+              : t('upload.showMapping')}
+          </button>
+          {showMapping && (
+            <>
+              <p className="mt-2 text-xs leading-5 text-slate-600">
+                {t('upload.mappingHelp')}
+              </p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {IMPORT_FIELDS.map((field) => (
+                  <label className="block" key={field}>
+                    <span className="text-xs font-bold text-slate-700">
+                      {getUploadColumnLabel(field, language)}
+                    </span>
+                    <select
+                      className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                      onChange={(event) =>
+                        onColumnMappingChange(field, event.target.value)
+                      }
+                      value={columnMapping[field] ?? ''}
+                    >
+                      <option value="">{t('upload.mappingNone')}</option>
+                      {preview.headers.map((header) => (
+                        <option key={header} value={header}>
+                          {header}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+
+      {preview.unknown_status_values.length > 0 && (
+        <div className="mt-4 border-t border-amber-200 pt-4">
+          <p className="text-xs font-extrabold text-slate-900">
+            {t('upload.statusMappingTitle')}
+          </p>
+          <p className="mt-1 text-xs leading-5 text-slate-600">
+            {t('upload.statusMappingHelp')}
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            {preview.unknown_status_values.map((status) => (
+              <label className="block" key={status}>
+                <span className="block truncate text-xs font-bold text-slate-700" title={status}>
+                  {status}
+                </span>
+                <select
+                  className="mt-1.5 w-full rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-xs text-slate-800 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+                  onChange={(event) =>
+                    onStatusMappingChange(
+                      status,
+                      event.target.value as CanonicalStatus,
+                    )
+                  }
+                  value={statusMapping[status] ?? ''}
+                >
+                  <option value="">{t('upload.statusChoose')}</option>
+                  <option value="completed">
+                    {t('upload.statusCompleted')}
+                  </option>
+                  <option value="cancelled">
+                    {t('upload.statusCancelled')}
+                  </option>
+                  <option value="returned">
+                    {t('upload.statusReturned')}
+                  </option>
+                  <option value="skip">{t('upload.statusSkip')}</option>
+                </select>
+              </label>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!preview.ready_for_analysis &&
+        !preview.warnings.includes('PROFILE_HEADERS_CHANGED') && (
+          <button
+            className="mt-4 w-full rounded-xl bg-slate-900 px-4 py-2.5 text-xs font-extrabold text-white transition hover:bg-slate-800"
+            onClick={onRunPreview}
+            type="button"
+          >
+            {t('upload.applyAndCheck')}
+          </button>
+        )}
+    </div>
   )
 }
 

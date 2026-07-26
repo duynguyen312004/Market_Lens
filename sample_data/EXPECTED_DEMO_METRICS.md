@@ -1,163 +1,172 @@
 # Expected metrics — `sample_sales_demo_60_days.csv`
 
-Các giá trị này là test oracle cho analysis contract V3. File được đọc bằng
-UTF-8-SIG. KPI doanh thu/khách hàng/sản phẩm chỉ dùng `completed`; order
-health dùng distinct order của mọi status.
+Đây là regression oracle của analysis contract V4. File được sinh bởi
+`scripts/generate_ds_demo_data.py`, chỉ chứa dữ liệu synthetic và dùng namespace
+`R60*` để không xung đột ngoài ý muốn với các gói dữ liệu khác.
 
 ## Input
 
-- Tổng dòng: 393.
-- Khoảng ngày toàn file: 2026-05-01 đến 2026-06-29.
-- Completed rows: 344.
-- Cancelled rows: 34.
-- Returned rows: 15.
+- Tổng dòng: `611`.
+- Khoảng ngày: `2026-05-01` đến `2026-06-29`.
+- Completed rows: `546`.
+- Cancelled rows: `38`.
+- Returned rows: `27`.
 - Không có dòng trùng hoàn toàn.
-- Không có xung đột order/product/customer ID.
+- Không có xung đột order/product/customer ID trong file.
+- 30 khách hàng, 8 sản phẩm và 60 ngày lịch sử.
 
 ## Summary
 
-- Total revenue: `113010000`.
-- Total orders: `273`.
+- Total revenue: `185263000`.
+- Total completed orders: `362`.
 - Total customers: `30`.
-- Total quantity sold: `503`.
-- Recent 7 days revenue: `16670000`.
-- Previous 7 days revenue: `12150000`.
-- Growth rate: khoảng `37.201646%`.
-- Average order value: khoảng `413956.04`.
-- Average revenue per customer: `3767000`.
+- Total quantity sold: `719`.
+- Latest 7-day revenue: `23171000`.
+- Previous 7-day revenue: `19750000`.
+- Growth rate: `17.321519%`.
+- Average order value: `511776.24`.
+- Average revenue per customer: `6175433.33`.
 
 ## Order health
 
-- Total distinct orders, all statuses: `313`.
-- Completed: `273` — khoảng `87.220447%`.
-- Cancelled: `27` — khoảng `8.626198%`.
-- Returned: `13` — khoảng `4.153355%`.
-- Average items per completed order: khoảng `1.842491`.
+- Total distinct orders, all statuses: `404`.
+- Completed: `362` — `89.60396%`.
+- Cancelled: `25` — `6.188119%`.
+- Returned: `17` — `4.207921%`.
+- Average items per completed order: `1.986188`.
 
-## Commerce và revenue pattern
+## Commerce
 
-- Gross revenue trước discount: `115180000`.
-- Total discount: `2170000`.
-- Discount rate: khoảng `1.884008%`.
-- Peak revenue day: `2026-05-21` — `4430000`.
-- Lowest non-zero revenue day: `2026-05-27` — `90000`.
-- Thứ Sáu: `22580000`, 50 distinct completed orders, khoảng `19.980533%`
-  tổng doanh thu.
-- Top product revenue share: khoảng `27.926732%`.
-- Top category revenue share: khoảng `36.563136%`.
-- Top 20% sản phẩm: 2 sản phẩm, khoảng `53.853641%` doanh thu.
+- Gross revenue before discount: `190921000`.
+- Total discount: `5658000`.
+- Discount rate: `2.963529%`.
+- Peak revenue day: `2026-06-14` — `5819000`.
+- Lowest non-zero revenue day: `2026-06-03` — `1140000`.
+- Friday revenue: `30983000`, 66 completed orders, `16.723793%` revenue.
+- Top product revenue share: `26.500165%`.
+- Top category revenue share: `38.14847%`.
+- Top 20% products: 2 products, `48.937996%` revenue.
 
-## Customer segments
+## Customer analytics
 
-Theo rule `ceil(30 × 10%)`, có 3 VIP:
+- Segment counts: new `0`, returning `27`, VIP `3`.
+- Repeat customers: `30`; repeat rate: `100%`.
+- Returning revenue: `139511000` — `75.304297%`.
+- VIP revenue: `45752000` — `24.695703%`.
+- Potential customer IDs:
+  `R60C003`, `R60C004`, `R60C015`, `R60C005`, `R60C007`, `R60C008`.
 
-- `vip`: 3 (`C003`, `C020`, `C009` theo revenue rank).
-- `returning`: 27.
-- `new`: 0.
+RFM snapshot date là `2026-06-30`:
 
-Customer health:
+- new: `0`;
+- champion: `6`;
+- loyal: `6`;
+- at risk: `5`;
+- regular: `13`.
 
-- Repeat customers: `30`.
-- Repeat customer rate: `100%`.
-- Revenue by segment: new `0`; returning `92290000` (khoảng `81.665339%`);
-  VIP `20720000` (khoảng `18.334661%`).
+At-risk priority:
+`R60C005`, `R60C009`, `R60C013`, `R60C011`, `R60C022`.
 
-Potential customers là nhãn phụ, không cộng vào ba segment:
+Cohort chưa available vì file chỉ phủ hai calendar months; reason là
+`INSUFFICIENT_COHORT_HISTORY`.
 
-- Count: 6.
-- IDs: `C017`, `C025`, `C015`, `C018`, `C012`, `C011`.
+## Product analytics
 
-## E2 — RFM customer intelligence
+Top revenue product:
 
-- Snapshot date: `2026-06-30`.
-- RFM segments:
-  - `new`: 0.
-  - `champion`: 5.
-  - `loyal`: 10.
-  - `at_risk`: 3.
-  - `regular`: 12.
-- At-risk customer IDs theo priority: `C015`, `C018`, `C022`.
-
-Scoring dùng empirical quintile 1-5 với average rank; giá trị bằng nhau nhận
-cùng điểm.
-
-## Top product by revenue
-
-- Product: `P004` — `Tai nghe Bluetooth`.
-- Revenue: `31560000`.
-- Quantity: `65`.
-- Distinct orders: `45`.
-
-## E2 — Product intelligence
+- `R60P002` — `Quan jean`;
+- revenue `49095000`;
+- quantity `130`;
+- 100 distinct completed orders.
 
 ABC:
 
-- Class A: 4 sản phẩm, `97460000`, khoảng `86.240156%` doanh thu.
-- Class B: 2 sản phẩm, `15550000`, khoảng `13.759844%` doanh thu.
-- Class C: 0 sản phẩm.
+- Class A: 5 sản phẩm, `156674000`, `84.568424%`.
+- Class B: 2 sản phẩm, `23004000`, `12.416942%`.
+- Class C: 1 sản phẩm, `5585000`, `3.014633%`.
 
-Association rules:
+Association rule đầu:
 
-- 71 completed orders có ít nhất hai sản phẩm distinct.
-- 0 order bị bỏ qua do basket quá lớn.
-- Rule đầu: `P003 → P001`, xuất hiện cùng nhau trong 7 order.
-- Support `2.564103%`, confidence `14.583333%`, lift `0.686422`.
-- Lift dưới 1 chỉ thể hiện đồng xuất hiện thấp hơn mức kỳ vọng độc lập, không
-  phải quan hệ nhân quả.
-
-Cohort:
-
-- Dataset chỉ phủ hai calendar months nên `available = false`.
-- Reason: `INSUFFICIENT_COHORT_HISTORY`.
+- `R60P002 → R60P001`;
+- pair orders `38`;
+- support `10.497238%`;
+- confidence `38%`;
+- lift `1.335534`.
 
 Discount:
 
-- 131 completed orders có discount.
-- Discounted-order rate: khoảng `47.985348%`.
-- Sản phẩm có tổng discount cao nhất: `P006`, `500000`.
+- 138 completed orders có discount, tương ứng `38.121547%`.
+- `R60P002` có tổng discount cao nhất: `1475000`.
 
-## Revenue by category
+Hủy/trả:
 
-- `Thoi trang`: `41320000`.
-- `Gia dung`: `32420000`.
-- `Dien tu`: `31560000`.
-- `Phu kien`: `7710000`.
+- 42 distinct orders bị hủy hoặc trả.
+- Giá trị sản phẩm ghi nhận trong các đơn đó: `22870000`.
+- `R60P008` đứng đầu adjusted ranking:
+  - 54 đơn chứa sản phẩm;
+  - 6 đơn hủy và 5 đơn trả;
+  - issue rate `20.37037%`;
+  - adjusted ranking score `11.773934%`;
+  - affected product value `1817000`.
 
-## Forecast
+## Growth drivers
 
-Với linear trend trên 30 ngày cuối và làm tròn mỗi điểm đến integer:
+Kỳ 7 ngày:
+
+- current: `2026-06-23` đến `2026-06-29`, revenue `23171000`;
+- previous: `2026-06-16` đến `2026-06-22`, revenue `19750000`;
+- net change `+3421000`, tương ứng `+17.321519%`;
+- top increase: `R60P004`, `+3707000`;
+- top decrease: `R60P002`, `-2142000`.
+
+Kỳ 30 ngày:
+
+- current: `2026-05-31` đến `2026-06-29`, revenue `97917000`;
+- previous: `2026-05-01` đến `2026-05-30`, revenue `87346000`;
+- net change `+10571000`, tương ứng `+12.102443%`;
+- top increase: `R60P006`, `+7059000`;
+- top decrease: `R60P004`, `-5383000`.
+
+## Forecast 7 ngày
+
+Selected method: `weekday_average_4_weeks`.
 
 ```text
-2193862
-2198305
-2202747
-2207190
-2211633
-2216076
-2220518
+3175250
+2247750
+3014750
+3679000
+4411000
+3670250
+2508500
 ```
 
-- Forecast total: `15450331`.
-- Change vs last 7 days: khoảng `-7.316551%`.
-
-Nếu implementation chọn làm tròn total sau khi cộng float thay vì cộng từng
-điểm đã làm tròn, kết quả vẫn là `15450331` với dataset này.
-
-## Forecast selection và evaluation V3
-
-- Selection strategy: `rolling_origin_candidate_comparison`.
-- Candidates theo rank: linear trend, moving average, weekday average,
-  seasonal naive.
-- Selected method: `linear_trend_30_days` vì có MAE thấp nhất.
-- Evaluation strategy: `rolling_origin_selected_method`.
-- Evaluated method: `linear_trend_30_days`.
-- Baseline: `seasonal_naive_7_days`.
+- Forecast total: `22706500`.
+- Previous 7-day total: `23171000`.
+- Change: `-2.004661%`.
+- Total empirical range: `16913000` đến `28500000`.
 - 4 fold, 28 validation points.
-- Model MAE: `856855.5`; RMSE: `1034308.06`; sMAPE: `42.263957%`.
-- Baseline MAE: `1223928.57`; RMSE: `1432915.36`; sMAPE: `67.306507%`.
-- MAE improvement vs baseline: `29.99138%`.
-- Reliability: `low` vì sMAPE cao hơn ngưỡng medium 40%, dù MAE tốt hơn
-  baseline. Đây là nhãn bằng chứng backtest, không phải cam kết tương lai.
-- Empirical interval: available với 28 residual.
-- Absolute-error quantile 80%: `1439007`.
-- Observed backtest coverage: `82.142857%`.
+- Model MAE: `1083410.71`.
+- Model RMSE: `1254129.63`.
+- Model sMAPE: `35.526306%`.
+- Baseline MAE: `1417214.29`.
+- Improvement vs baseline: `23.553501%`.
+- Reliability: `medium`.
+- Daily absolute-error q80: `1786500`.
+- Observed daily coverage: `82.142857%`.
+- Total-error q80: `5793500`.
+- Observed total coverage: `100%`.
+
+## Forecast 30 ngày
+
+- Method fallback: `moving_average_7_days`.
+- Forecast total: `99304290`.
+- Previous 30-day total: `97917000`.
+- Change: `+1.416802%`.
+- File đủ 60 ngày để công bố forecast cơ bản.
+- Chưa đủ 74 ngày cho hai fold 30 ngày nên selection, reliability và empirical
+  range đều `unavailable`.
+
+Mọi giá trị trong file này phải được cập nhật có chủ đích khi generator hoặc
+production analytics contract thay đổi. `ACADEMIC_EVIDENCE.json` là oracle
+machine-readable tương ứng.

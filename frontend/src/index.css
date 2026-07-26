@@ -71,7 +71,8 @@ a {
 
 button:focus-visible,
 a:focus-visible,
-input:focus-visible {
+input:focus-visible,
+summary:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--primary) 45%, transparent);
   outline-offset: 3px;
 }
@@ -169,7 +170,7 @@ input:focus-visible {
     border: 0 !important;
     border-radius: 0 !important;
     box-shadow: none !important;
-    font-size: 8.5pt;
+    font-size: 9pt;
   }
 
   #business-report header,
@@ -187,31 +188,40 @@ input:focus-visible {
     page-break-after: avoid;
   }
 
-  #business-report > section {
-    break-before: auto;
-    page-break-before: auto;
-  }
-
-  #business-report .report-print-section,
-  #business-report .report-risk-section {
+  #business-report .report-priority-page,
+  #business-report .report-detail-page {
     break-before: page;
+    break-inside: avoid-page;
     page-break-before: always;
+    page-break-inside: avoid;
   }
 
   #business-report > header {
-    padding: 24px !important;
-  }
-
-  #business-report > section {
     padding: 20px 24px !important;
   }
 
-  #business-report > footer {
+  #business-report > section,
+  #business-report .report-priority-page > section,
+  #business-report .report-detail-page > section {
     padding: 16px 24px !important;
   }
 
+  #business-report .report-detail-page > section {
+    padding: 10px 20px !important;
+  }
+
+  #business-report footer {
+    padding: 8px 24px !important;
+    font-size: 8pt !important;
+    line-height: 1.35 !important;
+  }
+
+  #business-report footer p {
+    line-height: 1.35 !important;
+  }
+
   #business-report .report-print-break-avoid {
-    padding: 12px !important;
+    padding: 10px !important;
   }
 
   #business-report .report-kpi-grid {
@@ -222,7 +232,27 @@ input:focus-visible {
   #business-report .report-print-two-column,
   #business-report .report-print-chart-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 12px !important;
+    gap: 10px !important;
+  }
+
+  #business-report .report-detail-page .report-print-chart-grid {
+    margin-top: 10px !important;
+  }
+
+  #business-report .report-detail-page .report-chart-canvas {
+    height: 118px !important;
+    margin-top: 6px !important;
+    aspect-ratio: auto !important;
+  }
+
+  #business-report .report-detail-page figcaption p,
+  #business-report .report-analysis-section p {
+    font-size: 7.5pt !important;
+    line-height: 1.3 !important;
+  }
+
+  #business-report .report-analysis-section .report-print-break-avoid {
+    padding: 8px !important;
   }
 
   #business-report
@@ -230,15 +260,77 @@ input:focus-visible {
     grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
   }
 
+  #business-report .report-screen-evidence {
+    display: none !important;
+  }
+
+  #business-report .report-print-evidence {
+    display: block !important;
+    margin-top: 5px !important;
+  }
+
+  #business-report .report-evidence-content {
+    display: inline !important;
+    margin-top: 0 !important;
+    font-size: 7pt !important;
+    line-height: 1.35 !important;
+  }
+
+  #business-report .report-evidence-heading {
+    display: inline !important;
+    margin-right: 4px !important;
+    font-size: 7pt !important;
+  }
+
+  #business-report .report-evidence-heading::after {
+    content: ":";
+  }
+
+  #business-report .report-evidence-content > div {
+    display: inline !important;
+    margin-top: 0 !important;
+  }
+
   #business-report .report-evidence-chip {
-    align-items: flex-start;
-    padding: 4px 7px !important;
+    display: inline !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    color: #334155 !important;
+    font-size: 7pt !important;
+    font-weight: 600 !important;
+  }
+
+  #business-report .report-evidence-chip:not(:last-child)::after {
+    content: "; ";
   }
 
   #business-report .report-evidence-label {
+    display: inline !important;
     overflow: visible !important;
     text-overflow: clip !important;
     white-space: normal !important;
+  }
+
+  #business-report .report-evidence-chip > span:last-child {
+    display: inline !important;
+    margin-left: 0.2em !important;
+    color: #475569 !important;
+  }
+
+  #business-report .report-recommendation-card h4,
+  #business-report .report-recommendation-body {
+    margin-top: 6px !important;
+  }
+
+  #business-report .report-recommendation-body > * + * {
+    margin-top: 5px !important;
+  }
+
+  #business-report .report-priority-page > section > div:first-child,
+  #business-report .report-analysis-section > div:first-child {
+    margin-bottom: 10px !important;
   }
 
   #business-report .report-chart-svg {

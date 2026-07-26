@@ -9,7 +9,7 @@ import {
   type PropsWithChildren,
 } from 'react'
 
-export const LAST_ANALYSIS_ID_KEY = 'marketlens:lastAnalysisId'
+export const ACTIVE_ANALYSIS_ID_KEY = 'marketlens:activeAnalysisId'
 
 type ActiveAnalysisContextValue = {
   activeAnalysisId: string | null
@@ -20,12 +20,12 @@ const ActiveAnalysisContext =
   createContext<ActiveAnalysisContextValue | null>(null)
 
 export function getAnalysisStorageKey(userId: string) {
-  return `${LAST_ANALYSIS_ID_KEY}:${userId}`
+  return `${ACTIVE_ANALYSIS_ID_KEY}:${userId}`
 }
 
 export function readStoredAnalysisId(userId: string) {
   try {
-    return localStorage.getItem(getAnalysisStorageKey(userId))
+    return sessionStorage.getItem(getAnalysisStorageKey(userId))
   } catch {
     return null
   }
@@ -38,9 +38,9 @@ export function storeSelectedAnalysisId(
   try {
     const storageKey = getAnalysisStorageKey(userId)
     if (analysisId) {
-      localStorage.setItem(storageKey, analysisId)
+      sessionStorage.setItem(storageKey, analysisId)
     } else {
-      localStorage.removeItem(storageKey)
+      sessionStorage.removeItem(storageKey)
     }
   } catch {
     // Selection remains available in memory when storage is blocked.

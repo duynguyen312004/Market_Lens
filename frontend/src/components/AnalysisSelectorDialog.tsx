@@ -11,6 +11,7 @@ import { useEffect, useRef } from 'react'
 
 import { listAnalyses } from '../api/analysesApi'
 import { parseApiError } from '../api/apiErrors'
+import { useAuth } from '../auth/useAuth'
 import {
   useActiveAnalysis,
 } from '../features/analysis/ActiveAnalysisContext'
@@ -27,12 +28,15 @@ export function AnalysisSelectorDialog({
   onClose: () => void
 }) {
   const { activeAnalysisId, selectAnalysis } = useActiveAnalysis()
+  const { user } = useAuth()
   const { language, t } = useLanguage()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const dialogRef = useRef<HTMLElement>(null)
+  const userId = user?.id ?? 'signed-out'
   const analysesQuery = useQuery({
-    queryKey: analysisKeys.list(100, 0),
+    queryKey: analysisKeys.list(userId, 100, 0),
     queryFn: () => listAnalyses(100, 0),
+    enabled: Boolean(user),
   })
 
   useEffect(() => {
@@ -97,7 +101,7 @@ export function AnalysisSelectorDialog({
             >
               {t('selector.title')}
             </h2>
-            <p className="mt-1 text-xs leading-relaxed text-slate-500">
+            <p className="mt-1 text-sm leading-6 text-slate-600">
               {t('selector.desc')}
             </p>
           </div>
@@ -166,7 +170,7 @@ export function AnalysisSelectorDialog({
                 <p className="mt-3 font-black text-slate-900">
                   {t('selector.emptyTitle')}
                 </p>
-                <p className="mt-1 text-xs text-slate-500">
+                <p className="mt-1 text-sm leading-6 text-slate-600">
                   {t('selector.emptyDesc')}
                 </p>
               </div>
@@ -211,14 +215,14 @@ export function AnalysisSelectorDialog({
                             {item.file_name}
                           </span>
                           {item.upload_mode === 'combined' && (
-                            <span className="shrink-0 rounded-md bg-slate-200/70 px-2 py-0.5 text-[10px] font-bold text-slate-600">
+                            <span className="shrink-0 rounded-md bg-slate-200/70 px-2 py-0.5 text-xs font-bold text-slate-700">
                               {t('selector.fileCount', {
                                 count: item.source_file_count,
                               })}
                             </span>
                           )}
                         </span>
-                        <span className="mt-1 block text-[11px] font-medium text-slate-500">
+                        <span className="mt-1 block text-xs font-medium leading-5 text-slate-600">
                           {formatInteger(item.row_count, language)} {t('selector.rows')}
                           {' / '}
                           {item.date_from && item.date_to

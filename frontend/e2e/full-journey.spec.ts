@@ -25,6 +25,7 @@ test.beforeAll(() => {
 test('shop owner completes the protected mobile and desktop journey', async ({
   page,
 }, testInfo) => {
+  test.setTimeout(90_000)
   await page.setViewportSize({ height: 844, width: 390 })
   await page.goto('/history')
   await expect(page).toHaveURL(/\/login$/)
@@ -48,6 +49,14 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await page
     .getByLabel('Choose a CSV or XLSX file')
     .setInputFiles(samplePath!)
+  await page
+    .getByRole('button', { name: 'Check file structure' })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      name: 'The file is ready for analysis',
+    }),
+  ).toBeVisible()
   await page.getByRole('button', { name: 'Start Analysis' }).click()
   await expect(
     page.getByRole('heading', {
@@ -65,7 +74,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await expect(
     page.getByRole('heading', { name: 'Business Overview' }),
   ).toBeVisible()
-  await expect(page.getByText('₫113,010,000').first()).toBeVisible()
+  await expect(page.getByText('₫185,263,000').first()).toBeVisible()
   await expectNoHorizontalOverflow(page)
 
   await page.setViewportSize({ height: 1000, width: 1440 })
@@ -82,6 +91,14 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await page
     .getByLabel('Choose a CSV or XLSX file')
     .setInputFiles([combinedPath1!, combinedPath2!])
+  await page
+    .getByRole('button', { name: 'Check file structure' })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      name: 'The file is ready for analysis',
+    }),
+  ).toBeVisible()
   await page
     .getByRole('button', { name: 'Analyze 2 files together' })
     .click()
@@ -104,7 +121,7 @@ test('shop owner completes the protected mobile and desktop journey', async ({
   await expect(combinedSelectorTrigger).toBeVisible()
   await combinedSelectorTrigger.click()
   const selectorDialog = page.getByRole('dialog', {
-    name: 'Switch active analysis',
+    name: 'Choose a saved analysis',
   })
   await expect(selectorDialog).toBeVisible()
   await selectorDialog
@@ -117,12 +134,12 @@ test('shop owner completes the protected mobile and desktop journey', async ({
       .getByRole('button')
       .filter({ hasText: 'sample_sales_demo_60_days.csv' }),
   ).toBeVisible()
-  await expect(page.getByText('₫113,010,000').first()).toBeVisible()
+  await expect(page.getByText('₫185,263,000').first()).toBeVisible()
 
   for (const route of [
     { path: '/sales', title: 'Sales Analytics' },
     { path: '/customers', title: 'Customer Analytics' },
-    { path: '/forecast', title: '7-Day Revenue Forecast' },
+    { path: '/forecast', title: 'Revenue Forecast' },
   ]) {
     await page.goto(route.path)
     await expect(
@@ -131,8 +148,38 @@ test('shop owner completes the protected mobile and desktop journey', async ({
     await expectNoHorizontalOverflow(page)
   }
 
+  await page.goto('/sales')
+  await page
+    .getByRole('tab', { name: 'Cancellations and returns' })
+    .click()
+  await expect(
+    page.getByRole('heading', {
+      name: 'Products with notable cancellations or returns',
+    }),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('table').getByText('So tay planner'),
+  ).toBeVisible()
+  await expect(
+    page.getByRole('button', {
+      name: 'Sort by Cancelled or returned rate',
+    }),
+  ).toBeVisible()
+  await expectNoHorizontalOverflow(page)
+  await page.screenshot({
+    path: testInfo.outputPath(
+      'journey-desktop-cancellations-returns.png',
+    ),
+    fullPage: true,
+  })
+
   await page.goto('/report')
-  await expect(page.locator('#business-report')).toContainText('Version 2.0')
+  await expect(page.locator('#business-report')).not.toContainText(
+    'Version 2.0',
+  )
+  await expect(page.locator('#business-report')).not.toContainText(
+    /\b(?:backend|lift|confidence|support|MAE|RMSE|sMAPE)\b/i,
+  )
   await expect(page.locator('#business-report')).toContainText(
     'Automatic summary',
   )

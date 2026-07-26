@@ -1,0 +1,2 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+IRV-O001,01/06/2026,IRV-C001,Khach hang IRV-C001,IRV-P001,San pham sai du lieu,Danh muc synthetic,0,khong-phai-so,0,shipping

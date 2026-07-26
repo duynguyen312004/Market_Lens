@@ -24,9 +24,13 @@ import {
 } from '../components/analytics/Charts'
 import { MetricCard } from '../components/analytics/MetricCard'
 import { useCurrentAnalysis } from '../features/analysis/analysisQueries'
-import { formatAnalysisWarning } from '../features/analysis/presentation'
+import {
+  formatAnalysisWarning,
+  getTrailingPeriodComparison,
+} from '../features/analysis/presentation'
 import { useLanguage } from '../i18n/LanguageContext'
 import {
+  formatDate,
   formatInteger,
   formatPercent,
   formatVnd,
@@ -41,21 +45,10 @@ export function DashboardPage() {
   if (isEmpty || !analysis) return <AnalysisEmptyState />
 
   const growth = analysis.summary.growth_rate_percent
-  const growthChange =
-    growth === null
-      ? {
-          label: t('dashboard.notEnoughData'),
-          tone: 'neutral' as const,
-        }
-      : {
-          label: `${formatPercent(growth, 1, true, language)}% ${t('dashboard.vsPrevious')}`,
-          tone:
-            growth > 0
-              ? ('positive' as const)
-              : growth < 0
-                ? ('negative' as const)
-                : ('neutral' as const),
-        }
+  const revenueComparison = getTrailingPeriodComparison(
+    analysis.revenue_by_date,
+    7,
+  )
 
   return (
     <main className="px-4 py-6 sm:px-7 lg:px-8 lg:py-8">
@@ -80,8 +73,11 @@ export function DashboardPage() {
           className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
         >
           <MetricCard
-            change={growthChange}
             featured
+            helper={t('dashboard.totalRevenuePeriod', {
+              from: formatDate(analysis.period.from, language),
+              to: formatDate(analysis.period.to, language),
+            })}
             icon={CurrencyCircleDollarIcon}
             label={t('dashboard.totalRevenue')}
             value={formatVnd(analysis.summary.total_revenue, language)}
@@ -93,9 +89,21 @@ export function DashboardPage() {
             value={formatInteger(analysis.summary.total_orders, language)}
           />
           <MetricCard
+            helper={
+              analysis.customers.available
+                ? undefined
+                : t('dashboard.customerDataUnavailable')
+            }
             icon={UsersThreeIcon}
             label={t('dashboard.totalCustomers')}
-            value={formatInteger(analysis.summary.total_customers, language)}
+            value={
+              analysis.customers.available
+                ? formatInteger(
+                    analysis.summary.total_customers,
+                    language,
+                  )
+                : '—'
+            }
           />
           <MetricCard
             helper={t('dashboard.itemsSold')}
@@ -168,20 +176,28 @@ export function DashboardPage() {
               )}%`}
             />
             <MetricCard
-              helper={t('dashboard.repeatHelper', {
-                count: formatInteger(
-                  analysis.customers.repeat_customer_count,
-                  language,
-                ),
-              })}
+              helper={
+                analysis.customers.available
+                  ? t('dashboard.repeatHelper', {
+                      count: formatInteger(
+                        analysis.customers.repeat_customer_count,
+                        language,
+                      ),
+                    })
+                  : t('dashboard.customerDataUnavailable')
+              }
               icon={UsersThreeIcon}
               label={t('dashboard.repeatRate')}
-              value={`${formatPercent(
-                analysis.customers.repeat_customer_rate_percent,
-                1,
-                false,
-                language,
-              )}%`}
+              value={
+                analysis.customers.available
+                  ? `${formatPercent(
+                      analysis.customers.repeat_customer_rate_percent,
+                      1,
+                      false,
+                      language,
+                    )}%`
+                  : '—'
+              }
             />
           </div>
         </details>
@@ -205,6 +221,13 @@ export function DashboardPage() {
               <ArrowRightIcon aria-hidden="true" size={16} weight="bold" />
             </Link>
           </div>
+          {growth !== null && revenueComparison && (
+            <RevenueComparisonNote
+              current={revenueComparison.current}
+              growth={growth}
+              previous={revenueComparison.previous}
+            />
+          )}
           <div className="mt-5">
             <RevenueLineChart data={analysis.revenue_by_date} />
           </div>
@@ -282,9 +305,15 @@ export function DashboardPage() {
                 {t('dashboard.customerSegmentsDesc')}
               </p>
             </div>
-            <div className="mt-4">
-              <CustomerSegmentChart segments={analysis.customers.segments} />
-            </div>
+            {analysis.customers.available ? (
+              <div className="mt-4">
+                <CustomerSegmentChart
+                  segments={analysis.customers.segments}
+                />
+              </div>
+            ) : (
+              <CustomerDataUnavailable />
+            )}
           </section>
         </div>
 
@@ -294,6 +323,7 @@ export function DashboardPage() {
             <h2 className="text-base font-extrabold text-[var(--text-primary)]">
               {t('dashboard.topCustomers')}
             </h2>
+            {analysis.customers.available ? (
             <div className="mt-5 overflow-x-auto">
               <table className="w-full min-w-[34rem] text-left text-sm">
                 <thead className="border-b border-[var(--border)] text-xs font-semibold text-[var(--text-muted)]">
@@ -327,6 +357,9 @@ export function DashboardPage() {
                 </tbody>
               </table>
             </div>
+            ) : (
+              <CustomerDataUnavailable />
+            )}
           </section>
 
           {/* Quick Actions Sidebar Card */}
@@ -358,6 +391,46 @@ export function DashboardPage() {
   )
 }
 
+function RevenueComparisonNote({
+  current,
+  growth,
+  previous,
+}: {
+  current: { from: string; to: string }
+  growth: number
+  previous: { from: string; to: string }
+}) {
+  const { language, t } = useLanguage()
+  const copyKey =
+    growth > 0
+      ? 'dashboard.revenueComparisonHigher'
+      : growth < 0
+        ? 'dashboard.revenueComparisonLower'
+        : 'dashboard.revenueComparisonUnchanged'
+
+  return (
+    <div className="mt-4 flex items-start gap-3 rounded-xl border border-blue-100 bg-blue-50/70 px-4 py-3">
+      <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-white text-[var(--primary)]">
+        <TrendUpIcon aria-hidden="true" size={18} weight="duotone" />
+      </span>
+      <div className="min-w-0">
+        <p className="text-sm font-extrabold text-slate-900">
+          {t('dashboard.revenueComparisonTitle')}
+        </p>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          {t(copyKey, {
+            currentFrom: formatDate(current.from, language),
+            currentTo: formatDate(current.to, language),
+            previousFrom: formatDate(previous.from, language),
+            previousTo: formatDate(previous.to, language),
+            value: formatPercent(Math.abs(growth), 1, false, language),
+          })}
+        </p>
+      </div>
+    </div>
+  )
+}
+
 function QuickActionCard({
   icon: IconComponent,
   label,
@@ -380,5 +453,27 @@ function QuickActionCard({
       </div>
       <ArrowRightIcon className="text-slate-400 transition group-hover:translate-x-0.5 group-hover:text-white" size={16} weight="bold" />
     </Link>
+  )
+}
+
+function CustomerDataUnavailable() {
+  const { t } = useLanguage()
+
+  return (
+    <div className="mt-5 rounded-xl border border-amber-200 bg-amber-50/70 p-4">
+      <p className="text-sm font-extrabold text-slate-900">
+        {t('customers.unavailableTitle')}
+      </p>
+      <p className="mt-1 text-xs leading-5 text-slate-600">
+        {t('dashboard.customerDataUnavailableDesc')}
+      </p>
+      <Link
+        className="mt-3 inline-flex items-center gap-1.5 text-xs font-extrabold text-indigo-700 hover:underline"
+        to="/upload"
+      >
+        {t('customers.uploadAnother')}
+        <ArrowRightIcon aria-hidden="true" size={14} weight="bold" />
+      </Link>
+    </div>
   )
 }

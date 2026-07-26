@@ -1,0 +1,14 @@
+order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
+H13-O001,2026-06-01,H13-C001,Khach hang H13-C001,H13-P001,San pham lich su ngan,Danh muc synthetic,1,100000,0,completed
+H13-O002,2026-06-02,H13-C002,Khach hang H13-C002,H13-P001,San pham lich su ngan,Danh muc synthetic,1,101000,0,completed
+H13-O003,2026-06-03,H13-C003,Khach hang H13-C003,H13-P001,San pham lich su ngan,Danh muc synthetic,1,102000,0,completed
+H13-O004,2026-06-04,H13-C004,Khach hang H13-C004,H13-P001,San pham lich su ngan,Danh muc synthetic,1,103000,0,completed
+H13-O005,2026-06-05,H13-C005,Khach hang H13-C005,H13-P001,San pham lich su ngan,Danh muc synthetic,1,104000,0,completed
+H13-O006,2026-06-06,H13-C001,Khach hang H13-C001,H13-P001,San pham lich su ngan,Danh muc synthetic,1,105000,0,completed
+H13-O007,2026-06-07,H13-C002,Khach hang H13-C002,H13-P001,San pham lich su ngan,Danh muc synthetic,1,106000,0,completed
+H13-O008,2026-06-08,H13-C003,Khach hang H13-C003,H13-P001,San pham lich su ngan,Danh muc synthetic,1,107000,0,completed
+H13-O009,2026-06-09,H13-C004,Khach hang H13-C004,H13-P001,San pham lich su ngan,Danh muc synthetic,1,108000,0,completed
+H13-O010,2026-06-10,H13-C005,Khach hang H13-C005,H13-P001,San pham lich su ngan,Danh muc synthetic,1,109000,0,completed
+H13-O011,2026-06-11,H13-C001,Khach hang H13-C001,H13-P001,San pham lich su ngan,Danh muc synthetic,1,110000,0,completed
+H13-O012,2026-06-12,H13-C002,Khach hang H13-C002,H13-P001,San pham lich su ngan,Danh muc synthetic,1,111000,0,completed
+H13-O013,2026-06-13,H13-C003,Khach hang H13-C003,H13-P001,San pham lich su ngan,Danh muc synthetic,1,112000,0,completed

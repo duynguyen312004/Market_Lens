@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -9,6 +10,9 @@ from backend.app.services.analytics import calculate_analytics
 from backend.app.services.analytics.product_intelligence import (
     calculate_discount_analysis,
     calculate_product_intelligence,
+)
+from backend.app.services.analytics.product_order_issues import (
+    calculate_product_order_issues,
 )
 from backend.app.services.analytics.rfm import calculate_rfm
 from backend.app.services.file_reader import read_sales_file
@@ -31,16 +35,16 @@ def demo_analytics() -> dict:
 
 
 def test_demo_metrics_match_oracle(demo_analytics: dict) -> None:
-    assert demo_analytics["contract_version"] == "3.0"
+    assert demo_analytics["contract_version"] == "5.0"
     summary = demo_analytics["summary"]
     assert summary == {
-        "total_revenue": 113_010_000,
-        "total_orders": 273,
+        "total_revenue": 185_263_000,
+        "total_orders": 362,
         "total_customers": 30,
-        "total_quantity_sold": 503,
-        "growth_rate_percent": pytest.approx(37.201646),
-        "average_order_value": 413_956.04,
-        "average_revenue_per_customer": 3_767_000,
+        "total_quantity_sold": 719,
+        "growth_rate_percent": pytest.approx(17.321519),
+        "average_order_value": 511_776.24,
+        "average_revenue_per_customer": 6_175_433.33,
     }
     assert demo_analytics["customers"]["segments"] == {
         "new": 0,
@@ -50,16 +54,23 @@ def test_demo_metrics_match_oracle(demo_analytics: dict) -> None:
     assert [
         customer["customer_id"]
         for customer in demo_analytics["customers"]["potential_customers"]
-    ] == ["C017", "C025", "C015", "C018", "C012", "C011"]
+    ] == [
+        "R60C003",
+        "R60C004",
+        "R60C015",
+        "R60C005",
+        "R60C007",
+        "R60C008",
+    ]
 
     top_product = demo_analytics["sales"]["top_products_by_revenue"][0]
     assert top_product == {
-        "product_id": "P004",
-        "product_name": "Tai nghe Bluetooth",
-        "category": "Dien tu",
-        "revenue": 31_560_000,
-        "quantity": 65,
-        "order_count": 45,
+        "product_id": "R60P002",
+        "product_name": "Quan jean",
+        "category": "Thoi trang",
+        "revenue": 49_095_000,
+        "quantity": 130,
+        "order_count": 100,
     }
 
 
@@ -67,38 +78,38 @@ def test_demo_advanced_metrics_match_oracle(
     demo_analytics: dict,
 ) -> None:
     assert demo_analytics["orders"] == {
-        "total_orders_all_statuses": 313,
+        "total_orders_all_statuses": 404,
         "by_status": {
-            "completed": 273,
-            "cancelled": 27,
-            "returned": 13,
+            "completed": 362,
+            "cancelled": 25,
+            "returned": 17,
         },
         "status_rates_percent": {
-            "completed": pytest.approx(87.220447),
-            "cancelled": pytest.approx(8.626198),
-            "returned": pytest.approx(4.153355),
+            "completed": pytest.approx(89.60396),
+            "cancelled": pytest.approx(6.188119),
+            "returned": pytest.approx(4.207921),
         },
-        "average_items_per_completed_order": pytest.approx(1.842491),
+        "average_items_per_completed_order": pytest.approx(1.986188),
     }
 
     sales = demo_analytics["sales"]
-    assert sales["gross_revenue"] == 115_180_000
-    assert sales["total_discount"] == 2_170_000
-    assert sales["discount_rate_percent"] == pytest.approx(1.884008)
+    assert sales["gross_revenue"] == 190_921_000
+    assert sales["total_discount"] == 5_658_000
+    assert sales["discount_rate_percent"] == pytest.approx(2.963529)
     assert sales["peak_revenue_day"] == {
-        "date": "2026-05-21",
-        "revenue": 4_430_000,
+        "date": "2026-06-14",
+        "revenue": 5_819_000,
     }
     assert sales["lowest_nonzero_revenue_day"] == {
-        "date": "2026-05-27",
-        "revenue": 90_000,
+        "date": "2026-06-03",
+        "revenue": 1_140_000,
     }
     assert sales["concentration"] == {
-        "top_product_revenue_share_percent": pytest.approx(27.926732),
-        "top_category_revenue_share_percent": pytest.approx(36.563136),
+        "top_product_revenue_share_percent": pytest.approx(26.500165),
+        "top_category_revenue_share_percent": pytest.approx(38.14847),
         "top_20_percent_product_count": 2,
         "top_20_percent_products_revenue_share_percent": pytest.approx(
-            53.853641
+            48.937996
         ),
     }
     assert len(sales["revenue_by_weekday"]) == 7
@@ -106,9 +117,9 @@ def test_demo_advanced_metrics_match_oracle(
     assert friday == {
         "weekday": "friday",
         "weekday_index": 4,
-        "revenue": 22_580_000,
-        "order_count": 50,
-        "revenue_share_percent": pytest.approx(19.980533),
+        "revenue": 30_983_000,
+        "order_count": 66,
+        "revenue_share_percent": pytest.approx(16.723793),
     }
 
     customers = demo_analytics["customers"]
@@ -124,14 +135,14 @@ def test_demo_advanced_metrics_match_oracle(
         {
             "segment": "returning",
             "customer_count": 27,
-            "revenue": 92_290_000,
-            "revenue_share_percent": pytest.approx(81.665339),
+            "revenue": 139_511_000,
+            "revenue_share_percent": pytest.approx(75.304297),
         },
         {
             "segment": "vip",
             "customer_count": 3,
-            "revenue": 20_720_000,
-            "revenue_share_percent": pytest.approx(18.334661),
+            "revenue": 45_752_000,
+            "revenue_share_percent": pytest.approx(24.695703),
         },
     ]
 
@@ -144,49 +155,55 @@ def test_demo_e2_customer_and_product_intelligence_matches_oracle(
     assert rfm["snapshot_date"] == "2026-06-30"
     assert rfm["segments"] == {
         "new": 0,
-        "champion": 5,
-        "loyal": 10,
-        "at_risk": 3,
-        "regular": 12,
+        "champion": 6,
+        "loyal": 6,
+        "at_risk": 5,
+        "regular": 13,
     }
     assert [
         customer["customer_id"]
         for customer in rfm["at_risk_customers"]
-    ] == ["C015", "C018", "C022"]
+    ] == [
+        "R60C005",
+        "R60C009",
+        "R60C013",
+        "R60C011",
+        "R60C022",
+    ]
 
     intelligence = demo_analytics["sales"]["product_intelligence"]
-    assert intelligence["abc"]["classified_product_count"] == 6
+    assert intelligence["abc"]["classified_product_count"] == 8
     assert intelligence["abc"]["classes"] == {
         "A": {
-            "product_count": 4,
-            "revenue": 97_460_000,
-            "revenue_share_percent": pytest.approx(86.240156),
+            "product_count": 5,
+            "revenue": 156_674_000,
+            "revenue_share_percent": pytest.approx(84.568424),
         },
         "B": {
             "product_count": 2,
-            "revenue": 15_550_000,
-            "revenue_share_percent": pytest.approx(13.759844),
+            "revenue": 23_004_000,
+            "revenue_share_percent": pytest.approx(12.416942),
         },
         "C": {
-            "product_count": 0,
-            "revenue": 0,
-            "revenue_share_percent": 0.0,
+            "product_count": 1,
+            "revenue": 5_585_000,
+            "revenue_share_percent": pytest.approx(3.014633),
         },
     }
     associations = intelligence["associations"]
-    assert associations["basket_order_count"] == 71
+    assert associations["basket_order_count"] == 151
     assert associations["skipped_oversized_order_count"] == 0
     assert associations["rules"][0] == {
-        "source_product_id": "P003",
-        "source_product_name": "Binh nuoc",
-        "target_product_id": "P001",
-        "target_product_name": "Ao thun basic",
-        "pair_order_count": 7,
-        "source_order_count": 48,
-        "target_order_count": 58,
-        "support_percent": pytest.approx(2.564103),
-        "confidence_percent": pytest.approx(14.583333),
-        "lift": pytest.approx(0.686422),
+        "source_product_id": "R60P002",
+        "source_product_name": "Quan jean",
+        "target_product_id": "R60P001",
+        "target_product_name": "Ao thun co ban",
+        "pair_order_count": 38,
+        "source_order_count": 100,
+        "target_order_count": 103,
+        "support_percent": pytest.approx(10.497238),
+        "confidence_percent": pytest.approx(38.0),
+        "lift": pytest.approx(1.335534),
     }
     assert demo_analytics["customers"]["cohort_analysis"]["available"] is False
     assert demo_analytics["customers"]["cohort_analysis"]["reason"] == (
@@ -194,12 +211,104 @@ def test_demo_e2_customer_and_product_intelligence_matches_oracle(
     )
 
     discount = demo_analytics["sales"]["discount_analysis"]
-    assert discount["discounted_order_count"] == 131
+    assert discount["discounted_order_count"] == 138
     assert discount["discounted_order_rate_percent"] == pytest.approx(
-        47.985348
+        38.121547
     )
-    assert discount["by_product"][0]["product_id"] == "P006"
-    assert discount["by_product"][0]["discount_amount"] == 500_000
+    assert discount["by_product"][0]["product_id"] == "R60P002"
+    assert discount["by_product"][0]["discount_amount"] == 1_475_000
+
+    order_issues = demo_analytics["sales"]["product_order_issues"]
+    assert order_issues["available"] is True
+    assert order_issues["affected_order_count"] == 42
+    assert order_issues["affected_product_value"] == 22_870_000
+    assert order_issues["products"][0] == {
+        "product_id": "R60P008",
+        "product_name": "So tay planner",
+        "category": "Van phong",
+        "total_order_count": 54,
+        "completed_order_count": 43,
+        "cancelled_order_count": 6,
+        "returned_order_count": 5,
+        "issue_order_count": 11,
+        "cancellation_rate_percent": pytest.approx(11.111111),
+        "return_rate_percent": pytest.approx(9.259259),
+        "issue_rate_percent": pytest.approx(20.37037),
+        "ranking_score_percent": pytest.approx(11.773934),
+        "affected_product_value": 1_817_000,
+    }
+
+
+def test_product_order_issue_ranking_reduces_small_sample_bias() -> None:
+    rows = [
+        _normalized_row(
+            order_id=f"A{index:03}",
+            product_id="P-A",
+            order_status="cancelled" if index <= 5 else "completed",
+        )
+        for index in range(1, 101)
+    ]
+    rows.extend(
+        _normalized_row(
+            order_id=f"B{index:03}",
+            product_id="P-B",
+            order_status="returned" if index == 1 else "completed",
+        )
+        for index in range(1, 11)
+    )
+    rows.extend(
+        _normalized_row(
+            order_id=f"C{index:03}",
+            product_id="P-C",
+            order_status="returned",
+        )
+        for index in range(1, 3)
+    )
+
+    result = calculate_product_order_issues(pd.DataFrame(rows))
+
+    assert result["available"] is True
+    assert result["evaluated_product_count"] == 3
+    assert result["qualified_product_count"] == 2
+    assert [
+        product["product_id"] for product in result["products"]
+    ] == ["P-A", "P-B"]
+    assert result["products"][0]["issue_rate_percent"] == 5.0
+    assert result["products"][1]["issue_rate_percent"] == 10.0
+    assert (
+        result["products"][0]["ranking_score_percent"]
+        > result["products"][1]["ranking_score_percent"]
+    )
+
+
+def test_product_order_issue_counts_distinct_orders_per_product() -> None:
+    rows = [
+        _normalized_row(
+            order_id="RETURNED-1",
+            product_id="P-A",
+            order_status="returned",
+        ),
+        _normalized_row(
+            order_id="RETURNED-1",
+            product_id="P-A",
+            order_status="returned",
+        ),
+    ]
+    rows.extend(
+        _normalized_row(
+            order_id=f"COMPLETED-{index}",
+            product_id="P-A",
+        )
+        for index in range(1, 10)
+    )
+
+    result = calculate_product_order_issues(pd.DataFrame(rows))
+    product = result["products"][0]
+
+    assert product["total_order_count"] == 10
+    assert product["returned_order_count"] == 1
+    assert product["issue_rate_percent"] == 10.0
+    assert product["affected_product_value"] == 200_000
 
 
 def test_rfm_requires_a_minimum_customer_sample() -> None:
@@ -368,45 +477,52 @@ def test_demo_forecast_matches_oracle(demo_analytics: dict) -> None:
     )
 
     assert warnings == []
-    assert forecast["method"] == "linear_trend_30_days"
+    forecast_7 = _forecast_horizon(forecast, 7)
+    assert forecast_7["method"] == "weekday_average_4_weeks"
     assert [
-        point["predicted_revenue"] for point in forecast["points"]
+        point["predicted_revenue"] for point in forecast_7["points"]
     ] == [
-        2_193_862,
-        2_198_305,
-        2_202_747,
-        2_207_190,
-        2_211_633,
-        2_216_076,
-        2_220_518,
+        3_175_250,
+        2_247_750,
+        3_014_750,
+        3_679_000,
+        4_411_000,
+        3_670_250,
+        2_508_500,
     ]
-    assert forecast["forecast_total"] == 15_450_331
-    assert forecast["change_vs_last_7_days_percent"] == pytest.approx(
-        -7.316548,
+    assert forecast_7["forecast_total"] == 22_706_500
+    assert forecast_7[
+        "change_vs_previous_period_percent"
+    ] == pytest.approx(
+        -2.004661,
         abs=0.00001,
     )
-    evaluation = forecast["evaluation"]
+    evaluation = forecast_7["evaluation"]
     assert evaluation["available"] is True
-    assert evaluation["evaluated_method"] == "linear_trend_30_days"
+    assert evaluation["evaluated_method"] == "weekday_average_4_weeks"
     assert evaluation["baseline_method"] == "seasonal_naive_7_days"
     assert evaluation["fold_count"] == 4
     assert evaluation["evaluation_points"] == 28
-    assert evaluation["model_metrics"] == {
-        "mae": pytest.approx(856_855.5),
-        "rmse": pytest.approx(1_034_308.06),
-        "smape_percent": pytest.approx(42.263957),
+    assert evaluation["model_daily_metrics"] == {
+        "mae": pytest.approx(1_083_410.71),
+        "rmse": pytest.approx(1_254_129.63),
+        "smape_percent": pytest.approx(35.526306),
     }
-    assert evaluation["baseline_metrics"] == {
-        "mae": pytest.approx(1_223_928.57),
-        "rmse": pytest.approx(1_432_915.36),
-        "smape_percent": pytest.approx(67.306507),
+    assert evaluation["baseline_daily_metrics"] == {
+        "mae": pytest.approx(1_417_214.29),
+        "rmse": pytest.approx(1_665_305.16),
+        "smape_percent": pytest.approx(46.734697),
     }
     assert evaluation[
-        "mae_improvement_vs_baseline_percent"
-    ] == pytest.approx(29.99138)
-    assert evaluation["reliability"] == "low"
+        "primary_mae_improvement_vs_baseline_percent"
+    ] == pytest.approx(23.553501)
+    assert evaluation["reliability"] == "medium"
     assert evaluation["folds"][0]["training_days"] == 32
     assert evaluation["folds"][-1]["validation_to"] == "2026-06-29"
+    forecast_30 = _forecast_horizon(forecast, 30)
+    assert forecast_30["available"] is True
+    assert forecast_30["forecast_total"] == 99_304_290
+    assert len(forecast_30["points"]) == 30
 
 
 def test_one_order_with_two_items_counts_as_one_order() -> None:
@@ -479,10 +595,11 @@ def test_customer_segments_are_disjoint(demo_analytics: dict) -> None:
 def test_short_history_forecast_is_unavailable() -> None:
     forecast, warnings = calculate_forecast(_daily_points(13, revenue=100))
 
-    assert forecast["available"] is False
-    assert forecast["points"] == []
-    assert forecast["evaluation"]["available"] is False
-    assert forecast["evaluation"]["reason"] == "FORECAST_UNAVAILABLE"
+    forecast_7 = _forecast_horizon(forecast, 7)
+    assert forecast_7["available"] is False
+    assert forecast_7["points"] == []
+    assert forecast_7["evaluation"]["available"] is False
+    assert forecast_7["evaluation"]["reason"] == "FORECAST_UNAVAILABLE"
     assert warnings == ["INSUFFICIENT_HISTORY"]
 
 
@@ -490,34 +607,41 @@ def test_medium_history_uses_moving_average() -> None:
     forecast, warnings = calculate_forecast(_daily_points(20, revenue=100))
 
     assert warnings == []
-    assert forecast["method"] == "moving_average_7_days"
-    assert len(forecast["points"]) == 7
+    forecast_7 = _forecast_horizon(forecast, 7)
+    assert forecast_7["method"] == "moving_average_7_days"
+    assert len(forecast_7["points"]) == 7
     assert all(
-        point["predicted_revenue"] == 100 for point in forecast["points"]
+        point["predicted_revenue"] == 100
+        for point in forecast_7["points"]
     )
-    assert forecast["evaluation"]["available"] is False
+    assert forecast_7["evaluation"]["available"] is False
     assert (
-        forecast["evaluation"]["reason"]
+        forecast_7["evaluation"]["reason"]
         == "INSUFFICIENT_SELECTION_HISTORY"
     )
-    assert forecast["evaluation"]["minimum_history_days"] == 28
+    assert forecast_7["evaluation"]["minimum_history_days"] == 28
 
 
 def test_moving_average_evaluation_uses_two_recent_seven_day_folds() -> None:
     forecast, warnings = calculate_forecast(_daily_points(28, revenue=100))
 
     assert warnings == []
-    evaluation = forecast["evaluation"]
+    evaluation = _forecast_horizon(forecast, 7)["evaluation"]
     assert evaluation["available"] is True
     assert evaluation["fold_count"] == 2
     assert evaluation["evaluation_points"] == 14
-    assert evaluation["model_metrics"] == {
+    assert evaluation["model_daily_metrics"] == {
         "mae": 0.0,
         "rmse": 0.0,
         "smape_percent": 0.0,
     }
-    assert evaluation["baseline_metrics"] == evaluation["model_metrics"]
-    assert evaluation["mae_improvement_vs_baseline_percent"] == 0.0
+    assert (
+        evaluation["baseline_daily_metrics"]
+        == evaluation["model_daily_metrics"]
+    )
+    assert evaluation[
+        "primary_mae_improvement_vs_baseline_percent"
+    ] == 0.0
     assert evaluation["reliability"] == "medium"
     assert [
         (fold["training_days"], fold["validation_from"])
@@ -538,15 +662,24 @@ def test_model_candidates_enter_only_when_they_have_two_folds() -> None:
 
     assert [
         candidate["method"]
-        for candidate in before_weekday["selection"]["candidates"]
+        for candidate in _forecast_horizon(
+            before_weekday,
+            7,
+        )["selection"]["candidates"]
     ] == ["seasonal_naive_7_days", "moving_average_7_days"]
     assert "weekday_average_4_weeks" in {
         candidate["method"]
-        for candidate in with_weekday["selection"]["candidates"]
+        for candidate in _forecast_horizon(
+            with_weekday,
+            7,
+        )["selection"]["candidates"]
     }
     assert "linear_trend_30_days" in {
         candidate["method"]
-        for candidate in with_linear["selection"]["candidates"]
+        for candidate in _forecast_horizon(
+            with_linear,
+            7,
+        )["selection"]["candidates"]
     }
 
 
@@ -558,9 +691,11 @@ def test_forecast_clips_negative_values_to_zero() -> None:
     forecast, warnings = calculate_forecast(points)
 
     assert warnings == []
-    assert len(forecast["points"]) == 7
+    forecast_7 = _forecast_horizon(forecast, 7)
+    assert len(forecast_7["points"]) == 7
     assert all(
-        point["predicted_revenue"] >= 0 for point in forecast["points"]
+        point["predicted_revenue"] >= 0
+        for point in forecast_7["points"]
     )
 
 
@@ -585,9 +720,13 @@ def test_rule_based_report_has_grounded_recommendations(
     assert report["report_version"] == "2.0"
     assert report["source"] == "rule_based"
     assert 1 <= len(report["recommendations"]) <= 5
-    assert "Tai nghe Bluetooth" in report["sections"][1]["narrative"]
-    assert "273" in report["executive_summary"]
-    assert "113,010,000" in report["executive_summary"]
+    assert "Quan jean" in report["sections"][1]["narrative"]
+    assert "362" in report["executive_summary"]
+    assert "185,263,000" in report["executive_summary"]
+    assert "Test a product bundle" in {
+        recommendation["title"]
+        for recommendation in report["recommendations"]
+    }
     assert all(
         recommendation["evidence"]
         and recommendation["success_metric"]
@@ -602,6 +741,22 @@ def test_rule_based_report_has_grounded_recommendations(
             "lợi nhuận giảm",
         )
     )
+
+
+def test_rule_based_report_only_suggests_bundle_for_positive_relationship(
+    demo_analytics: dict,
+) -> None:
+    stronger_pair_analysis = deepcopy(demo_analytics)
+    stronger_pair_analysis["sales"]["product_intelligence"][
+        "associations"
+    ]["rules"][0]["lift"] = 1.5
+
+    report = build_rule_based_report(stronger_pair_analysis)
+
+    assert "Test a product bundle" in {
+        recommendation["title"]
+        for recommendation in report["recommendations"]
+    }
     assert report["disclaimer"]
 
 
@@ -612,10 +767,66 @@ def test_rule_based_report_supports_natural_vietnamese(
 
     assert report["title"] == "Báo cáo tình hình kinh doanh"
     assert report["language"] == "vi"
-    assert "273 đơn hoàn tất" in report["executive_summary"]
-    assert "113.010.000 VND" in report["executive_summary"]
+    assert "362 đơn hoàn tất" in report["executive_summary"]
+    assert "185.263.000 VND" in report["executive_summary"]
     assert report["sections"][0]["title"] == "Hiệu quả doanh thu"
     assert report["disclaimer"].startswith("Báo cáo sử dụng")
+
+
+def test_rule_based_report_safely_truncates_long_product_names(
+    demo_analytics: dict,
+) -> None:
+    analysis = deepcopy(demo_analytics)
+    analysis["sales"]["top_products_by_revenue"][0]["product_name"] = (
+        "Sản phẩm " + "A" * 250
+    )
+
+    report = build_rule_based_report(analysis, "vi")
+
+    top_product_evidence = next(
+        item
+        for item in report["sections"][1]["evidence"]
+        if item["metric_key"] == "sales.top_product.revenue"
+    )
+    assert len(top_product_evidence["context"]) <= 200
+    assert all(
+        len(recommendation["title"]) <= 160
+        for recommendation in report["recommendations"]
+    )
+
+
+def test_rule_based_report_uses_growth_and_both_forecast_horizons(
+    demo_analytics: dict,
+) -> None:
+    analysis = deepcopy(demo_analytics)
+    analysis["forecast"], forecast_warnings = calculate_forecast(
+        analysis["revenue_by_date"]
+    )
+    analysis["warnings"] = [
+        *analysis["warnings"],
+        *forecast_warnings,
+    ]
+
+    report = build_rule_based_report(analysis, "vi")
+    product_evidence = {
+        item["metric_key"] for item in report["sections"][1]["evidence"]
+    }
+    forecast_evidence = {
+        item["metric_key"] for item in report["sections"][3]["evidence"]
+    }
+
+    assert any(
+        key.startswith("sales.growth.month.product_increase")
+        for key in product_evidence
+    )
+    assert "forecast.h7.forecast_total" in forecast_evidence
+    assert "forecast.h30.forecast_total" in forecast_evidence
+    assert "Doanh thu dự báo 7 ngày tới" in report["sections"][3][
+        "narrative"
+    ]
+    assert "Doanh thu dự báo 30 ngày tới" in report["sections"][3][
+        "narrative"
+    ]
 
 
 def _normalized_row(
@@ -663,3 +874,14 @@ def _daily_points(days: int, *, revenue: int) -> list[dict]:
         }
         for index in range(days)
     ]
+
+
+def _forecast_horizon(
+    forecast: dict,
+    horizon_days: int,
+) -> dict:
+    return next(
+        item
+        for item in forecast["horizons"]
+        if item["horizon_days"] == horizon_days
+    )

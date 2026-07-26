@@ -3,12 +3,17 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type PropsWithChildren,
 } from 'react'
 
 import { AuthContext, type AuthContextValue } from './authContext'
 import { supabase } from './supabase'
+import { queryClient } from '../app/queryClient'
+import {
+  storeSelectedAnalysisId,
+} from '../features/analysis/ActiveAnalysisContext'
 import { useLanguage } from '../i18n/LanguageContext'
 
 const missingConfigurationMessage =
@@ -42,6 +47,20 @@ export function AuthProvider({ children }: PropsWithChildren) {
   const [isPasswordRecovery, setIsPasswordRecovery] = useState(
     readPasswordRecoveryState,
   )
+  const authenticatedUserIdRef = useRef<string | null>(null)
+
+  const replaceSession = useCallback((nextSession: Session | null) => {
+    const previousUserId = authenticatedUserIdRef.current
+    const nextUserId = nextSession?.user.id ?? null
+    if (previousUserId !== nextUserId) {
+      queryClient.clear()
+      if (previousUserId) {
+        storeSelectedAnalysisId(previousUserId, null)
+      }
+      authenticatedUserIdRef.current = nextUserId
+    }
+    setSession(nextSession)
+  }, [])
 
   useEffect(() => {
     if (!supabase) {
@@ -55,9 +74,9 @@ export function AuthProvider({ children }: PropsWithChildren) {
       if (!isMounted) return
 
       if (error) {
-        setSession(null)
+        replaceSession(null)
       } else {
-        setSession(data.session)
+        replaceSession(data.session)
       }
       setLoading(false)
     })
@@ -73,7 +92,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
           writePasswordRecoveryState(false)
           setIsPasswordRecovery(false)
         }
-        setSession(nextSession)
+        replaceSession(nextSession)
         setLoading(false)
       }
     })
@@ -82,7 +101,7 @@ export function AuthProvider({ children }: PropsWithChildren) {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [replaceSession])
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) throw new Error(missingConfigurationMessage)
@@ -93,8 +112,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     })
 
     if (error) throw error
-    setSession(data.session)
-  }, [])
+    replaceSession(data.session)
+  }, [replaceSession])
 
   const signUp = useCallback(
     async (email: string, password: string, displayName: string) => {
@@ -111,13 +130,13 @@ export function AuthProvider({ children }: PropsWithChildren) {
       })
 
       if (error) throw error
-      setSession(data.session)
+      replaceSession(data.session)
 
       return {
         requiresEmailConfirmation: data.session === null,
       }
     },
-    [],
+    [replaceSession],
   )
 
   const signOut = useCallback(async () => {
@@ -127,8 +146,8 @@ export function AuthProvider({ children }: PropsWithChildren) {
     if (error) throw error
     writePasswordRecoveryState(false)
     setIsPasswordRecovery(false)
-    setSession(null)
-  }, [])
+    replaceSession(null)
+  }, [replaceSession])
 
   const requestPasswordReset = useCallback(async (email: string) => {
     if (!supabase) throw new Error(missingConfigurationMessage)

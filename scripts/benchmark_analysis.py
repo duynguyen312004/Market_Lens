@@ -83,6 +83,16 @@ def run_benchmark() -> dict[str, Any]:
     report = build_rule_based_report(analytics)
     ReportContent.model_validate(report)
     report_seconds = perf_counter() - stage_started
+    forecast_7 = next(
+        item
+        for item in forecast["horizons"]
+        if item["horizon_days"] == 7
+    )
+    forecast_30 = next(
+        item
+        for item in forecast["horizons"]
+        if item["horizon_days"] == 30
+    )
 
     return {
         "fixture": {
@@ -93,8 +103,10 @@ def run_benchmark() -> dict[str, Any]:
         "result": {
             "contract_version": analytics["contract_version"],
             "completed_orders": analytics["summary"]["total_orders"],
-            "forecast_method": forecast["method"],
-            "forecast_days": forecast["forecast_days"],
+            "forecast_7_method": forecast_7["method"],
+            "forecast_7_total": forecast_7["forecast_total"],
+            "forecast_30_method": forecast_30["method"],
+            "forecast_30_total": forecast_30["forecast_total"],
             "report_version": report["report_version"],
         },
         "timing_seconds": {

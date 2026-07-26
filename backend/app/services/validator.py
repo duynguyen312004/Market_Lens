@@ -143,11 +143,16 @@ def validate_sales_data(
     normalized["order_date"] = parsed_dates
 
     quantity = pd.to_numeric(normalized["quantity"], errors="coerce")
+    max_quantity_per_row = max(
+        1,
+        int(np.iinfo(np.int64).max // max(max_rows, 1)),
+    )
     invalid_quantity = (
         quantity.isna()
         | ~np.isfinite(quantity)
         | (quantity <= 0)
         | ((quantity.notna()) & (quantity % 1 != 0))
+        | (quantity > max_quantity_per_row)
     )
     _add_mask_errors(
         errors,
@@ -170,9 +175,49 @@ def validate_sales_data(
         )
         normalized[column] = numeric
 
-    line_revenue = (
-        normalized["quantity"] * normalized["unit_price"]
-        - normalized["discount"]
+    max_monetary_value_per_row = (
+        np.finfo(np.float64).max / max(max_rows, 1) / 4
+    )
+    with np.errstate(over="ignore", invalid="ignore"):
+        gross_revenue = (
+            normalized["quantity"] * normalized["unit_price"]
+        )
+        line_revenue = gross_revenue - normalized["discount"]
+    invalid_gross_revenue = (
+        ~np.isfinite(gross_revenue)
+        | (gross_revenue > max_monetary_value_per_row)
+    )
+    _add_mask_errors(
+        errors,
+        normalized,
+        invalid_gross_revenue,
+        column="unit_price",
+        reason="line_value_out_of_supported_range",
+    )
+    invalid_discount_range = (
+        normalized["discount"] > max_monetary_value_per_row
+    )
+    _add_mask_errors(
+        errors,
+        normalized,
+        invalid_discount_range,
+        column="discount",
+        reason="line_value_out_of_supported_range",
+    )
+    invalid_line_revenue = (
+        (
+            ~np.isfinite(line_revenue)
+            | (line_revenue > max_monetary_value_per_row)
+        )
+        & ~invalid_gross_revenue
+        & ~invalid_discount_range
+    )
+    _add_mask_errors(
+        errors,
+        normalized,
+        invalid_line_revenue,
+        column="unit_price",
+        reason="line_value_out_of_supported_range",
     )
     _add_mask_errors(
         errors,

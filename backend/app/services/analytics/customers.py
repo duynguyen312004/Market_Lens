@@ -15,7 +15,73 @@ CUSTOMER_SEGMENTS = ("new", "returning", "vip")
 
 def calculate_customer_analytics(
     completed: pd.DataFrame,
+    *,
+    available: bool = True,
 ) -> dict[str, Any]:
+    if not available:
+        snapshot = (
+            completed["order_date"].max().normalize()
+            + pd.Timedelta(days=1)
+        )
+        order_months = completed["order_date"].dt.to_period("M")
+        period_from = str(order_months.min())
+        period_to = str(order_months.max())
+        return {
+            "available": False,
+            "reason": "MISSING_CUSTOMER_IDENTIFIERS",
+            "segments": {segment: 0 for segment in CUSTOMER_SEGMENTS},
+            "repeat_customer_count": 0,
+            "repeat_customer_rate_percent": 0.0,
+            "revenue_by_segment": [
+                {
+                    "segment": segment,
+                    "customer_count": 0,
+                    "revenue": 0,
+                    "revenue_share_percent": 0.0,
+                }
+                for segment in CUSTOMER_SEGMENTS
+            ],
+            "potential_count": 0,
+            "potential_customers": [],
+            "top_customers": [],
+            "rfm": {
+                "available": False,
+                "reason": "MISSING_CUSTOMER_IDENTIFIERS",
+                "snapshot_date": snapshot.date().isoformat(),
+                "customer_count": 0,
+                "minimum_customers": 5,
+                "score_scale": 5,
+                "scoring_method": "empirical_quintile_average_rank",
+                "segment_rules_version": "rfm_v1",
+                "segments": {
+                    segment: 0
+                    for segment in (
+                        "new",
+                        "champion",
+                        "loyal",
+                        "at_risk",
+                        "regular",
+                    )
+                },
+                "segment_revenue": [],
+                "top_customers": [],
+                "at_risk_customers": [],
+            },
+            "cohort_analysis": {
+                "available": False,
+                "reason": "MISSING_CUSTOMER_IDENTIFIERS",
+                "method": "acquisition_month_completed_orders",
+                "period_from": period_from,
+                "period_to": period_to,
+                "observed_month_count": 0,
+                "minimum_month_count": 3,
+                "customer_count": 0,
+                "cohort_count": 0,
+                "maximum_observed_month_index": 0,
+                "cohorts": [],
+            },
+        }
+
     grouped = (
         completed.groupby(
             ["customer_id", "customer_name"],
@@ -113,6 +179,8 @@ def calculate_customer_analytics(
     )[:potential_limit]
 
     return {
+        "available": True,
+        "reason": None,
         "segments": segments,
         "repeat_customer_count": repeat_customer_count,
         "repeat_customer_rate_percent": percent(

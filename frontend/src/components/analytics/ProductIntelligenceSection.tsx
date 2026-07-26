@@ -243,7 +243,14 @@ function ProductAssociationTable({
                           : 'bg-slate-100 text-slate-600',
                       ].join(' ')}
                     >
-                      {formatPercent(rule.lift, 2, false, language)}
+                      {t('pairs.strengthValue', {
+                        value: formatPercent(
+                          rule.lift,
+                          2,
+                          false,
+                          language,
+                        ),
+                      })}
                     </span>
                   </td>
                 </tr>

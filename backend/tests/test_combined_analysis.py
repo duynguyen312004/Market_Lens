@@ -66,8 +66,20 @@ def test_combines_disjoint_validated_files() -> None:
     assert result.duplicate_order_count == 0
     assert result.warnings == []
     assert result.source_files == [
-        {"file_name": "january.csv", "row_count": 1},
-        {"file_name": "february.csv", "row_count": 1},
+        {
+            "file_name": "january.csv",
+            "row_count": 1,
+            "source_type": "marketlens",
+            "source_row_count": 1,
+            "skipped_row_count": 0,
+        },
+        {
+            "file_name": "february.csv",
+            "row_count": 1,
+            "source_type": "marketlens",
+            "source_row_count": 1,
+            "skipped_row_count": 0,
+        },
     ]
 
 

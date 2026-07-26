@@ -1,12 +1,12 @@
 order_id,order_date,customer_id,customer_name,product_id,product_name,category,quantity,unit_price,discount,order_status
-ORD-010,2026-07-10,C007,Vu Khanh,P001,Basic T-Shirt,Fashion,2,180000,0,completed
-ORD-011,2026-07-11,C003,Le Chi,P002,Canvas Tote,Accessories,2,220000,10000,completed
-ORD-012,2026-07-12,C008,Bui Lam,P004,Desk Lamp,Home,1,490000,40000,completed
-ORD-013,2026-07-13,C004,Pham Dung,P003,Water Bottle,Home,3,150000,0,completed
-ORD-014,2026-07-14,C009,Ngo Minh,P001,Basic T-Shirt,Fashion,1,180000,0,completed
-ORD-015,2026-07-15,C001,Nguyen An,P004,Desk Lamp,Home,1,490000,0,completed
-ORD-016,2026-07-16,C010,Dang Nam,P005,Running Shoes,Sports,1,850000,100000,completed
-ORD-017,2026-07-17,C002,Tran Binh,P001,Basic T-Shirt,Fashion,2,180000,20000,completed
-ORD-018,2026-07-18,C005,Hoang Giang,P002,Canvas Tote,Accessories,1,220000,0,completed
-ORD-019,2026-07-19,C003,Le Chi,P005,Running Shoes,Sports,1,850000,50000,completed
-ORD-020,2026-07-20,C011,Duong Oanh,P003,Water Bottle,Home,2,150000,0,completed
+CB-O010,2026-06-10,CB-C010,Khach hang gop 010,CB-P005,Giay chay bo,The thao,2,850000,0,completed
+CB-O011,2026-06-11,CB-C011,Khach hang gop 011,CB-P001,Ao thun co ban,Thoi trang,1,180000,0,completed
+CB-O012,2026-06-12,CB-C001,Khach hang gop 001,CB-P002,Tui tote canvas,Phu kien,1,220000,50000,completed
+CB-O013,2026-06-13,CB-C002,Khach hang gop 002,CB-P003,Binh nuoc the thao,Gia dung,1,150000,0,completed
+CB-O014,2026-06-14,CB-C003,Khach hang gop 003,CB-P004,Tai nghe Bluetooth,Dien tu,1,590000,0,completed
+CB-O015,2026-06-15,CB-C004,Khach hang gop 004,CB-P005,Giay chay bo,The thao,2,850000,0,completed
+CB-O016,2026-06-16,CB-C005,Khach hang gop 005,CB-P001,Ao thun co ban,Thoi trang,1,180000,0,completed
+CB-O017,2026-06-17,CB-C006,Khach hang gop 006,CB-P002,Tui tote canvas,Phu kien,1,220000,0,completed
+CB-O018,2026-06-18,CB-C007,Khach hang gop 007,CB-P003,Binh nuoc the thao,Gia dung,1,150000,50000,completed
+CB-O019,2026-06-19,CB-C008,Khach hang gop 008,CB-P004,Tai nghe Bluetooth,Dien tu,1,590000,0,completed
+CB-O020,2026-06-20,CB-C009,Khach hang gop 009,CB-P005,Giay chay bo,The thao,2,850000,0,completed

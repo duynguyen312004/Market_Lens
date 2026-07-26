@@ -2,8 +2,7 @@ import {
   ArrowClockwiseIcon,
   ChartLineUpIcon,
   CloudArrowUpIcon,
-  DownloadSimpleIcon,
-  FileCsvIcon,
+  FilesIcon,
   WarningCircleIcon,
 } from '@phosphor-icons/react'
 import { Link } from 'react-router'
@@ -97,19 +96,13 @@ export function AnalysisEmptyState({
                 <CloudArrowUpIcon aria-hidden="true" size={18} weight="bold" />
                 <span>{t('analysis.uploadFile')}</span>
               </Link>
-              <a
+              <Link
                 className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3.5 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:w-auto"
-                download
-                href="/marketlens_ds_demo_365_days.csv"
+                to="/history"
               >
-                <DownloadSimpleIcon size={16} weight="bold" />
-                <span>{t('analysis.downloadDemo')}</span>
-              </a>
-            </div>
-
-            <div className="mt-8 flex items-center justify-center gap-2 border-t border-slate-100 pt-6 text-xs font-bold text-slate-500">
-              <FileCsvIcon className="text-blue-700" size={16} />
-              <span>{t('upload.supportedFormat')}</span>
+                <FilesIcon aria-hidden="true" size={17} weight="bold" />
+                <span>{t('analysis.chooseSaved')}</span>
+              </Link>
             </div>
           </div>
         </section>

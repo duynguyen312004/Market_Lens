@@ -28,10 +28,10 @@ def test_constant_series_selects_simplest_candidate_on_exact_tie() -> None:
 
     assert selection.available is True
     assert selection.selected_method == "seasonal_naive_7_days"
-    assert selection.selection_reason == "LOWEST_MAE"
+    assert selection.selection_reason == "LOWEST_PRIMARY_ERROR"
     assert len(selection.fold_origins) == 8
     assert all(
-        candidate.metrics["mae"] == 0
+        candidate.daily_metrics["mae"] == 0
         for candidate in selection.candidates
     )
 
@@ -44,8 +44,8 @@ def test_linear_series_selects_linear_trend() -> None:
     assert selection.selected_method == "linear_trend_30_days"
     selected = selection.selected_candidate
     assert selected is not None
-    assert selected.metrics["mae"] == 0
-    assert selection.selection_reason == "LOWEST_MAE"
+    assert selected.daily_metrics["mae"] == 0
+    assert selection.selection_reason == "LOWEST_PRIMARY_ERROR"
 
 
 def test_weekday_average_reconstructs_four_week_pattern() -> None:
@@ -228,12 +228,64 @@ def test_rich_demo_forecast_selection_matches_oracle() -> None:
     contract = selection.to_contract()
 
     assert contract["fold_count"] == 8
-    assert contract["candidates"][0]["method"] == "moving_average_7_days"
-    assert contract["candidates"][0]["metrics"]["mae"] == pytest.approx(
-        5_659_224.61
+    assert contract["candidates"][0]["method"] == "seasonal_naive_7_days"
+    assert contract["candidates"][0]["daily_metrics"][
+        "mae"
+    ] == pytest.approx(
+        6_222_839.29
     )
-    assert selection.selected_method == "moving_average_7_days"
-    assert selection.selection_reason == "LOWEST_MAE"
+    assert selection.selected_method == "seasonal_naive_7_days"
+    assert selection.selection_reason == "LOWEST_PRIMARY_ERROR"
+
+
+def test_thirty_day_selection_uses_total_period_error() -> None:
+    values = [100_000 + index * 25_000 for index in range(180)]
+
+    selection = select_forecast_model(
+        _daily_points(values),
+        horizon_days=30,
+    )
+    contract = selection.to_contract()
+
+    assert contract["available"] is True
+    assert contract["primary_metric"] == "total_mae"
+    assert contract["evaluation_points"] == (
+        contract["fold_count"] * 30
+    )
+    assert selection.selected_method == "linear_trend_30_days"
+    assert selection.selected_candidate is not None
+    assert selection.selected_candidate.total_metrics["mae"] == 0
+
+
+def test_thirty_day_uncertainty_uses_fold_total_residuals() -> None:
+    values = [
+        100_000 + index * 2_000 + (5_000 if index % 2 else -5_000)
+        for index in range(180)
+    ]
+    selection = select_forecast_model(
+        _daily_points(values),
+        horizon_days=30,
+    )
+    selected_method = selection.selected_method
+    assert selected_method is not None
+    predictions = round_predictions(
+        predict_revenue(
+            selected_method,
+            _as_array(values),
+            horizon_days=30,
+        )
+    ).tolist()
+
+    uncertainty = calculate_forecast_uncertainty(
+        selection,
+        predictions,
+    )
+
+    assert uncertainty["available"] is True
+    assert uncertainty["total_interval_available"] is True
+    assert uncertainty["total_residual_count"] >= 4
+    assert uncertainty["total_lower_bound"] <= sum(predictions)
+    assert uncertainty["total_upper_bound"] >= sum(predictions)
 
 
 def _daily_points(values: list[float]) -> list[dict[str, str | float]]:

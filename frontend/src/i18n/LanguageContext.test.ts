@@ -46,6 +46,9 @@ describe('MarketLens translations', () => {
     expect(translate('vi', 'dashboard.uniqueOrders')).toBe(
       'Mỗi đơn hàng chỉ được tính một lần',
     )
+    expect(translate('vi', 'orderIssues.tableDesc')).toBe(
+      'Mỗi đơn hàng chỉ được tính một lần cho từng sản phẩm. Nếu một sản phẩm xuất hiện ở nhiều dòng trong cùng đơn, MarketLens vẫn chỉ tính là một đơn.',
+    )
     expect(
       translate('vi', 'rfm.snapshotExplain', {
         date: '21/07/2026',
@@ -62,6 +65,16 @@ describe('MarketLens translations', () => {
       }),
     ).toBe('Doanh thu theo từng ngày trong tháng 7/2026.')
     expect(
+      translate('vi', 'sales.changeDecrease', {
+        value: 27,
+      }),
+    ).toBe('Giảm 27')
+    expect(
+      translate('vi', 'sales.declineContribution', {
+        value: '7,9',
+      }),
+    ).toBe('Chiếm 7,9% tổng mức giảm doanh thu')
+    expect(
       translate('vi', 'cohort.example', {
         active: 203,
         cohort: 'T8/2025',
@@ -73,11 +86,13 @@ describe('MarketLens translations', () => {
       'Ví dụ ngay trong bảng: nhóm T8/2025 có 261 khách ban đầu. Sau 1 tháng, 203 khách mua lại, tương đương 77,8%.',
     )
     expect(
-      translate('vi', 'forecast.vsLast7', {
-        value: '+8,4',
+      translate('vi', 'forecast.comparisonActualPeriod', {
+        amount: '12.500.000 ₫',
+        from: '01/06/2026',
+        to: '30/06/2026',
       }),
     ).toBe(
-      '+8,4% so với doanh thu thực tế của 7 ngày trước',
+      'Doanh thu thực tế từ 01/06/2026 đến 30/06/2026: 12.500.000 ₫.',
     )
     expect(translate('vi', 'forecast.reliabilityImpact.low')).toContain(
       'ưu tiên khoảng dự kiến',
@@ -102,6 +117,15 @@ describe('MarketLens translations', () => {
       translate('vi', 'report.actionDescRules'),
       translate('vi', 'rfm.desc'),
       translate('vi', 'pairs.desc'),
+      translate('vi', 'pairs.metricsHelp'),
+      translate('vi', 'forecast.errorAverage'),
+      translate('vi', 'forecast.errorLarge'),
+      translate('vi', 'forecast.errorPercent'),
+      translate('vi', 'api.NETWORK_ERROR'),
+      translate('vi', 'orderIssues.howRankedScope', {
+        minimum: 10,
+      }),
+      translate('vi', 'orderIssues.howRankedReason'),
     ]
       .join(' ')
       .toLowerCase()
@@ -111,6 +135,12 @@ describe('MarketLens translations', () => {
       'candidate',
       'fallback',
       'fold',
+      'lift',
+      'confidence',
+      'support',
+      'mae',
+      'rmse',
+      'smape',
       'metric key',
       'residual',
     ]) {
