@@ -39,6 +39,40 @@ test('shop owner completes the protected laptop journey with basic mobile covera
   await expect(page.locator('.app-sidebar')).toBeHidden()
   await expectNoHorizontalOverflow(page)
 
+  await page.setViewportSize({ height: 768, width: 1366 })
+  await page.goto('/dashboard')
+  await page
+    .locator('.app-sidebar')
+    .getByRole('button', { name: 'VI', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', { name: 'Chưa chọn dữ liệu để phân tích' }),
+  ).toBeVisible()
+  const emptyStateActions = [
+    page.getByRole('link', { name: 'Tải file bán hàng' }),
+    page.getByRole('link', { name: 'Chọn lần phân tích đã lưu' }),
+  ]
+  for (const action of emptyStateActions) {
+    await expect(action).toHaveCSS('white-space', 'nowrap')
+    await expect
+      .poll(() =>
+        action.evaluate(
+          (element) => element.getBoundingClientRect().height,
+        ),
+      )
+      .toBeLessThanOrEqual(56)
+  }
+  await expectNoHorizontalOverflow(page)
+  await page.setViewportSize({ height: 800, width: 640 })
+  await expectNoHorizontalOverflow(page)
+  await page.setViewportSize({ height: 768, width: 1366 })
+  await page
+    .locator('.app-sidebar')
+    .getByRole('button', { name: 'EN', exact: true })
+    .click()
+  await page.setViewportSize({ height: 844, width: 390 })
+  await page.goto('/history')
+
   await page
     .locator('.app-mobile-header')
     .getByRole('link', { name: 'Upload Data' })

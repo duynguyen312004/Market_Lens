@@ -75,7 +75,7 @@ export function AnalysisEmptyState({
     <main className="px-4 py-8 sm:px-7 lg:px-10 lg:py-12">
       <div className="mx-auto max-w-4xl">
         <section className="rounded-xl border border-[var(--border)] bg-white p-8 text-center shadow-[0_1px_2px_rgba(19,33,54,0.04)] sm:p-14">
-          <div className="mx-auto max-w-md">
+          <div className="mx-auto max-w-xl">
             <span className="mx-auto grid size-16 place-items-center rounded-xl border border-blue-200 bg-blue-50 text-blue-700">
               <ChartLineUpIcon aria-hidden="true" size={32} weight="bold" />
             </span>
@@ -84,20 +84,20 @@ export function AnalysisEmptyState({
               {displayTitle}
             </h1>
 
-            <p className="mt-3 text-sm font-medium leading-relaxed text-slate-600">
+            <p className="mx-auto mt-3 max-w-md text-sm font-medium leading-relaxed text-slate-600">
               {t('analysis.noDataDesc')}
             </p>
 
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <div className="mt-8 flex flex-col items-center justify-center gap-3 md:flex-row">
               <Link
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-[var(--primary)] px-6 py-3.5 text-sm font-extrabold text-white transition hover:bg-[var(--primary-hover)] active:scale-[0.98] sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg bg-[var(--primary)] px-6 py-3.5 text-sm font-extrabold text-white transition hover:bg-[var(--primary-hover)] active:scale-[0.98] md:w-auto"
                 to="/upload"
               >
                 <CloudArrowUpIcon aria-hidden="true" size={18} weight="bold" />
                 <span>{t('analysis.uploadFile')}</span>
               </Link>
               <Link
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white px-5 py-3.5 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] sm:w-auto"
+                className="flex w-full items-center justify-center gap-2 whitespace-nowrap rounded-lg border border-slate-300 bg-white px-5 py-3.5 text-sm font-extrabold text-slate-800 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 active:scale-[0.98] md:w-auto"
                 to="/history"
               >
                 <FilesIcon aria-hidden="true" size={17} weight="bold" />
