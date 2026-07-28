@@ -183,6 +183,24 @@ test('shop owner completes the protected laptop journey with basic mobile covera
     await expectLaptopLayout(page, 1366, 768)
   }
 
+  await page.goto('/customers')
+  await page
+    .locator('.app-sidebar')
+    .getByRole('button', { name: 'VI', exact: true })
+    .click()
+  await expect(
+    page.getByRole('heading', { name: 'Phân tích khách hàng' }),
+  ).toBeVisible()
+  await expectElementsNotToOverlap(
+    page.getByTestId('customer-segment-chart'),
+    page.getByTestId('customer-segment-revenue'),
+  )
+  await expectNoHorizontalOverflow(page)
+  await page
+    .locator('.app-sidebar')
+    .getByRole('button', { name: 'EN', exact: true })
+    .click()
+
   await page.goto('/sales')
   await page
     .getByRole('tab', { name: 'Cancellations and returns' })
@@ -382,6 +400,25 @@ async function expectLaptopLayout(
       .filter(({ fontSize, text }) => text && fontSize < 13),
   )
   expect(undersizedText).toEqual([])
+}
+
+async function expectElementsNotToOverlap(
+  first: ReturnType<Page['locator']>,
+  second: ReturnType<Page['locator']>,
+) {
+  const [firstBox, secondBox] = await Promise.all([
+    first.boundingBox(),
+    second.boundingBox(),
+  ])
+  expect(firstBox).not.toBeNull()
+  expect(secondBox).not.toBeNull()
+
+  const overlap =
+    firstBox!.x < secondBox!.x + secondBox!.width &&
+    firstBox!.x + firstBox!.width > secondBox!.x &&
+    firstBox!.y < secondBox!.y + secondBox!.height &&
+    firstBox!.y + firstBox!.height > secondBox!.y
+  expect(overlap).toBe(false)
 }
 
 async function deleteFirstHistoryItem(

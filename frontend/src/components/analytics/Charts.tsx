@@ -486,8 +486,15 @@ export function CustomerSegmentChart({
   const total = data.reduce((sum, item) => sum + item.value, 0)
 
   return (
-    <div className="grid items-center gap-6 sm:grid-cols-[minmax(13rem,0.8fr)_minmax(14rem,1.2fr)]">
-      <div aria-label={t('analysis.segmentChart')} className="relative h-56" role="img">
+    <div
+      className="grid min-w-0 items-center gap-6 sm:grid-cols-[minmax(12rem,0.8fr)_minmax(0,1.2fr)]"
+      data-testid="customer-segment-chart"
+    >
+      <div
+        aria-label={t('analysis.segmentChart')}
+        className="relative h-56 min-w-0"
+        role="img"
+      >
         <ResponsiveContainer height="100%" width="100%">
           <PieChart accessibilityLayer>
             <Tooltip
@@ -525,10 +532,10 @@ export function CustomerSegmentChart({
         </div>
       </div>
 
-      <ul className="space-y-3">
+      <ul className="min-w-0 space-y-3">
         {data.map((item) => (
           <li
-            className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2 hover:bg-slate-50 transition"
+            className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl p-2 transition hover:bg-slate-50"
             key={item.key}
           >
             <span

@@ -281,9 +281,12 @@ function CustomerOverview({ analysis }: { analysis: AnalysisDetail }) {
         <p className="mt-1 max-w-2xl text-xs leading-5 text-slate-500">
           {t('customers.compositionDesc')}
         </p>
-        <div className="mt-5 grid items-center gap-6 lg:grid-cols-[minmax(20rem,0.9fr)_minmax(0,1.1fr)]">
+        <div className="mt-5 grid items-center gap-6 xl:grid-cols-[minmax(0,1.15fr)_minmax(20rem,0.85fr)]">
           <CustomerSegmentChart segments={customers.segments} />
-          <div>
+          <div
+            className="min-w-0"
+            data-testid="customer-segment-revenue"
+          >
             <h3 className="text-sm font-extrabold text-slate-900">
               {t('customers.segmentRevenue')}
             </h3>
@@ -293,7 +296,7 @@ function CustomerOverview({ analysis }: { analysis: AnalysisDetail }) {
                   className="grid grid-cols-[minmax(0,1fr)_auto] gap-4 py-3 first:pt-0 last:pb-0"
                   key={item.segment}
                 >
-                  <dt>
+                  <dt className="min-w-0">
                     <p className="text-sm font-extrabold text-slate-900">
                       {getSegmentLabel(item.segment, language)}
                     </p>
@@ -306,7 +309,7 @@ function CustomerOverview({ analysis }: { analysis: AnalysisDetail }) {
                       })}
                     </p>
                   </dt>
-                  <dd className="text-right">
+                  <dd className="shrink-0 whitespace-nowrap text-right">
                     <p className="text-sm font-black text-slate-900">
                       {formatVnd(item.revenue, language)}
                     </p>
